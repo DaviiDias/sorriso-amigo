@@ -78,6 +78,7 @@ Veja o guia em [docs/implantacao-web-real.md](docs/implantacao-web-real.md).
 
 ## Acompanhamento e governanca
 
+- Controle de versao da entrega: [docs/controle-de-versao-entrega.md](docs/controle-de-versao-entrega.md)
 - Quadro de iteracao: [docs/quadro-acompanhamento-iteracao-01.md](docs/quadro-acompanhamento-iteracao-01.md)
 - Validacao tecnica e BD: [docs/validacao-funcionamento-e-bd.md](docs/validacao-funcionamento-e-bd.md)
 - Guia do usuario: [docs/guia-do-usuario.md](docs/guia-do-usuario.md)

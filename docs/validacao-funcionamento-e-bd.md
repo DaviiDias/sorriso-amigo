@@ -33,6 +33,7 @@ node server/src/server.js
 Resultado:
 
 - API iniciou e exibiu mensagem de subida do servidor.
+- Endpoint `/api/health` retornou `status: ok`.
 
 ### 3) Validacao do docker compose
 
@@ -50,11 +51,12 @@ Resultado:
 
 ### Status atual
 
-- **Pendente de execucao neste ambiente** porque o Docker Engine local nao estava ativo no momento da tentativa.
+- **Execucao iniciada, mas nao concluida neste ambiente** por indisponibilidade do backend com banco ativo.
 
 Erro observado:
 
 - Nao foi possivel conectar ao engine `dockerDesktopLinuxEngine`.
+- No `npm run smoke:db`, houve falha de conexao HTTP (`fetch failed`) por API/BD indisponiveis no momento da chamada.
 
 ### Como executar a validacao completa (passo a passo)
 
@@ -76,6 +78,23 @@ docker compose up -d --build
 
 - O checklist salvo deve aparecer na leitura.
 - Os indicadores do dashboard devem refletir os dados gravados.
+
+### Script de validacao automatica disponivel
+
+Com API+BD ativos:
+
+```bash
+cd server
+npm run smoke:db
+```
+
+Esse script valida:
+
+- cadastro de usuario,
+- login/autenticacao,
+- gravacao do checklist,
+- leitura do checklist gravado,
+- leitura de estatisticas.
 
 ## Conclusao
 
