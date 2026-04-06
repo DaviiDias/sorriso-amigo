@@ -12,19 +12,21 @@ Este projeto ja esta preparado para publicar com URL real HTTPS.
 ### 2) Publicar aplicacao web
 
 - Crie um novo Web Service apontando para este repositorio
+- Use o repositorio raiz como build context
+- O Render vai detectar o `Dockerfile` na raiz do projeto
 - Build command:
 
 ```bash
-npm install
+N/A (usando Dockerfile)
 ```
 
 - Start command:
 
 ```bash
-npm run db:init && npm start
+N/A (executado pelo CMD do Dockerfile)
 ```
 
-- Root directory: `server`
+- Root directory: raiz do repositorio
 
 ### 3) Variaveis de ambiente
 
