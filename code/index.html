@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Sorriso Amigo | Saude Bucal TEA</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito+Sans:wght@400;600;700;800&display=swap"
+			rel="stylesheet"
+		/>
+		<link rel="stylesheet" href="./assets/style.css" />
+	</head>
+	<body>
+		<div class="bg-glow bg-glow-a"></div>
+		<div class="bg-glow bg-glow-b"></div>
+
+		<main class="layout">
+			<section id="landing" class="panel auth-panel">
+				<div class="brand-column">
+					<p class="eyebrow">Projeto Educativo Digital</p>
+					<h1>Sorriso Amigo</h1>
+					<p class="subtitle">Suporte continuo para rotina de saude bucal de pessoas com TEA.</p>
+					<ul class="feature-list">
+						<li>Checklist diario com nivel de resistencia</li>
+						<li>Guia ludico de escovacao por etapas</li>
+						<li>Quiz educativo com feedback imediato</li>
+						<li>Conteudos em video para familiares e profissionais</li>
+					</ul>
+				</div>
+
+				<div class="auth-column">
+					<div class="auth-switch">
+						<button id="showLoginBtn" class="switch-btn active" type="button">Entrar</button>
+						<button id="showRegisterBtn" class="switch-btn" type="button">Criar conta</button>
+					</div>
+
+					<form id="loginForm" class="auth-form" novalidate>
+						<h2>Acesso seguro</h2>
+						<label>
+							E-mail
+							<input type="email" name="email" placeholder="voce@email.com" required />
+						</label>
+						<label>
+							Senha
+							<input type="password" name="password" placeholder="Minimo 8 caracteres" required />
+						</label>
+						<button type="submit" class="btn btn-primary">Entrar na plataforma</button>
+					</form>
+
+					<form id="registerForm" class="auth-form hidden">
+						<h2>Novo cadastro</h2>
+						<label>
+							Nome completo
+							<input type="text" name="fullName" placeholder="Nome e sobrenome" required />
+						</label>
+						<label>
+							E-mail
+							<input type="email" name="email" placeholder="voce@email.com" required />
+						</label>
+						<label>
+							Perfil
+							<select name="role">
+								<option value="caregiver">Cuidador(a)</option>
+								<option value="family">Familiar</option>
+								<option value="professional">Profissional de saude</option>
+							</select>
+						</label>
+						<label>
+							Senha
+							<input type="password" name="password" placeholder="Minimo 8 caracteres" required />
+						</label>
+
+						<label class="consent-label">
+							<input type="checkbox" name="acceptTerms" required />
+							Li e aceito os termos de uso e consentimento.
+						</label>
+
+						<details class="terms-box">
+							<summary>Visualizar termo resumido</summary>
+							<p>
+								Os dados do usuario sao usados somente para educacao em saude bucal e acompanhamento de rotina.
+								O acesso e protegido por autenticacao e boas praticas de seguranca.
+							</p>
+							<p>
+								O conteudo tem base educativa e nao substitui consulta profissional individual.
+							</p>
+						</details>
+
+						<button type="submit" class="btn btn-primary">Criar conta e iniciar</button>
+					</form>
+				</div>
+			</section>
+
+			<section id="appShell" class="panel app-shell hidden">
+				<header class="app-header">
+					<div>
+						<p class="eyebrow">Sorriso TEA</p>
+						<h2 id="welcomeName">Bem-vindo(a)</h2>
+					</div>
+					<button id="logoutBtn" class="btn btn-ghost" type="button">Sair</button>
+				</header>
+
+				<nav class="tab-nav" aria-label="Navegacao principal">
+					<button class="tab-btn active" data-section="dashboard" type="button">Dashboard</button>
+					<button class="tab-btn" data-section="checklist" type="button">Checklist</button>
+					<button class="tab-btn" data-section="guide" type="button">Guia</button>
+					<button class="tab-btn" data-section="quiz" type="button">Quiz</button>
+					<button class="tab-btn" data-section="videos" type="button">Videos</button>
+					<button class="tab-btn" data-section="settings" type="button">Configuracoes</button>
+				</nav>
+
+				<p id="statusBar" class="status-bar" aria-live="polite"></p>
+
+				<section id="section-dashboard" class="app-section active">
+					<div class="stats-grid">
+						<article class="stat-card">
+							<h3>Adesao mensal</h3>
+							<p id="adherenceValue">0%</p>
+						</article>
+						<article class="stat-card">
+							<h3>Escovacoes concluidas</h3>
+							<p id="completedValue">0</p>
+						</article>
+						<article class="stat-card">
+							<h3>Resistencia moderada/grave</h3>
+							<p id="resistanceValue">0</p>
+						</article>
+					</div>
+
+					<label class="inline-control">
+						Mes de referencia
+						<input id="monthInput" type="month" />
+					</label>
+
+					<div class="history-box">
+						<h3>Historico recente</h3>
+						<table>
+							<thead>
+								<tr>
+									<th>Data</th>
+									<th>Manha</th>
+									<th>Tarde</th>
+									<th>Noite</th>
+									<th>Resistencia</th>
+								</tr>
+							</thead>
+							<tbody id="historyTableBody"></tbody>
+						</table>
+					</div>
+				</section>
+
+				<section id="section-checklist" class="app-section">
+					<div class="card">
+						<h3>Checklist diario de escovacao</h3>
+						<form id="checklistForm" class="stack-form">
+							<label>
+								Data
+								<input id="checklistDate" type="date" required />
+							</label>
+
+							<div class="checkbox-line">
+								<label><input type="checkbox" name="morning" /> Escovou de manha</label>
+								<label><input type="checkbox" name="afternoon" /> Escovou de tarde</label>
+								<label><input type="checkbox" name="night" /> Escovou a noite</label>
+							</div>
+
+							<label>
+								Nivel de resistencia
+								<select name="resistanceLevel">
+									<option value="none">Nenhuma</option>
+									<option value="light">Leve</option>
+									<option value="moderate">Moderada</option>
+									<option value="severe">Grave</option>
+								</select>
+							</label>
+
+							<label>
+								Observacoes
+								<textarea name="notes" rows="4" placeholder="Ex.: aceitou melhor apos recurso visual."></textarea>
+							</label>
+
+							<button class="btn btn-primary" type="submit">Salvar registro</button>
+						</form>
+					</div>
+				</section>
+
+				<section id="section-guide" class="app-section">
+					<h3>Guia ludico de escovacao</h3>
+					<div id="guideContainer" class="guide-grid"></div>
+				</section>
+
+				<section id="section-quiz" class="app-section">
+					<h3>Quiz educativo</h3>
+					<form id="quizForm" class="stack-form"></form>
+					<button id="quizSubmitBtn" class="btn btn-primary" type="button">Enviar respostas</button>
+					<div id="quizResult" class="card hidden"></div>
+					<div class="history-box">
+						<h3>Ultimas tentativas</h3>
+						<ul id="quizHistoryList" class="attempt-list"></ul>
+					</div>
+				</section>
+
+				<section id="section-videos" class="app-section">
+					<h3>Videos e conteudos educativos</h3>
+					<div id="videoContainer" class="video-grid"></div>
+				</section>
+
+				<section id="section-settings" class="app-section">
+					<div class="card">
+						<h3>Configuracoes</h3>
+						<form id="preferencesForm" class="stack-form">
+							<label class="consent-label">
+								<input id="reminderEnabled" type="checkbox" />
+								Ativar lembretes de escovacao no navegador
+							</label>
+
+							<label>
+								Horarios (HH:MM, separados por virgula)
+								<input id="reminderTimes" type="text" placeholder="08:00,13:00,20:00" />
+							</label>
+
+							<label>
+								Acessibilidade
+								<select id="accessibilityMode">
+									<option value="default">Padrao</option>
+									<option value="high-contrast">Alto contraste</option>
+									<option value="large-text">Texto ampliado</option>
+								</select>
+							</label>
+
+							<button class="btn btn-primary" type="submit">Salvar preferencias</button>
+						</form>
+
+						<hr />
+
+						<h4>Ajuda e contato</h4>
+						<p>Email institucional sugerido: contato@sorrisoamigo.org</p>
+						<p>Telefone sugerido: (00) 0000-0000</p>
+
+						<h4>Termos de uso</h4>
+						<p>
+							Este sistema tem objetivo educativo e de apoio de rotina. Nao substitui avaliacao clinica
+							odontologica individual.
+						</p>
+					</div>
+				</section>
+			</section>
+		</main>
+
+		<script src="./assets/script.js" defer></script>
+	</body>
+</html>

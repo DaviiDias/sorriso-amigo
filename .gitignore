@@ -1,0 +1,23 @@
+# Node
+node_modules/
+server/node_modules/
+
+# Python
+.venv/
+__pycache__/
+
+# Env
+.env
+server/.env
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker
+pgdata/

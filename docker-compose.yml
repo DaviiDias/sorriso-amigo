@@ -1,0 +1,41 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: sorriso-amigo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: sorriso_amigo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d sorriso_amigo"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    container_name: sorriso-amigo-web
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 4000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/sorriso_amigo
+      DATABASE_SSL: "false"
+      JWT_SECRET: troque-este-segredo-em-producao
+      FRONTEND_ORIGIN: http://localhost:4000
+      NODE_ENV: production
+    command: sh -c "npm run db:init && npm start"
+    ports:
+      - "4000:4000"
+
+volumes:
+  pgdata:
