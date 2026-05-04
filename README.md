@@ -20,6 +20,11 @@ Plataforma web para educacao e acompanhamento de saude bucal para pessoas com TE
 - Backend: Node.js + Express em [server](server)
 - Banco: PostgreSQL com schema em [server/sql/schema.sql](server/sql/schema.sql)
 
+## Marcos de versionamento
+
+- Tag v1: referencia a entrega da Iteracao 1
+- Branch iteracao2: exercicio com ajustes pontuais e merge para master
+
 ## Subir local com Docker
 
 ### 1) Requisito
