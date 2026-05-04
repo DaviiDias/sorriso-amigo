@@ -23,41 +23,89 @@ Plataforma web para educacao e acompanhamento de saude bucal para pessoas com TE
 ## Marcos de versionamento
 
 - Tag v1: referencia a entrega da Iteracao 1
+- Tag v2: referencia a entrega da Iteracao 2
 - Branch iteracao2: exercicio com ajustes pontuais e merge para master
 
-## Subir local com Docker
+## Como executar no computador pessoal
 
-### 1) Requisito
+### Requisitos
 
-- Docker Desktop instalado
+- Git
+- Docker Desktop 4.x ou superior
+- Caso rode sem Docker: Node.js 20+ e PostgreSQL 14+ localmente
 
-### 2) Executar
+### 1) Clonar o repositorio
+
+```bash
+git clone <URL_DO_REPOSITORIO>
+cd sorriso-amigo
+```
+
+### 2) Verificar a versao entregue
+
+```bash
+git checkout v2
+```
+
+Se o objetivo for apenas validar o codigo da Iteracao 2, esse comando coloca o repositorio exatamente na versao entregue.
+
+### 3) Executar com Docker
+
+1. Crie o arquivo `server/.env` com base em `server/.env.example`.
+2. Ajuste a senha do banco e o `JWT_SECRET` se necessario.
+3. Suba a aplicacao:
 
 ```bash
 docker compose up --build
 ```
 
-### 3) Acessar
+4. Acesse:
 
-- App web: http://localhost:4000
-- Health check da API: http://localhost:4000/api/health
+- Aplicacao web: http://localhost:4000
+- Health check: http://localhost:4000/api/health
 
-## Rodar sem Docker (manual)
+### 4) Executar sem Docker
 
-### 1) Banco PostgreSQL
-
-Crie um banco e configure a URL em `server/.env` (use `server/.env.example` como base).
-
-### 2) Backend
+1. Inicie o PostgreSQL localmente.
+2. Crie o banco `sorriso_amigo`.
+3. Configure `server/.env` com os dados do banco.
+4. Instale as dependencias do backend:
 
 ```bash
 cd server
 npm install
+```
+
+5. Inicialize o schema e os dados de apoio:
+
+```bash
 npm run db:init
+```
+
+6. Inicie o backend:
+
+```bash
 npm run dev
 ```
 
-### 3) Frontend
+7. Abra o frontend em:
+
+- http://localhost:4000
+
+### 5) Validacao local
+
+Com a API e o banco em execucao, rode:
+
+```bash
+cd server
+npm run smoke:db
+```
+
+Esse comando valida cadastro, login, gravacao e leitura de checklist, alem de estatisticas basicas.
+
+## Rodar sem Docker (manual)
+
+O passo a passo detalhado esta na secao "Como executar no computador pessoal".
 
 O frontend e servido automaticamente pelo backend em `/`.
 
