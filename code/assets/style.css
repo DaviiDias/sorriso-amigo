@@ -551,3 +551,214 @@ body.mode-large-text {
 		text-align: center;
 	}
 }
+
+/* =========================================
+   DUOLINGO STYLE SIDEBAR & LAYOUT
+   ========================================= */
+
+:root {
+    --sidebar-bg: #131f24;
+    --sidebar-hover: #202f36;
+    --sidebar-text: #a1aab0;
+    --sidebar-text-active: #ffffff;
+    --sidebar-active-bg: rgba(255, 255, 255, 0.08);
+    --sidebar-border: #28363d;
+    --danger-red: #ff4b4b;
+    --danger-red-hover: #ff6b6b;
+    --brand-green: #58cc02;
+}
+
+/* Base Layout for the App Shell */
+.app-layout {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    min-height: 100vh;
+    background-color: var(--bg-a); /* keep original background for content */
+    margin: 0;
+    border-radius: 0;
+    box-shadow: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    z-index: 10;
+}
+
+/* Sidebar Container */
+.sidebar {
+    background-color: var(--sidebar-bg);
+    border-right: 2px solid var(--sidebar-border);
+    display: flex;
+    flex-direction: column;
+    padding: 1.5rem 1rem;
+    height: 100vh;
+    color: var(--sidebar-text);
+}
+
+.sidebar-brand {
+    padding: 0 1rem 2rem 1rem;
+}
+
+.sidebar-brand .brand-title {
+    color: var(--brand-green);
+    font-size: 1.5rem;
+    margin: 0;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+/* Navigation List */
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+/* Sidebar Buttons */
+.sidebar-nav .tab-btn {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: transparent;
+    border: 2px solid transparent;
+    color: var(--sidebar-text);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.sidebar-nav .tab-btn i {
+    font-size: 1.5rem;
+}
+
+.sidebar-nav .tab-btn:hover {
+    background-color: var(--sidebar-hover);
+    border-color: var(--sidebar-hover);
+    transform: none; /* override original .btn */
+}
+
+.sidebar-nav .tab-btn.active {
+    background-color: var(--sidebar-active-bg);
+    color: var(--sidebar-text-active);
+    border-color: var(--sidebar-active-bg);
+}
+
+/* Sidebar Footer (Sair) */
+.sidebar-footer {
+    padding-top: 1rem;
+    border-top: 2px solid var(--sidebar-border);
+}
+
+.btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    width: 100%;
+    background: transparent;
+    border: 2px solid transparent;
+    color: var(--danger-red);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: left;
+}
+
+.btn-logout i {
+    font-size: 1.5rem;
+}
+
+.btn-logout:hover {
+    background-color: rgba(255, 75, 75, 0.1);
+    color: var(--danger-red-hover);
+}
+
+/* Main Content Area */
+.content-area {
+    padding: 2rem 3rem;
+    overflow-y: auto;
+    height: 100vh;
+}
+
+.content-header {
+    margin-bottom: 2rem;
+}
+
+.content-wrapper {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+/* Utility spacing used in index.html */
+.mt-4 {
+    margin-top: 1rem;
+}
+
+/* Responsive Rules for Mobile (Bottom Navigation) */
+@media (max-width: 768px) {
+    .app-layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr 70px;
+    }
+
+    .content-area {
+        padding: 1.5rem;
+        height: calc(100vh - 70px);
+    }
+
+    .sidebar {
+        flex-direction: row;
+        height: 70px;
+        padding: 0.5rem;
+        border-right: none;
+        border-top: 2px solid var(--sidebar-border);
+        align-items: center;
+        justify-content: space-around;
+        position: fixed;
+        bottom: 0;
+        width: 100vw;
+        z-index: 50;
+    }
+
+    .sidebar-brand, .sidebar-footer {
+        display: none; /* Hide brand and logout on mobile bottom bar */
+    }
+
+    .sidebar-nav {
+        flex-direction: row;
+        justify-content: space-around;
+        width: 100%;
+        gap: 0;
+    }
+
+    .sidebar-nav .tab-btn {
+        flex-direction: column;
+        gap: 0.2rem;
+        padding: 0.4rem;
+        border: none !important;
+        background: transparent !important;
+    }
+
+    .sidebar-nav .tab-btn span {
+        display: none; /* Hide text, keep icons only */
+    }
+
+    .sidebar-nav .tab-btn i {
+        font-size: 1.8rem;
+    }
+    
+    .sidebar-nav .tab-btn.active {
+        color: var(--brand-green);
+    }
+}
