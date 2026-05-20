@@ -715,10 +715,11 @@ async function loadPreferences() {
 
 		dom.reminderTimes.value = times.join(",");
 		dom.accessibilityMode.value = preferences.accessibility_mode || "default";
-		dom.themeMode.value = preferences.theme_mode || "dark";
+		const savedTheme = localStorage.getItem("sorriso_theme") || preferences.theme_mode || "light";
+		dom.themeMode.value = savedTheme;
 
 		applyAccessibility(dom.accessibilityMode.value);
-		applyTheme(dom.themeMode.value);
+		applyTheme(savedTheme);
 		setupReminderEngine(dom.reminderEnabled.checked, times);
 	} catch (error) {
 		setStatus(error.message, "error");
@@ -750,6 +751,7 @@ async function onPreferencesSubmit(event) {
 
 		applyAccessibility(accessibilityMode);
 		applyTheme(themeMode);
+		localStorage.setItem("sorriso_theme", themeMode);
 		setupReminderEngine(reminderEnabled, reminderTimes);
 		setStatus("Preferencias salvas.", "success");
 	} catch (error) {
@@ -868,7 +870,7 @@ function createDemoStore() {
 			reminder_enabled: true,
 			reminder_times: ["08:00", "13:00", "20:00"],
 			accessibility_mode: "default",
-			theme_mode: "dark"
+			theme_mode: "light"
 		},
 		checklists: [
 			/* Removido o item de 'today' para que a auto-seleção de turno funcione no carregamento */
