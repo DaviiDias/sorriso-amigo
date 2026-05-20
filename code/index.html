@@ -7,7 +7,7 @@
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito:wght@400;600;700;800&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Lexend:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap"
 			rel="stylesheet"
 		/>
         <!-- Phosphor Icons for minimalist Duolingo style -->
@@ -134,7 +134,6 @@
             <main class="content-area">
                 <header class="content-header">
                     <h2 id="welcomeName">Bem-vindo(a)</h2>
-                    <p id="statusBar" class="status-bar" aria-live="polite"></p>
                 </header>
 
                 <div class="content-wrapper">
@@ -180,39 +179,78 @@
                     </section>
 
                     <section id="section-checklist" class="app-section">
-                        <div class="card">
-                            <h3>Checklist diário de escovação</h3>
+                        <h2 class="checklist-title">Checklist da escovação</h2>
+                        <div class="card checklist-card">
                             <form id="checklistForm" class="stack-form">
-                                <label>
-                                    Data
-                                    <input id="checklistDate" type="date" required />
-                                </label>
-
-                                <div class="checkbox-line">
-                                    <label><input type="checkbox" name="morning" /> Escovou de manhã</label>
-                                    <label><input type="checkbox" name="afternoon" /> Escovou de tarde</label>
-                                    <label><input type="checkbox" name="night" /> Escovou à noite</label>
+                                <div class="form-group relative-group">
+                                    <label>Data da Escovação</label>
+                                    <input id="checklistDate" type="text" readonly required class="custom-input date-input" />
+                                    <!-- Custom Datepicker Wrapper -->
+                                    <div id="customDatePicker" class="custom-datepicker hidden">
+                                        <div class="datepicker-header">
+                                            <button type="button" id="dpPrev"><i class="ph ph-caret-left"></i></button>
+                                            <span id="dpMonthYear"></span>
+                                            <button type="button" id="dpNext"><i class="ph ph-caret-right"></i></button>
+                                        </div>
+                                        <div class="datepicker-grid days-header">
+                                            <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                                        </div>
+                                        <div id="dpDays" class="datepicker-grid days-body"></div>
+                                    </div>
                                 </div>
 
-                                <label>
-                                    Nível de resistência
-                                    <select name="resistanceLevel">
-                                        <option value="none">Nenhuma</option>
-                                        <option value="light">Leve</option>
-                                        <option value="moderate">Moderada</option>
-                                        <option value="severe">Grave</option>
-                                    </select>
-                                </label>
+                                <div class="form-group time-group">
+                                    <label class="text-center">Turno / Período do dia</label>
+                                    <div class="time-selector">
+                                        <button type="button" class="time-btn" data-time="morning" title="Manhã">
+                                            <i class="ph ph-sun-horizon"></i>
+                                        </button>
+                                        <button type="button" class="time-btn" data-time="afternoon" title="Tarde">
+                                            <i class="ph ph-sun"></i>
+                                        </button>
+                                        <button type="button" class="time-btn" data-time="night" title="Noite">
+                                            <i class="ph ph-moon-stars"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Hidden inputs to keep script.js compatibility -->
+                                    <input type="checkbox" name="morning" id="input-morning" class="hidden" />
+                                    <input type="checkbox" name="afternoon" id="input-afternoon" class="hidden" />
+                                    <input type="checkbox" name="night" id="input-night" class="hidden" />
+                                </div>
 
-                                <label>
-                                    Observações
-                                    <textarea name="notes" rows="4" placeholder="Ex.: aceitou melhor após recurso visual."></textarea>
-                                </label>
+                                <div class="form-group resistance-group">
+                                    <label class="text-center">Nível de Resistência</label>
+                                    <div class="resistance-selector">
+                                        <button type="button" class="res-btn extreme-negative" data-level="severe" title="Extremamente Negativa">
+                                            <i class="ph-fill ph-smiley-angry"></i>
+                                        </button>
+                                        <button type="button" class="res-btn negative" data-level="moderate" title="Negativa">
+                                            <i class="ph-fill ph-smiley-sad"></i>
+                                        </button>
+                                        <button type="button" class="res-btn neutral" data-level="light" title="Neutra">
+                                            <i class="ph-fill ph-smiley-meh"></i>
+                                        </button>
+                                        <button type="button" class="res-btn positive" data-level="none" title="Positiva">
+                                            <i class="ph-fill ph-smiley"></i>
+                                        </button>
+                                        <button type="button" class="res-btn extreme-positive" data-level="super-none" title="Extremamente Positiva">
+                                            <i class="ph-fill ph-smiley-wink"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Hidden input to keep script.js compatibility -->
+                                    <input type="hidden" name="resistanceLevel" id="input-resistance" value="none" />
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Observação</label>
+                                    <textarea name="notes" rows="4" maxlength="150" placeholder="Ex.: aceitou melhor após recurso visual." class="custom-input custom-textarea"></textarea>
+                                </div>
 
                                 <button class="btn btn-primary" type="submit">Salvar registro</button>
                             </form>
                         </div>
                     </section>
+
 
                     <section id="section-guide" class="app-section">
                         <h3>Guia lúdico de escovação</h3>
@@ -258,6 +296,15 @@
                                     </select>
                                 </label>
 
+                                <label>
+                                    Tema Visual
+                                    <select id="themeMode">
+                                        <option value="dark">Escuro (Padrão)</option>
+                                        <option value="light">Claro (Suave / TEA-Friendly)</option>
+                                        <option value="blue">Claro (Azul Bebê)</option>
+                                    </select>
+                                </label>
+
                                 <button class="btn btn-primary" type="submit">Salvar preferências</button>
                             </form>
 
@@ -275,6 +322,8 @@
             </main>
 		</section>
 
+		<!-- Global Toast Notifications -->
+		<div id="toast-container" class="toast-container"></div>
 		<script src="./assets/script.js" defer></script>
 	</body>
 </html>

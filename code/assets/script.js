@@ -44,7 +44,8 @@ const dom = {
 	preferencesForm: document.querySelector("#preferencesForm"),
 	reminderEnabled: document.querySelector("#reminderEnabled"),
 	reminderTimes: document.querySelector("#reminderTimes"),
-	accessibilityMode: document.querySelector("#accessibilityMode")
+	accessibilityMode: document.querySelector("#accessibilityMode"),
+	themeMode: document.querySelector("#themeMode")
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -84,6 +85,29 @@ function bindEvents() {
 	dom.checklistForm.addEventListener("submit", onChecklistSubmit);
 	dom.quizSubmitBtn.addEventListener("click", onQuizSubmit);
 	dom.preferencesForm.addEventListener("submit", onPreferencesSubmit);
+
+	// Custom Checklist UI events
+	const timeBtns = document.querySelectorAll(".time-btn");
+	timeBtns.forEach(btn => {
+		btn.addEventListener("click", () => {
+			btn.classList.toggle("active");
+			const time = btn.dataset.time;
+			const input = document.getElementById(`input-${time}`);
+			if (input) input.checked = btn.classList.contains("active");
+		});
+	});
+
+	const resBtns = document.querySelectorAll(".res-btn");
+	const resInput = document.getElementById("input-resistance");
+	resBtns.forEach(btn => {
+		btn.addEventListener("click", () => {
+			resBtns.forEach(b => b.classList.remove("active"));
+			btn.classList.add("active");
+			if (resInput) resInput.value = btn.dataset.level;
+		});
+	});
+
+	initDatepicker();
 }
 
 function applyDefaultDates() {
@@ -92,6 +116,84 @@ function applyDefaultDates() {
 	const month = now.toISOString().slice(0, 7);
 	dom.checklistDate.value = today;
 	dom.monthInput.value = month;
+}
+
+function initDatepicker() {
+    const dateInput = document.getElementById("checklistDate");
+    const dpContainer = document.getElementById("customDatePicker");
+    const dpMonthYear = document.getElementById("dpMonthYear");
+    const dpDays = document.getElementById("dpDays");
+    const dpPrev = document.getElementById("dpPrev");
+    const dpNext = document.getElementById("dpNext");
+    
+    if (!dateInput || !dpContainer) return;
+    
+    let currentShownDate = new Date();
+    
+    function renderCalendar() {
+        dpDays.innerHTML = "";
+        const year = currentShownDate.getFullYear();
+        const month = currentShownDate.getMonth();
+        
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+        dpMonthYear.textContent = `${monthNames[month]} ${year}`;
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        for (let i = 0; i < firstDay; i++) {
+            const emptyDiv = document.createElement("div");
+            emptyDiv.className = "dp-day empty";
+            dpDays.appendChild(emptyDiv);
+        }
+        
+        for (let i = 1; i <= daysInMonth; i++) {
+            const dayDiv = document.createElement("div");
+            dayDiv.className = "dp-day";
+            dayDiv.textContent = i;
+            
+            const cellDateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+            if (cellDateStr === dateInput.value) {
+                dayDiv.classList.add("selected");
+            }
+            
+            dayDiv.addEventListener("click", () => {
+                dateInput.value = cellDateStr;
+                dpContainer.classList.add("hidden");
+                renderCalendar();
+            });
+            dpDays.appendChild(dayDiv);
+        }
+    }
+    
+    dateInput.addEventListener("click", () => {
+        dpContainer.classList.toggle("hidden");
+        const val = dateInput.value;
+        if (val) {
+            currentShownDate = new Date(val + "T12:00:00");
+        }
+        renderCalendar();
+    });
+    
+    dpPrev.addEventListener("click", (e) => {
+		e.stopPropagation();
+        currentShownDate.setMonth(currentShownDate.getMonth() - 1);
+        renderCalendar();
+    });
+    
+    dpNext.addEventListener("click", (e) => {
+		e.stopPropagation();
+        currentShownDate.setMonth(currentShownDate.getMonth() + 1);
+        renderCalendar();
+    });
+    
+    document.addEventListener("click", (e) => {
+        if (!dateInput.contains(e.target) && !dpContainer.contains(e.target)) {
+            dpContainer.classList.add("hidden");
+        }
+    });
+    
+    renderCalendar();
 }
 
 function setAuthMode(mode) {
@@ -110,6 +212,21 @@ function setActiveSection(sectionName) {
 	dom.sections.forEach((section) => {
 		section.classList.toggle("active", section.id === `section-${sectionName}`);
 	});
+
+	// Update Dynamic Title
+	if (sectionName === 'checklist') {
+		dom.welcomeName.style.display = 'none';
+	} else {
+		dom.welcomeName.style.display = 'block';
+		const titles = {
+			dashboard: 'Dashboard',
+			guide: 'Guia lúdico',
+			quiz: 'Quizz',
+			videos: 'Vídeos educativos',
+			settings: 'Configurações'
+		};
+		dom.welcomeName.textContent = titles[sectionName] || 'Sorriso Amigo';
+	}
 }
 
 async function api(path, options = {}) {
@@ -147,9 +264,37 @@ async function api(path, options = {}) {
 	return data;
 }
 
+window.showToast = function(type, message) {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    
+    const toast = document.createElement("div");
+    toast.className = `toast ${type}`;
+    
+    let icon = "ph-info";
+    if (type === "success") icon = "ph-check-circle";
+    if (type === "error") icon = "ph-warning-circle";
+    if (type === "warning") icon = "ph-warning";
+    
+    toast.innerHTML = `<i class="ph ${icon}"></i> <span>${message}</span>`;
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.add("hiding");
+        toast.addEventListener("animationend", () => {
+            toast.remove();
+        });
+    }, 4000);
+};
+
 function setStatus(message, type = "info") {
-	dom.statusBar.textContent = message;
-	dom.statusBar.className = `status-bar ${type}`;
+	// Fallback for old status bar element if it exists
+	if (dom.statusBar) {
+		dom.statusBar.textContent = message;
+		dom.statusBar.className = `status-bar ${type}`;
+	}
+	// Trigger the new global Toast System
+	showToast(type, message);
 }
 
 async function onRegisterSubmit(event) {
@@ -293,11 +438,31 @@ async function loadChecklistForDate(dateValue) {
 		const item = result.items[0];
 		const form = dom.checklistForm;
 
-		form.morning.checked = Boolean(item?.brushing_morning);
-		form.afternoon.checked = Boolean(item?.brushing_afternoon);
-		form.night.checked = Boolean(item?.brushing_night);
-		form.resistanceLevel.value = item?.resistance_level || "none";
-		form.notes.value = item?.notes || "";
+		if (item) {
+			form.morning.checked = Boolean(item.brushing_morning);
+			form.afternoon.checked = Boolean(item.brushing_afternoon);
+			form.night.checked = Boolean(item.brushing_night);
+			form.resistanceLevel.value = item.resistance_level || "none";
+			form.notes.value = item.notes || "";
+		} else {
+			// Sem registro: Limpa os campos e auto-seleciona o turno atual
+			form.morning.checked = false;
+			form.afternoon.checked = false;
+			form.night.checked = false;
+			form.resistanceLevel.value = "light"; /* Default to neutral */
+			form.notes.value = "";
+
+			const hour = new Date().getHours();
+			if (hour >= 5 && hour < 12) {
+				form.morning.checked = true;
+			} else if (hour >= 12 && hour < 18) {
+				form.afternoon.checked = true;
+			} else {
+				form.night.checked = true;
+			}
+		}
+
+		syncChecklistUI();
 	} catch (error) {
 		setStatus(error.message, "error");
 	}
@@ -316,7 +481,7 @@ async function onChecklistSubmit(event) {
 		morning: dom.checklistForm.morning.checked,
 		afternoon: dom.checklistForm.afternoon.checked,
 		night: dom.checklistForm.night.checked,
-		resistanceLevel: dom.checklistForm.resistanceLevel.value,
+		resistanceLevel: dom.checklistForm.resistanceLevel.value === 'super-none' ? 'none' : dom.checklistForm.resistanceLevel.value,
 		notes: dom.checklistForm.notes.value
 	};
 
@@ -378,17 +543,21 @@ async function loadGuideSteps() {
 		}
 
 		result.steps.forEach((step) => {
-			const article = document.createElement("article");
-			article.className = "guide-card";
-			article.innerHTML = `
-				<img src="${step.image_url}" alt="${escapeHtml(step.title)}" loading="lazy" />
-				<div class="inner">
-					<span class="guide-step">Etapa ${step.step_order}</span>
-					<h4>${escapeHtml(step.title)}</h4>
-					<p>${escapeHtml(step.description)}</p>
-				</div>
+			const item = document.createElement("div");
+			item.className = "timeline-item";
+			item.innerHTML = `
+				<div class="timeline-badge">${step.step_order}</div>
+				<article class="guide-card">
+					<div class="guide-card-img-wrapper">
+						<img src="${step.image_url}" alt="${escapeHtml(step.title)}" loading="lazy" />
+					</div>
+					<div class="inner">
+						<h4>${escapeHtml(step.title)}</h4>
+						<p>${escapeHtml(step.description)}</p>
+					</div>
+				</article>
 			`;
-			dom.guideContainer.appendChild(article);
+			dom.guideContainer.appendChild(item);
 		});
 	} catch (error) {
 		setStatus(error.message, "error");
@@ -546,8 +715,10 @@ async function loadPreferences() {
 
 		dom.reminderTimes.value = times.join(",");
 		dom.accessibilityMode.value = preferences.accessibility_mode || "default";
+		dom.themeMode.value = preferences.theme_mode || "dark";
 
 		applyAccessibility(dom.accessibilityMode.value);
+		applyTheme(dom.themeMode.value);
 		setupReminderEngine(dom.reminderEnabled.checked, times);
 	} catch (error) {
 		setStatus(error.message, "error");
@@ -564,6 +735,7 @@ async function onPreferencesSubmit(event) {
 		.filter(Boolean);
 
 	const accessibilityMode = dom.accessibilityMode.value;
+	const themeMode = dom.themeMode.value;
 
 	try {
 		await api("/user/preferences", {
@@ -571,11 +743,13 @@ async function onPreferencesSubmit(event) {
 			body: {
 				reminderEnabled,
 				reminderTimes,
-				accessibilityMode
+				accessibilityMode,
+				themeMode
 			}
 		});
 
 		applyAccessibility(accessibilityMode);
+		applyTheme(themeMode);
 		setupReminderEngine(reminderEnabled, reminderTimes);
 		setStatus("Preferencias salvas.", "success");
 	} catch (error) {
@@ -592,6 +766,16 @@ function applyAccessibility(mode) {
 
 	if (mode === "large-text") {
 		document.body.classList.add("mode-large-text");
+	}
+}
+
+function applyTheme(theme) {
+	document.body.classList.remove("mode-light", "mode-blue");
+	
+	if (theme === "light") {
+		document.body.classList.add("mode-light");
+	} else if (theme === "blue") {
+		document.body.classList.add("mode-light", "mode-blue");
 	}
 }
 
@@ -683,18 +867,11 @@ function createDemoStore() {
 		preferences: {
 			reminder_enabled: true,
 			reminder_times: ["08:00", "13:00", "20:00"],
-			accessibility_mode: "default"
+			accessibility_mode: "default",
+			theme_mode: "dark"
 		},
 		checklists: [
-			{
-				checklist_date: today,
-				brushing_morning: true,
-				brushing_afternoon: false,
-				brushing_night: true,
-				resistance_level: "light",
-				notes: "Boa adesao com reforco positivo.",
-				updated_at: new Date().toISOString()
-			},
+			/* Removido o item de 'today' para que a auto-seleção de turno funcione no carregamento */
 			{
 				checklist_date: format(yesterday),
 				brushing_morning: true,
@@ -1096,4 +1273,31 @@ function escapeHtml(value) {
 		.replaceAll(">", "&gt;")
 		.replaceAll('"', "&quot;")
 		.replaceAll("'", "&#39;");
+}
+
+function syncChecklistUI() {
+	const form = dom.checklistForm;
+	const mBtn = document.querySelector('.time-btn[data-time="morning"]');
+	const aBtn = document.querySelector('.time-btn[data-time="afternoon"]');
+	const nBtn = document.querySelector('.time-btn[data-time="night"]');
+	
+	if(mBtn) mBtn.classList.toggle('active', form.morning.checked);
+	if(aBtn) aBtn.classList.toggle('active', form.afternoon.checked);
+	if(nBtn) nBtn.classList.toggle('active', form.night.checked);
+
+	let resLevel = form.resistanceLevel.value || 'none';
+	document.querySelectorAll('.res-btn').forEach(btn => {
+		btn.classList.remove('active');
+	});
+	
+	if (resLevel === 'none') {
+		const posBtn = document.querySelector('.res-btn.positive');
+		if(posBtn) posBtn.classList.add('active');
+	} else if (resLevel === 'super-none') {
+		const extPosBtn = document.querySelector('.res-btn.extreme-positive');
+		if(extPosBtn) extPosBtn.classList.add('active');
+	} else {
+		const activeBtn = document.querySelector(`.res-btn[data-level="${resLevel}"]`);
+		if(activeBtn) activeBtn.classList.add('active');
+	}
 }
