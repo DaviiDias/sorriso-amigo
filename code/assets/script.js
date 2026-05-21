@@ -8,7 +8,11 @@ const state = {
 	user: null,
 	quizQuestions: [],
 	reminderTimer: null,
-	lastNotificationKey: ""
+	lastNotificationKey: "",
+	currentQuestionIndex: 0,
+	selectedOptionId: null,
+	quizAnswers: [],
+	quizState: "start"
 };
 
 // Modo temporario para demonstracao sem backend ativo.
@@ -24,28 +28,74 @@ const dom = {
 	loginForm: document.querySelector("#loginForm"),
 	registerForm: document.querySelector("#registerForm"),
 	logoutBtn: document.querySelector("#logoutBtn"),
-	welcomeName: document.querySelector("#welcomeName"),
 	statusBar: document.querySelector("#statusBar"),
 	tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
 	sections: Array.from(document.querySelectorAll(".app-section")),
 	monthInput: document.querySelector("#monthInput"),
 	adherenceValue: document.querySelector("#adherenceValue"),
 	completedValue: document.querySelector("#completedValue"),
-	resistanceValue: document.querySelector("#resistanceValue"),
-	historyTableBody: document.querySelector("#historyTableBody"),
+	brushingsGoalHint: document.querySelector("#brushingsGoalHint"),
+	trackedDaysValue: document.querySelector("#trackedDaysValue"),
+	resistanceHint: document.querySelector("#resistanceHint"),
+	dashboardChart: document.querySelector("#dashboardChart"),
+	dashboardChartPanel: document.querySelector(".dashboard-chart-panel"),
+	dashboardChartPanelTitle: document.querySelector(".dashboard-chart-panel h3"),
+	dashboardChartPanelSubtitle: document.querySelector(".dashboard-chart-panel .dashboard-panel-subtitle"),
+	dashboardMonthHeatmap: document.querySelector("#dashboardMonthHeatmap"),
+	dashboardHeatmapLegend: document.querySelector(".dashboard-heatmap-legend"),
+	dashboardPeriodBars: document.querySelector("#dashboardPeriodBars"),
+	dashboardAttentionList: document.querySelector("#dashboardAttentionList"),
+	dashboardQuizSummary: document.querySelector("#dashboardQuizSummary"),
+	dashboardRecentQuiz: document.querySelector("#dashboardRecentQuiz"),
+	dashboardChartToggleButtons: Array.from(document.querySelectorAll("[data-chart-range]")),
 	checklistForm: document.querySelector("#checklistForm"),
 	checklistDate: document.querySelector("#checklistDate"),
 	guideContainer: document.querySelector("#guideContainer"),
-	quizForm: document.querySelector("#quizForm"),
-	quizSubmitBtn: document.querySelector("#quizSubmitBtn"),
-	quizResult: document.querySelector("#quizResult"),
+	quizContainerBox: document.querySelector("#quizContainerBox"),
+	quizStateStart: document.querySelector("#quizStateStart"),
+	quizStateActive: document.querySelector("#quizStateActive"),
+	quizStateResults: document.querySelector("#quizStateResults"),
+	quizStartBtn: document.querySelector("#quizStartBtn"),
+	quizExitHeaderBtn: document.querySelector("#quizExitHeaderBtn"),
+	quizExitFooterBtn: document.querySelector("#quizExitFooterBtn"),
+	quizProgressBar: document.querySelector("#quizProgressBar"),
+	quizQuestionCategory: document.querySelector("#quizQuestionCategory"),
+	quizQuestionContainer: document.querySelector(".quiz-question-container"),
+	quizQuestionText: document.querySelector("#quizQuestionText"),
+	quizOptionsGrid: document.querySelector("#quizOptionsGrid"),
+	quizFeedbackContainer: document.querySelector("#quizFeedbackContainer"),
+	quizFeedbackIcon: document.querySelector("#quizFeedbackIcon"),
+	quizFeedbackTitle: document.querySelector("#quizFeedbackTitle"),
+	quizFeedbackExplanation: document.querySelector("#quizFeedbackExplanation"),
+	quizActionBtn: document.querySelector("#quizActionBtn"),
+	quizResultsScore: document.querySelector("#quizResultsScore"),
+	quizResultsPercentage: document.querySelector("#quizResultsPercentage"),
+	quizResultsFeedbackList: document.querySelector("#quizResultsFeedbackList"),
+	quizRestartBtn: document.querySelector("#quizRestartBtn"),
 	quizHistoryList: document.querySelector("#quizHistoryList"),
 	videoContainer: document.querySelector("#videoContainer"),
 	preferencesForm: document.querySelector("#preferencesForm"),
 	reminderEnabled: document.querySelector("#reminderEnabled"),
 	reminderTimes: document.querySelector("#reminderTimes"),
 	accessibilityMode: document.querySelector("#accessibilityMode"),
-	themeMode: document.querySelector("#themeMode")
+	themeMode: document.querySelector("#themeMode"),
+	confirmModal: document.querySelector("#confirmModal"),
+	confirmModalBackdrop: document.querySelector("#confirmModalBackdrop"),
+	confirmModalIcon: document.querySelector("#confirmModalIcon"),
+	confirmModalTitle: document.querySelector("#confirmModalTitle"),
+	confirmModalMessage: document.querySelector("#confirmModalMessage"),
+	confirmModalCancel: document.querySelector("#confirmModalCancel"),
+	confirmModalConfirm: document.querySelector("#confirmModalConfirm")
+};
+
+let confirmModalResolver = null;
+
+const dashboardCache = {
+	month: "",
+	monthItems: [],
+	recentItems: [],
+	attempts: [],
+	chartRange: "month"
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -74,8 +124,10 @@ function bindEvents() {
 		button.addEventListener("click", () => setActiveSection(button.dataset.section));
 	});
 
-	dom.monthInput.addEventListener("change", () => {
-		loadDashboardStats(dom.monthInput.value);
+	dom.dashboardChartToggleButtons.forEach((button) => {
+		button.addEventListener("click", () => {
+			setDashboardChartRange(button.dataset.chartRange);
+		});
 	});
 
 	dom.checklistDate.addEventListener("change", () => {
@@ -83,8 +135,19 @@ function bindEvents() {
 	});
 
 	dom.checklistForm.addEventListener("submit", onChecklistSubmit);
-	dom.quizSubmitBtn.addEventListener("click", onQuizSubmit);
+	
+	// Ouvintes do Quiz Interativo (estilo Duolingo)
+	if (dom.quizStartBtn) {
+		dom.quizStartBtn.addEventListener("click", startQuiz);
+		dom.quizExitHeaderBtn.addEventListener("click", exitQuiz);
+		dom.quizExitFooterBtn.addEventListener("click", exitQuiz);
+		dom.quizActionBtn.addEventListener("click", handleQuizAction);
+		dom.quizRestartBtn.addEventListener("click", showQuizStartScreen);
+	}
+
 	dom.preferencesForm.addEventListener("submit", onPreferencesSubmit);
+
+	bindConfirmModalEvents();
 
 	// Custom Checklist UI events
 	const timeBtns = document.querySelectorAll(".time-btn");
@@ -108,6 +171,7 @@ function bindEvents() {
 	});
 
 	initDatepicker();
+	initDashboardMonthPicker();
 }
 
 function applyDefaultDates() {
@@ -118,82 +182,179 @@ function applyDefaultDates() {
 	dom.monthInput.value = month;
 }
 
+function createCalendarPicker({ input, container, monthYear, days, prev, next, mode = "date", onSelect }) {
+	if (!input || !container || !monthYear || !days || !prev || !next) return;
+
+	const monthNames = [
+		"Janeiro",
+		"Fevereiro",
+		"Março",
+		"Abril",
+		"Maio",
+		"Junho",
+		"Julho",
+		"Agosto",
+		"Setembro",
+		"Outubro",
+		"Novembro",
+		"Dezembro"
+	];
+	let currentShownDate = new Date();
+	currentShownDate.setHours(12, 0, 0, 0);
+
+	function getSelectedDate() {
+		if (!input.value) return null;
+		const selectedValue = mode === "month" ? `${input.value}-01` : input.value;
+		const parsedDate = new Date(`${selectedValue}T12:00:00`);
+		return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+	}
+
+	function renderCalendar() {
+		days.innerHTML = "";
+		const year = currentShownDate.getFullYear();
+		const month = currentShownDate.getMonth();
+		const displayMonth = String(month + 1).padStart(2, "0");
+		monthYear.textContent = mode === "month" ? String(year) : `${monthNames[month]} ${year}`;
+		prev.setAttribute("aria-label", mode === "month" ? "Ano anterior" : "Mês anterior");
+		next.setAttribute("aria-label", mode === "month" ? "Próximo ano" : "Próximo mês");
+		prev.innerHTML = mode === "month" ? '<i class="ph ph-caret-left"></i>' : '<i class="ph ph-caret-left"></i>';
+		next.innerHTML = mode === "month" ? '<i class="ph ph-caret-right"></i>' : '<i class="ph ph-caret-right"></i>';
+
+		if (mode === "month") {
+			days.classList.add("month-grid");
+			days.classList.remove("days-body");
+			const selectedMonthKey = input.value;
+			const monthButtons = [
+				"Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"
+			];
+
+			monthButtons.forEach((label, index) => {
+				const monthButton = document.createElement("button");
+				monthButton.type = "button";
+				monthButton.className = "dp-day month-day";
+				monthButton.textContent = label;
+				const value = `${year}-${String(index + 1).padStart(2, "0")}`;
+				if (selectedMonthKey === value) {
+					monthButton.classList.add("selected");
+				}
+				monthButton.addEventListener("click", () => {
+					input.value = value;
+					container.classList.add("hidden");
+					renderCalendar();
+					if (typeof onSelect === "function") {
+						onSelect(input.value);
+					}
+				});
+				days.appendChild(monthButton);
+			});
+			return;
+		}
+
+		days.classList.remove("month-grid");
+		days.classList.add("days-body");
+
+		const firstDay = new Date(year, month, 1).getDay();
+		const daysInMonth = new Date(year, month + 1, 0).getDate();
+		const selectedDate = getSelectedDate();
+		const selectedMonthKey = selectedDate ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}` : "";
+
+		for (let i = 0; i < firstDay; i += 1) {
+			const emptyDiv = document.createElement("div");
+			emptyDiv.className = "dp-day empty";
+			days.appendChild(emptyDiv);
+		}
+
+		for (let day = 1; day <= daysInMonth; day += 1) {
+			const dayDiv = document.createElement("div");
+			dayDiv.className = "dp-day";
+			dayDiv.textContent = day;
+
+			const cellDateStr = `${year}-${displayMonth}-${String(day).padStart(2, "0")}`;
+			if (mode === "date" && cellDateStr === input.value) {
+				dayDiv.classList.add("selected");
+			}
+			if (mode === "month" && selectedMonthKey === `${year}-${displayMonth}` && day === 1) {
+				dayDiv.classList.add("selected");
+			}
+
+			dayDiv.addEventListener("click", () => {
+				input.value = mode === "month" ? `${year}-${displayMonth}` : cellDateStr;
+				container.classList.add("hidden");
+				renderCalendar();
+				if (typeof onSelect === "function") {
+					onSelect(input.value);
+				}
+			});
+
+			days.appendChild(dayDiv);
+		}
+	}
+
+	input.addEventListener("click", () => {
+		container.classList.toggle("hidden");
+		const selectedDate = getSelectedDate();
+		if (selectedDate) {
+			currentShownDate = selectedDate;
+		}
+		if (mode === "month" && !selectedDate && input.value) {
+			currentShownDate = new Date(`${input.value}-01T12:00:00`);
+		}
+		renderCalendar();
+	});
+
+	prev.addEventListener("click", (event) => {
+		event.stopPropagation();
+		if (mode === "month") {
+			currentShownDate.setFullYear(currentShownDate.getFullYear() - 1);
+		} else {
+			currentShownDate.setMonth(currentShownDate.getMonth() - 1);
+		}
+		renderCalendar();
+	});
+
+	next.addEventListener("click", (event) => {
+		event.stopPropagation();
+		if (mode === "month") {
+			currentShownDate.setFullYear(currentShownDate.getFullYear() + 1);
+		} else {
+			currentShownDate.setMonth(currentShownDate.getMonth() + 1);
+		}
+		renderCalendar();
+	});
+
+	document.addEventListener("click", (event) => {
+		if (!input.contains(event.target) && !container.contains(event.target)) {
+			container.classList.add("hidden");
+		}
+	});
+
+	renderCalendar();
+}
+
 function initDatepicker() {
-    const dateInput = document.getElementById("checklistDate");
-    const dpContainer = document.getElementById("customDatePicker");
-    const dpMonthYear = document.getElementById("dpMonthYear");
-    const dpDays = document.getElementById("dpDays");
-    const dpPrev = document.getElementById("dpPrev");
-    const dpNext = document.getElementById("dpNext");
-    
-    if (!dateInput || !dpContainer) return;
-    
-    let currentShownDate = new Date();
-    
-    function renderCalendar() {
-        dpDays.innerHTML = "";
-        const year = currentShownDate.getFullYear();
-        const month = currentShownDate.getMonth();
-        
-        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
-        dpMonthYear.textContent = `${monthNames[month]} ${year}`;
-        
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        for (let i = 0; i < firstDay; i++) {
-            const emptyDiv = document.createElement("div");
-            emptyDiv.className = "dp-day empty";
-            dpDays.appendChild(emptyDiv);
-        }
-        
-        for (let i = 1; i <= daysInMonth; i++) {
-            const dayDiv = document.createElement("div");
-            dayDiv.className = "dp-day";
-            dayDiv.textContent = i;
-            
-            const cellDateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-            if (cellDateStr === dateInput.value) {
-                dayDiv.classList.add("selected");
-            }
-            
-            dayDiv.addEventListener("click", () => {
-                dateInput.value = cellDateStr;
-                dpContainer.classList.add("hidden");
-                renderCalendar();
-            });
-            dpDays.appendChild(dayDiv);
-        }
-    }
-    
-    dateInput.addEventListener("click", () => {
-        dpContainer.classList.toggle("hidden");
-        const val = dateInput.value;
-        if (val) {
-            currentShownDate = new Date(val + "T12:00:00");
-        }
-        renderCalendar();
-    });
-    
-    dpPrev.addEventListener("click", (e) => {
-		e.stopPropagation();
-        currentShownDate.setMonth(currentShownDate.getMonth() - 1);
-        renderCalendar();
-    });
-    
-    dpNext.addEventListener("click", (e) => {
-		e.stopPropagation();
-        currentShownDate.setMonth(currentShownDate.getMonth() + 1);
-        renderCalendar();
-    });
-    
-    document.addEventListener("click", (e) => {
-        if (!dateInput.contains(e.target) && !dpContainer.contains(e.target)) {
-            dpContainer.classList.add("hidden");
-        }
-    });
-    
-    renderCalendar();
+	createCalendarPicker({
+		input: document.getElementById("checklistDate"),
+		container: document.getElementById("customDatePicker"),
+		monthYear: document.getElementById("dpMonthYear"),
+		days: document.getElementById("dpDays"),
+		prev: document.getElementById("dpPrev"),
+		next: document.getElementById("dpNext"),
+		mode: "date",
+		onSelect: (dateValue) => loadChecklistForDate(dateValue)
+	});
+}
+
+function initDashboardMonthPicker() {
+	createCalendarPicker({
+		input: dom.monthInput,
+		container: document.getElementById("dashboardMonthPicker"),
+		monthYear: document.getElementById("dashboardMonthYear"),
+		days: document.getElementById("dashboardMonthDays"),
+		prev: document.getElementById("dashboardMonthPrev"),
+		next: document.getElementById("dashboardMonthNext"),
+		mode: "month",
+		onSelect: (monthValue) => loadDashboard(monthValue)
+	});
 }
 
 function setAuthMode(mode) {
@@ -213,20 +374,6 @@ function setActiveSection(sectionName) {
 		section.classList.toggle("active", section.id === `section-${sectionName}`);
 	});
 
-	// Update Dynamic Title
-	if (sectionName === 'checklist') {
-		dom.welcomeName.style.display = 'none';
-	} else {
-		dom.welcomeName.style.display = 'block';
-		const titles = {
-			dashboard: 'Dashboard',
-			guide: 'Guia lúdico',
-			quiz: 'Quizz',
-			videos: 'Vídeos educativos',
-			settings: 'Configurações'
-		};
-		dom.welcomeName.textContent = titles[sectionName] || 'Sorriso Amigo';
-	}
 }
 
 async function api(path, options = {}) {
@@ -363,7 +510,6 @@ function activateSession(token, user) {
 	state.user = user;
 	localStorage.setItem("sorriso_token", token);
 
-	dom.welcomeName.textContent = `Bem-vindo(a), ${user.full_name}`;
 	dom.landing.classList.add("hidden");
 	dom.appShell.classList.remove("hidden");
 
@@ -374,7 +520,6 @@ async function bootstrapSession() {
 	try {
 		const result = await api("/auth/me");
 		state.user = result.user;
-		dom.welcomeName.textContent = `Bem-vindo(a), ${result.user.full_name}`;
 		dom.landing.classList.add("hidden");
 		dom.appShell.classList.remove("hidden");
 		await loadAllData();
@@ -400,9 +545,8 @@ function logout(silent) {
 
 async function loadAllData() {
 	await Promise.allSettled([
-		loadDashboardStats(dom.monthInput.value),
+		loadDashboard(dom.monthInput.value),
 		loadChecklistForDate(dom.checklistDate.value),
-		loadChecklistHistory(),
 		loadGuideSteps(),
 		loadQuizQuestions(),
 		loadQuizHistory(),
@@ -411,15 +555,428 @@ async function loadAllData() {
 	]);
 }
 
-async function loadDashboardStats(month) {
+function countBrushingsForItem(item) {
+	if (!item) return 0;
+	return (
+		Number(Boolean(item.brushing_morning)) +
+		Number(Boolean(item.brushing_afternoon)) +
+		Number(Boolean(item.brushing_night))
+	);
+}
+
+function computeDayAdherencePercent(item) {
+	if (!item) return 0;
+	return Math.round((countBrushingsForItem(item) / 3) * 100);
+}
+
+function parseMonthBounds(month) {
+	const [yearText, monthText] = month.split("-");
+	const year = Number(yearText);
+	const monthIndex = Number(monthText);
+	const lastDay = new Date(year, monthIndex, 0).getDate();
+
+	return {
+		year,
+		monthIndex,
+		start: `${month}-01`,
+		end: `${month}-${String(lastDay).padStart(2, "0")}`,
+		lastDay
+	};
+}
+
+function getHeatmapLevel(brushings, hasRecord) {
+	if (!hasRecord) return "level-none";
+	if (brushings <= 0) return "level-none";
+	if (brushings === 1) return "level-low";
+	if (brushings === 2) return "level-mid";
+	return "level-high";
+}
+
+function buildLast7DaysSeries(items) {
+	const byDate = new Map(items.map((item) => [item.checklist_date, item]));
+	const series = [];
+	const weekdayFormatter = new Intl.DateTimeFormat("pt-BR", { weekday: "short" });
+
+	for (let offset = 6; offset >= 0; offset -= 1) {
+		const date = new Date();
+		date.setHours(12, 0, 0, 0);
+		date.setDate(date.getDate() - offset);
+		const isoDate = date.toISOString().slice(0, 10);
+		const item = byDate.get(isoDate);
+		const brushings = countBrushingsForItem(item);
+
+		series.push({
+			label: weekdayFormatter.format(date).replace(".", ""),
+			date: isoDate,
+			percent: computeDayAdherencePercent(item),
+			brushings,
+			tooltip: item
+				? `${brushings}/3 escovações · ${translateResistance(item.resistance_level)}`
+				: "Sem registro"
+		});
+	}
+
+	return series;
+}
+
+function buildMonthWeeklySeries(items, month) {
+	const { lastDay } = parseMonthBounds(month);
+	const byDate = new Map(items.map((item) => [item.checklist_date, item]));
+	const series = [];
+
+	for (let weekStart = 1; weekStart <= lastDay; weekStart += 7) {
+		const weekEnd = Math.min(weekStart + 6, lastDay);
+		let percentSum = 0;
+		let daysWithRecord = 0;
+
+		for (let day = weekStart; day <= weekEnd; day += 1) {
+			const isoDate = `${month}-${String(day).padStart(2, "0")}`;
+			const item = byDate.get(isoDate);
+			if (!item) continue;
+			daysWithRecord += 1;
+			percentSum += computeDayAdherencePercent(item);
+		}
+
+		series.push({
+			label: `Dia ${weekStart}–${weekEnd}`,
+			percent: daysWithRecord ? Math.round(percentSum / daysWithRecord) : 0,
+			tooltip: daysWithRecord
+				? `Média da semana com ${daysWithRecord} dia(s) registrado(s)`
+				: "Sem registros nesta semana"
+		});
+	}
+
+	return series;
+}
+
+function renderDashboardBars(series, emptyMessage) {
+	if (!dom.dashboardChart) return;
+
+	const hasData = series.some((entry) => entry.percent > 0 || entry.brushings > 0);
+
+	if (!hasData) {
+		dom.dashboardChart.innerHTML = `<p class="dashboard-chart-empty">${emptyMessage}</p>`;
+		return;
+	}
+
+	dom.dashboardChart.innerHTML = series
+		.map((entry) => {
+			const height = Math.min(Math.max(entry.percent, 6), 100);
+			return `
+				<div class="chart-bar-col">
+					<span class="chart-bar-value">${entry.percent}%</span>
+					<div class="chart-bar-track">
+						<div
+							class="chart-bar-fill"
+							style="--bar-height: ${height}%;"
+							title="${escapeHtml(entry.tooltip || "")}"
+						></div>
+					</div>
+					<span class="chart-bar-label">${escapeHtml(entry.label)}</span>
+				</div>
+			`;
+		})
+		.join("");
+}
+
+function renderDashboardWeekCalendar(items) {
+	if (!dom.dashboardMonthHeatmap) return;
+
+	const byDate = new Map(items.map((item) => [item.checklist_date, item]));
+	const weekdayFormatter = new Intl.DateTimeFormat("pt-BR", { weekday: "short" });
+	const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" });
+	const weekdayLabels = ["D", "S", "T", "Q", "Q", "S", "S"];
+	const today = new Date();
+	today.setHours(12, 0, 0, 0);
+
+	let html = '<div class="heatmap-weekdays">';
+	weekdayLabels.forEach((label) => {
+		html += `<span class="heatmap-weekday">${label}</span>`;
+	});
+	html += '</div><div class="heatmap-grid heatmap-week-strip">';
+
+	for (let offset = 6; offset >= 0; offset -= 1) {
+		const date = new Date(today);
+		date.setDate(today.getDate() - offset);
+		const isoDate = date.toISOString().slice(0, 10);
+		const item = byDate.get(isoDate);
+		const brushings = countBrushingsForItem(item);
+		const level = getHeatmapLevel(brushings, Boolean(item));
+		const label = weekdayFormatter.format(date).replace(".", "");
+
+		html += `
+			<span class="heatmap-day ${level} heatmap-week-day" title="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}" aria-label="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}">${date.getDate()}</span>
+		`;
+	}
+
+	html += '</div>';
+	dom.dashboardMonthHeatmap.innerHTML = html;
+}
+
+function setDashboardChartPanelMode(range) {
+	const isMonth = range === "month";
+
+	if (dom.dashboardChartPanelTitle) {
+		dom.dashboardChartPanelTitle.textContent = isMonth ? "Visão do mês" : "Últimos 7 dias";
+	}
+
+	if (dom.dashboardChartPanelSubtitle) {
+		dom.dashboardChartPanelSubtitle.textContent = isMonth
+			? "Cada quadrado = 1 dia (0 a 3 escovações). Passe o mouse para ver o detalhe."
+			: "Os 7 dias mais recentes, incluindo hoje, no mesmo formato do calendário mensal.";
+	}
+
+	if (dom.dashboardHeatmapLegend) {
+		dom.dashboardHeatmapLegend.classList.toggle("hidden", !isMonth);
+	}
+
+	if (dom.dashboardChart) {
+		dom.dashboardChart.setAttribute(
+			"aria-label",
+			isMonth ? "Gráfico de adesão do mês" : "Gráfico dos últimos 7 dias"
+		);
+	}
+}
+
+function renderMonthHeatmap(items, month) {
+	if (!dom.dashboardMonthHeatmap) return;
+
+	const { year, monthIndex, lastDay } = parseMonthBounds(month);
+	const byDate = new Map(items.map((item) => [item.checklist_date, item]));
+	const weekdayLabels = ["D", "S", "T", "Q", "Q", "S", "S"];
+	const firstWeekday = new Date(year, monthIndex - 1, 1).getDay();
+
+	let html = '<div class="heatmap-weekdays">';
+	weekdayLabels.forEach((label) => {
+		html += `<span class="heatmap-weekday">${label}</span>`;
+	});
+	html += '</div><div class="heatmap-grid">';
+
+	for (let i = 0; i < firstWeekday; i += 1) {
+		html += '<span class="heatmap-day heatmap-day-empty" aria-hidden="true"></span>';
+	}
+
+	for (let day = 1; day <= lastDay; day += 1) {
+		const isoDate = `${month}-${String(day).padStart(2, "0")}`;
+		const item = byDate.get(isoDate);
+		const brushings = countBrushingsForItem(item);
+		const hasRecord = Boolean(item);
+		const level = getHeatmapLevel(brushings, hasRecord);
+		const title = hasRecord
+			? `${day}/${monthIndex}: ${brushings}/3 escovações`
+			: `${day}/${monthIndex}: sem registro`;
+
+		html += `
+			<span
+				class="heatmap-day ${level}"
+				title="${escapeHtml(title)}"
+				aria-label="${escapeHtml(title)}"
+			>${day}</span>
+		`;
+	}
+
+	html += "</div>";
+	dom.dashboardMonthHeatmap.innerHTML = html;
+}
+
+function computePeriodSummary(items) {
+	const summary = {
+		morning: { done: 0, label: "Manhã", icon: "ph-sun-horizon" },
+		afternoon: { done: 0, label: "Tarde", icon: "ph-sun" },
+		night: { done: 0, label: "Noite", icon: "ph-moon-stars" }
+	};
+
+	items.forEach((item) => {
+		if (item.brushing_morning) summary.morning.done += 1;
+		if (item.brushing_afternoon) summary.afternoon.done += 1;
+		if (item.brushing_night) summary.night.done += 1;
+	});
+
+	const days = items.length || 1;
+	return Object.values(summary).map((period) => ({
+		...period,
+		total: days * 1,
+		percent: Math.round((period.done / days) * 100)
+	}));
+}
+
+function renderPeriodBars(items) {
+	if (!dom.dashboardPeriodBars) return;
+
+	if (!items.length) {
+		dom.dashboardPeriodBars.innerHTML =
+			'<p class="dashboard-inline-empty">Nenhum dia registrado neste mês.</p>';
+		return;
+	}
+
+	const periods = computePeriodSummary(items);
+	dom.dashboardPeriodBars.innerHTML = periods
+		.map(
+			(period) => `
+			<div class="period-bar-row">
+				<div class="period-bar-label">
+					<i class="ph ${period.icon}"></i>
+					<span>${period.label}</span>
+					<strong>${period.done}×</strong>
+				</div>
+				<div class="period-bar-track">
+					<div class="period-bar-fill" style="width: ${period.percent}%;"></div>
+				</div>
+				<span class="period-bar-meta">${period.percent}% dos dias com registro</span>
+			</div>
+		`
+		)
+		.join("");
+}
+
+function getAttentionDays(items) {
+	return items
+		.filter((item) => {
+			const brushings = countBrushingsForItem(item);
+			const incomplete = brushings < 3;
+			const highResistance = item.resistance_level === "moderate" || item.resistance_level === "severe";
+			return incomplete || highResistance;
+		})
+		.sort((a, b) => (a.checklist_date < b.checklist_date ? 1 : -1))
+		.slice(0, 6);
+}
+
+function renderAttentionList(items) {
+	if (!dom.dashboardAttentionList) return;
+
+	const attentionDays = getAttentionDays(items);
+	dom.dashboardAttentionList.innerHTML = "";
+
+	if (!attentionDays.length) {
+		dom.dashboardAttentionList.innerHTML =
+			'<li class="dashboard-activity-item dashboard-activity-item-good"><span>Nenhum dia crítico no mês. Continue registrando no Checklist.</span></li>';
+		return;
+	}
+
+	attentionDays.forEach((item) => {
+		const brushings = countBrushingsForItem(item);
+		const li = document.createElement("li");
+		li.className = "dashboard-activity-item";
+		li.innerHTML = `
+			<strong>${escapeHtml(formatDate(item.checklist_date))}</strong>
+			<span>${brushings}/3 escovações · ${escapeHtml(translateResistance(item.resistance_level))}</span>
+		`;
+		dom.dashboardAttentionList.appendChild(li);
+	});
+}
+
+function renderDashboardQuizBlock(attempts) {
+	if (!dom.dashboardRecentQuiz) return;
+
+	const list = attempts || [];
+	dom.dashboardRecentQuiz.innerHTML = "";
+
+	if (dom.dashboardQuizSummary) {
+		if (!list.length) {
+			dom.dashboardQuizSummary.textContent = "Nenhuma tentativa registrada ainda.";
+		} else {
+			const avg =
+				list.reduce((sum, attempt) => {
+					const total = Number(attempt.total_questions) || 0;
+					const score = Number(attempt.score) || 0;
+					return sum + (total ? (score / total) * 100 : 0);
+				}, 0) / list.length;
+			dom.dashboardQuizSummary.textContent = `Média das últimas ${list.length} tentativa(s): ${Math.round(avg)}% de acertos.`;
+		}
+	}
+
+	if (!list.length) {
+		dom.dashboardRecentQuiz.innerHTML =
+			'<li class="dashboard-activity-item"><span>Vá à aba Quizz para treinar com a criança.</span></li>';
+		return;
+	}
+
+	list.slice(0, 3).forEach((attempt) => {
+		const total = Number(attempt.total_questions) || 0;
+		const score = Number(attempt.score) || 0;
+		const percent = total ? Math.round((score / total) * 100) : 0;
+
+		const li = document.createElement("li");
+		li.className = "dashboard-activity-item";
+		li.innerHTML = `
+			<strong>${escapeHtml(formatDateTime(attempt.created_at))}</strong>
+			<span>${score}/${total} acertos (${percent}%)</span>
+		`;
+		dom.dashboardRecentQuiz.appendChild(li);
+	});
+}
+
+function setDashboardChartRange(range) {
+	dashboardCache.chartRange = range === "month" ? "month" : "week";
+
+	dom.dashboardChartToggleButtons.forEach((button) => {
+		button.classList.toggle("active", button.dataset.chartRange === dashboardCache.chartRange);
+	});
+
+	setDashboardChartPanelMode(dashboardCache.chartRange);
+
+	if (dashboardCache.chartRange === "month") {
+		renderMonthHeatmap(dashboardCache.monthItems, dashboardCache.month);
+		renderDashboardBars(
+			buildMonthWeeklySeries(dashboardCache.monthItems, dashboardCache.month),
+			"Registre dias no mês selecionado para ver o resumo por semana."
+		);
+		return;
+	}
+
+	renderDashboardWeekCalendar(dashboardCache.recentItems);
+	renderDashboardBars(
+		buildLast7DaysSeries(dashboardCache.recentItems),
+		"Registre o checklist para visualizar os últimos 7 dias."
+	);
+}
+
+async function loadDashboard(month) {
+	const monthValue = month || new Date().toISOString().slice(0, 7);
+	const { start, end } = parseMonthBounds(monthValue);
+
 	try {
-		const result = await api(`/checklists/stats?month=${encodeURIComponent(month)}`);
+		const today = new Date();
+		const recentStart = new Date();
+		recentStart.setDate(today.getDate() - 6);
 
-		dom.adherenceValue.textContent = `${result.adherenceRate}%`;
-		dom.completedValue.textContent = String(result.completedBrushings);
+		const [statsResult, monthChecklists, recentChecklists, quizResult] = await Promise.all([
+			api(`/checklists/stats?month=${encodeURIComponent(monthValue)}`),
+			api(`/checklists?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),
+			api(
+				`/checklists?start=${recentStart.toISOString().slice(0, 10)}&end=${today.toISOString().slice(0, 10)}`
+			),
+			api("/quiz/history?limit=6")
+		]);
 
-		const highResistance = (result.resistance.moderate || 0) + (result.resistance.severe || 0);
-		dom.resistanceValue.textContent = String(highResistance);
+		const highResistance =
+			(statsResult.resistance.moderate || 0) + (statsResult.resistance.severe || 0);
+
+		dom.adherenceValue.textContent = `${statsResult.adherenceRate}%`;
+		dom.completedValue.textContent = `${statsResult.completedBrushings}/${statsResult.expectedBrushings}`;
+
+		if (dom.brushingsGoalHint) {
+			dom.brushingsGoalHint.textContent = `${statsResult.expectedBrushings} previstas no mês (até 3 por dia)`;
+		}
+
+		if (dom.trackedDaysValue) {
+			dom.trackedDaysValue.textContent = String(statsResult.entries || 0);
+		}
+
+		if (dom.resistanceHint) {
+			dom.resistanceHint.textContent = `Resistência moderada/grave: ${highResistance} dia(s)`;
+		}
+
+		dashboardCache.month = monthValue;
+		dashboardCache.monthItems = monthChecklists.items || [];
+		dashboardCache.recentItems = recentChecklists.items || [];
+		dashboardCache.attempts = quizResult.attempts || [];
+
+		renderMonthHeatmap(dashboardCache.monthItems, monthValue);
+		renderPeriodBars(dashboardCache.monthItems);
+		renderAttentionList(dashboardCache.monthItems);
+		renderDashboardQuizBlock(dashboardCache.attempts);
+		setDashboardChartRange(dashboardCache.chartRange);
 	} catch (error) {
 		setStatus(error.message, "error");
 	}
@@ -492,41 +1049,7 @@ async function onChecklistSubmit(event) {
 		});
 
 		setStatus("Checklist salvo com sucesso.", "success");
-		await Promise.all([loadChecklistHistory(), loadDashboardStats(dom.monthInput.value)]);
-	} catch (error) {
-		setStatus(error.message, "error");
-	}
-}
-
-async function loadChecklistHistory() {
-	try {
-		const today = new Date();
-		const start = new Date();
-		start.setDate(today.getDate() - 14);
-
-		const result = await api(
-			`/checklists?start=${start.toISOString().slice(0, 10)}&end=${today.toISOString().slice(0, 10)}`
-		);
-
-		dom.historyTableBody.innerHTML = "";
-
-		if (!result.items.length) {
-			dom.historyTableBody.innerHTML =
-				"<tr><td colspan='5'>Sem registros recentes.</td></tr>";
-			return;
-		}
-
-		result.items.forEach((item) => {
-			const row = document.createElement("tr");
-			row.innerHTML = `
-				<td>${formatDate(item.checklist_date)}</td>
-				<td>${item.brushing_morning ? "Sim" : "Nao"}</td>
-				<td>${item.brushing_afternoon ? "Sim" : "Nao"}</td>
-				<td>${item.brushing_night ? "Sim" : "Nao"}</td>
-				<td>${translateResistance(item.resistance_level)}</td>
-			`;
-			dom.historyTableBody.appendChild(row);
-		});
+		await loadDashboard(dom.monthInput.value);
 	} catch (error) {
 		setStatus(error.message, "error");
 	}
@@ -568,82 +1091,297 @@ async function loadQuizQuestions() {
 	try {
 		const result = await api("/quiz/questions");
 		state.quizQuestions = result.questions;
-		renderQuizQuestions();
 	} catch (error) {
 		setStatus(error.message, "error");
 	}
 }
 
-function renderQuizQuestions() {
-	dom.quizForm.innerHTML = "";
-
-	if (!state.quizQuestions.length) {
-		dom.quizForm.innerHTML = "<p>Sem perguntas disponiveis no momento.</p>";
+function startQuiz() {
+	if (!state.quizQuestions || !state.quizQuestions.length) {
+		setStatus("Nenhuma pergunta disponível no momento.", "error");
 		return;
 	}
+	state.currentQuestionIndex = 0;
+	state.quizAnswers = [];
+	state.selectedOptionId = null;
+	state.quizState = "active";
 
-	state.quizQuestions.forEach((question, index) => {
-		const block = document.createElement("fieldset");
-		block.className = "quiz-question";
-		block.innerHTML = `
-			<h4>${index + 1}. ${escapeHtml(question.question)}</h4>
-			${question.options
-				.map(
-					(option) => `
-					<label class="quiz-option">
-						<input type="radio" name="q_${question.id}" value="${option.id}" />
-						<span>${escapeHtml(option.text)}</span>
-					</label>
-				`
-				)
-				.join("")}
-		`;
+	dom.quizStateStart.classList.add("hidden");
+	dom.quizStateResults.classList.add("hidden");
+	dom.quizStateActive.classList.remove("hidden");
 
-		dom.quizForm.appendChild(block);
+	renderCurrentQuizQuestion();
+}
+
+function resetQuizSession() {
+	state.currentQuestionIndex = 0;
+	state.selectedOptionId = null;
+	state.quizAnswers = [];
+	state.quizState = "start";
+
+	if (dom.quizProgressBar) {
+		dom.quizProgressBar.style.width = "0%";
+	}
+}
+
+function showQuizStartScreen() {
+	resetQuizSession();
+	dom.quizStateActive.classList.add("hidden");
+	dom.quizStateResults.classList.add("hidden");
+	dom.quizStateStart.classList.remove("hidden");
+	loadQuizHistory();
+}
+
+function bindConfirmModalEvents() {
+	if (!dom.confirmModal) return;
+
+	dom.confirmModalCancel.addEventListener("click", () => closeConfirmModal(false));
+	dom.confirmModalBackdrop.addEventListener("click", () => closeConfirmModal(false));
+	dom.confirmModalConfirm.addEventListener("click", () => closeConfirmModal(true));
+
+	document.addEventListener("keydown", (event) => {
+		if (event.key === "Escape" && !dom.confirmModal.classList.contains("hidden")) {
+			closeConfirmModal(false);
+		}
 	});
 }
 
-async function onQuizSubmit() {
-	if (!state.quizQuestions.length) {
-		setStatus("Nao ha perguntas carregadas.", "error");
-		return;
+function openConfirmModal({
+	title,
+	message,
+	confirmText = "Confirmar",
+	cancelText = "Cancelar",
+	danger = false
+}) {
+	return new Promise((resolve) => {
+		if (!dom.confirmModal) {
+			resolve(window.confirm(message || title));
+			return;
+		}
+
+		confirmModalResolver = resolve;
+		dom.confirmModalTitle.textContent = title;
+		dom.confirmModalMessage.textContent = message;
+		dom.confirmModalConfirm.textContent = confirmText;
+		dom.confirmModalCancel.textContent = cancelText;
+
+		dom.confirmModalIcon.classList.toggle("is-danger", danger);
+		dom.confirmModalConfirm.classList.toggle("is-danger", danger);
+
+		dom.confirmModal.classList.remove("hidden");
+		dom.confirmModal.setAttribute("aria-hidden", "false");
+		document.body.classList.add("modal-open");
+		dom.confirmModalCancel.focus();
+	});
+}
+
+function closeConfirmModal(confirmed) {
+	if (!dom.confirmModal) return;
+
+	dom.confirmModal.classList.add("hidden");
+	dom.confirmModal.setAttribute("aria-hidden", "true");
+	document.body.classList.remove("modal-open");
+
+	if (confirmModalResolver) {
+		confirmModalResolver(Boolean(confirmed));
+		confirmModalResolver = null;
 	}
+}
 
-	const formData = new FormData(dom.quizForm);
-	const answers = state.quizQuestions
-		.map((question) => ({
-			questionId: question.id,
-			optionId: Number(formData.get(`q_${question.id}`))
-		}))
-		.filter((answer) => Number.isInteger(answer.optionId));
-
-	if (answers.length !== state.quizQuestions.length) {
-		setStatus("Responda todas as perguntas antes de enviar.", "error");
-		return;
-	}
-
-	try {
-		const result = await api("/quiz/submit", {
-			method: "POST",
-			body: { answers }
+async function exitQuiz() {
+	if (state.quizState === "active" || state.quizState === "checked") {
+		const confirmed = await openConfirmModal({
+			title: "Sair do quiz?",
+			message: "Todo o seu progresso nesta tentativa será perdido.",
+			confirmText: "Sair",
+			cancelText: "Continuar quiz",
+			danger: true
 		});
 
-		const lines = result.feedback
-			.map((item) => {
-				const stateLabel = item.isCorrect ? "Correto" : "Rever";
-				return `<li><strong>${stateLabel}:</strong> ${escapeHtml(item.explanation)}</li>`;
-			})
-			.join("");
+		if (confirmed) {
+			showQuizStartScreen();
+		}
+		return;
+	}
 
-		dom.quizResult.classList.remove("hidden");
-		dom.quizResult.innerHTML = `
-			<h4>Resultado</h4>
-			<p>Pontuacao: <strong>${result.score}/${result.total}</strong> (${result.percentage}%)</p>
-			<ul>${lines}</ul>
+	showQuizStartScreen();
+}
+
+function renderCurrentQuizQuestion() {
+	const question = state.quizQuestions[state.currentQuestionIndex];
+
+	// Barra de Progresso
+	const progress = (state.currentQuestionIndex / state.quizQuestions.length) * 100;
+	dom.quizProgressBar.style.width = `${progress}%`;
+
+	// Categoria e Título
+	dom.quizQuestionCategory.textContent = question.category || "Saúde Bucal";
+	dom.quizQuestionText.textContent = question.question;
+
+	// Renderizar Opções (altura adapta conforme quantidade)
+	const optionCount = question.options.length;
+	dom.quizOptionsGrid.style.setProperty("--quiz-options-count", String(optionCount));
+	dom.quizOptionsGrid.innerHTML = "";
+	question.options.forEach((option, index) => {
+		const item = document.createElement("div");
+		item.className = "quiz-option-item";
+		item.dataset.id = option.id;
+
+		item.innerHTML = `
+			<span class="quiz-option-index">${index + 1}</span>
+			<span class="quiz-option-text">${escapeHtml(option.text)}</span>
 		`;
 
+		item.addEventListener("click", () => selectQuizOption(option.id));
+		dom.quizOptionsGrid.appendChild(item);
+	});
+
+	// Ocultar banner de feedback
+	dom.quizFeedbackContainer.className = "quiz-feedback-banner hidden";
+
+	// Resetar botão de ação
+	dom.quizActionBtn.textContent = "Verificar";
+	dom.quizActionBtn.disabled = true;
+	dom.quizActionBtn.className = "quiz-btn-action";
+}
+
+function selectQuizOption(optionId) {
+	if (state.quizState !== "active") return;
+
+	state.selectedOptionId = optionId;
+
+	const items = dom.quizOptionsGrid.querySelectorAll(".quiz-option-item");
+	items.forEach((item) => {
+		if (Number(item.dataset.id) === optionId) {
+			item.classList.add("selected");
+		} else {
+			item.classList.remove("selected");
+		}
+	});
+
+	dom.quizActionBtn.disabled = false;
+	dom.quizActionBtn.classList.add("ready");
+}
+
+async function handleQuizAction() {
+	if (state.quizState === "active") {
+		if (state.selectedOptionId == null) {
+			return;
+		}
+
+		// Verificar Resposta
+		const question = state.quizQuestions[state.currentQuestionIndex];
+		const selectedOption = question.options.find((opt) => opt.id === state.selectedOptionId);
+		const isCorrect = selectedOption ? Boolean(selectedOption.isCorrect) : false;
+		const explanation = selectedOption ? (selectedOption.explanation || "") : "";
+
+		// Salvar resposta na lista local
+		state.quizAnswers.push({
+			questionId: question.id,
+			optionId: state.selectedOptionId
+		});
+
+		state.quizState = "checked";
+
+		// Destacar opções e travar interações
+		const items = dom.quizOptionsGrid.querySelectorAll(".quiz-option-item");
+		items.forEach((item) => {
+			item.classList.add("disabled");
+			const optId = Number(item.dataset.id);
+			const opt = question.options.find((o) => o.id === optId);
+
+			if (optId === state.selectedOptionId) {
+				if (isCorrect) {
+					item.classList.add("correct");
+				} else {
+					item.classList.add("incorrect");
+				}
+			} else if (opt && opt.isCorrect) {
+				// Mostrar a resposta correta se o usuário errou
+				item.classList.add("correct");
+			}
+		});
+
+		// Exibir feedback
+		dom.quizFeedbackContainer.classList.remove("hidden");
+		const feedbackIcon = dom.quizFeedbackIcon;
+		const feedbackTitle = dom.quizFeedbackTitle;
+		const feedbackExplanation = dom.quizFeedbackExplanation;
+
+		if (isCorrect) {
+			dom.quizFeedbackContainer.className = "quiz-feedback-banner correct";
+			feedbackIcon.className = "ph-fill ph-check-circle";
+			feedbackTitle.textContent = "Excelente! Resposta Correta";
+			feedbackExplanation.textContent = explanation || "Você acertou esta etapa importante!";
+			dom.quizActionBtn.textContent = "Continuar";
+			dom.quizActionBtn.className = "quiz-btn-action continue-correct";
+		} else {
+			dom.quizFeedbackContainer.className = "quiz-feedback-banner incorrect";
+			feedbackIcon.className = "ph-fill ph-x-circle";
+			feedbackTitle.textContent = "Rever Etapa";
+
+			let feedbackMsg = explanation;
+			if (!feedbackMsg) {
+				const correctOpt = question.options.find((o) => o.isCorrect);
+				feedbackMsg = correctOpt ? correctOpt.explanation : "";
+			}
+			feedbackExplanation.textContent = feedbackMsg || "Estude esta dica para a próxima vez.";
+			dom.quizActionBtn.textContent = "Continuar";
+			dom.quizActionBtn.className = "quiz-btn-action continue-incorrect";
+		}
+
+		dom.quizActionBtn.disabled = false;
+
+	} else if (state.quizState === "checked") {
+		// Avançar
+		state.currentQuestionIndex++;
+
+		if (state.currentQuestionIndex >= state.quizQuestions.length) {
+			await submitQuizResults();
+		} else {
+			state.selectedOptionId = null;
+			state.quizState = "active";
+			renderCurrentQuizQuestion();
+		}
+	}
+}
+
+async function submitQuizResults() {
+	try {
+		dom.quizProgressBar.style.width = "100%";
+
+		const result = await api("/quiz/submit", {
+			method: "POST",
+			body: { answers: state.quizAnswers }
+		});
+
+		state.quizState = "results";
+
+		dom.quizStateActive.classList.add("hidden");
+		dom.quizStateResults.classList.remove("hidden");
+
+		dom.quizResultsScore.textContent = `${result.score}/${result.total}`;
+		dom.quizResultsPercentage.textContent = `${result.percentage}%`;
+
+		dom.quizResultsFeedbackList.innerHTML = "";
+		result.feedback.forEach((item, index) => {
+			const questionObj = state.quizQuestions.find((q) => q.id === item.questionId);
+			const questionText = questionObj ? questionObj.question : `Pergunta ${index + 1}`;
+
+			const li = document.createElement("li");
+			li.className = `results-review-item ${item.isCorrect ? "correct" : "incorrect"}`;
+
+			li.innerHTML = `
+				<i class="ph-fill ${item.isCorrect ? "ph-check-circle" : "ph-x-circle"}"></i>
+				<div class="review-details">
+					<strong>${index + 1}. ${escapeHtml(questionText)}</strong>
+					<p>${escapeHtml(item.explanation || "")}</p>
+				</div>
+			`;
+			dom.quizResultsFeedbackList.appendChild(li);
+		});
+
 		await loadQuizHistory();
-		setStatus("Quiz enviado com sucesso.", "success");
 	} catch (error) {
 		setStatus(error.message, "error");
 	}
@@ -654,7 +1392,7 @@ async function loadQuizHistory() {
 		const result = await api("/quiz/history?limit=8");
 		dom.quizHistoryList.innerHTML = "";
 
-		if (!result.attempts.length) {
+		if (!result.attempts || !result.attempts.length) {
 			dom.quizHistoryList.innerHTML = "<li>Nenhuma tentativa registrada.</li>";
 			return;
 		}
@@ -851,13 +1589,58 @@ function toEmbedUrl(url) {
 
 function createDemoStore() {
 	const now = new Date();
-	const today = now.toISOString().slice(0, 10);
 	const yesterday = new Date(now);
 	yesterday.setDate(now.getDate() - 1);
 	const twoDaysAgo = new Date(now);
 	twoDaysAgo.setDate(now.getDate() - 2);
 
 	const format = (value) => value.toISOString().slice(0, 10);
+
+	const demoChecklists = [
+		{
+			checklist_date: format(yesterday),
+			brushing_morning: true,
+			brushing_afternoon: true,
+			brushing_night: true,
+			resistance_level: "none",
+			notes: "Rotina completa.",
+			updated_at: new Date().toISOString()
+		},
+		{
+			checklist_date: format(twoDaysAgo),
+			brushing_morning: false,
+			brushing_afternoon: true,
+			brushing_night: true,
+			resistance_level: "moderate",
+			notes: "Resistencia no periodo da manha.",
+			updated_at: new Date().toISOString()
+		}
+	];
+
+	const demoPatterns = [
+		[true, false, true, "light"],
+		[true, true, false, "none"],
+		[false, false, true, "severe"],
+		[true, true, true, "none"],
+		[true, false, false, "moderate"],
+		[false, true, true, "light"]
+	];
+
+	for (let offset = 3; offset <= 22; offset += 1) {
+		const date = new Date(now);
+		date.setDate(now.getDate() - offset);
+		const pattern = demoPatterns[offset % demoPatterns.length];
+
+		demoChecklists.push({
+			checklist_date: format(date),
+			brushing_morning: pattern[0],
+			brushing_afternoon: pattern[1],
+			brushing_night: pattern[2],
+			resistance_level: pattern[3],
+			notes: "",
+			updated_at: new Date().toISOString()
+		});
+	}
 
 	return {
 		user: {
@@ -872,27 +1655,7 @@ function createDemoStore() {
 			accessibility_mode: "default",
 			theme_mode: "light"
 		},
-		checklists: [
-			/* Removido o item de 'today' para que a auto-seleção de turno funcione no carregamento */
-			{
-				checklist_date: format(yesterday),
-				brushing_morning: true,
-				brushing_afternoon: true,
-				brushing_night: true,
-				resistance_level: "none",
-				notes: "Rotina completa.",
-				updated_at: new Date().toISOString()
-			},
-			{
-				checklist_date: format(twoDaysAgo),
-				brushing_morning: false,
-				brushing_afternoon: true,
-				brushing_night: true,
-				resistance_level: "moderate",
-				notes: "Resistencia no periodo da manha.",
-				updated_at: new Date().toISOString()
-			}
-		],
+		checklists: demoChecklists,
 		guideSteps: [
 			{
 				id: 1,
@@ -1013,6 +1776,42 @@ function createDemoStore() {
 				id: 3,
 				title: "Prevencao em saude bucal",
 				description: "Conteudo para familias e profissionais de apoio.",
+				url: "https://www.youtube.com/watch?v=4N8R4h3rBlM"
+			},
+			{
+				id: 4,
+				title: "Rotina visual passo a passo",
+				description: "Como usar imagens e sequencias para preparar a escovacao.",
+				url: "https://www.youtube.com/watch?v=JYgM9sGQqDY"
+			},
+			{
+				id: 5,
+				title: "Fio dental com paciencia",
+				description: "Dicas para introduzir o fio dental sem aumentar a ansiedade.",
+				url: "https://www.youtube.com/watch?v=2f8A3f6wE8Q"
+			},
+			{
+				id: 6,
+				title: "Alimentacao e dentes saudaveis",
+				description: "Habitos alimentares que ajudam na prevencao de caries.",
+				url: "https://www.youtube.com/watch?v=4N8R4h3rBlM"
+			},
+			{
+				id: 7,
+				title: "Primeira ida ao dentista",
+				description: "O que esperar e como preparar a crianca para a consulta.",
+				url: "https://www.youtube.com/watch?v=JYgM9sGQqDY"
+			},
+			{
+				id: 8,
+				title: "Reforco positivo na higiene oral",
+				description: "Elogios e recompensas que fortalecem a adesao a rotina.",
+				url: "https://www.youtube.com/watch?v=2f8A3f6wE8Q"
+			},
+			{
+				id: 9,
+				title: "Historia social: hora de escovar",
+				description: "Narrativa lúdica para antecipar o momento da escovacao.",
 				url: "https://www.youtube.com/watch?v=4N8R4h3rBlM"
 			}
 		],
@@ -1166,7 +1965,9 @@ async function mockApi(path, options = {}) {
 				category: question.category,
 				options: question.options.map((option) => ({
 					id: option.id,
-					text: option.text
+					text: option.text,
+					isCorrect: Boolean(option.isCorrect),
+					explanation: option.explanation || ""
 				}))
 			}))
 		};

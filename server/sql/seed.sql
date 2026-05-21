@@ -43,5 +43,11 @@ INSERT INTO educational_videos (title, description, url, audience)
 VALUES
   ('Escovacao adaptada para TEA', 'Tecnicas de abordagem gradual e previsivel para higiene oral.', 'https://www.youtube.com/watch?v=JYgM9sGQqDY', 'caregivers'),
   ('Manejo de resistencia durante a rotina', 'Estrategias de comunicacao e reforco positivo.', 'https://www.youtube.com/watch?v=2f8A3f6wE8Q', 'caregivers'),
-  ('Saude bucal infantil e prevencao', 'Conteudo educativo para familias e profissionais.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM', 'all')
+  ('Saude bucal infantil e prevencao', 'Conteudo educativo para familias e profissionais.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM', 'all'),
+  ('Rotina visual passo a passo', 'Como usar imagens e sequencias para preparar a escovacao.', 'https://www.youtube.com/watch?v=JYgM9sGQqDY&v=4', 'caregivers'),
+  ('Fio dental com paciencia', 'Dicas para introduzir o fio dental sem aumentar a ansiedade.', 'https://www.youtube.com/watch?v=2f8A3f6wE8Q&v=5', 'caregivers'),
+  ('Alimentacao e dentes saudaveis', 'Habitos alimentares que ajudam na prevencao de caries.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM&v=6', 'all'),
+  ('Primeira ida ao dentista', 'O que esperar e como preparar a crianca para a consulta.', 'https://www.youtube.com/watch?v=JYgM9sGQqDY&v=7', 'caregivers'),
+  ('Reforco positivo na higiene oral', 'Elogios e recompensas que fortalecem a adesao a rotina.', 'https://www.youtube.com/watch?v=2f8A3f6wE8Q&v=8', 'caregivers'),
+  ('Historia social: hora de escovar', 'Narrativa ludica para antecipar o momento da escovacao.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM&v=9', 'all')
 ON CONFLICT (url) DO NOTHING;
