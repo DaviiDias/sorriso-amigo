@@ -952,7 +952,7 @@ function renderDashboardQuizBlock(attempts) {
 		return;
 	}
 
-	list.slice(0, 3).forEach((attempt) => {
+	list.slice(0, 6).forEach((attempt) => {
 		const total = Number(attempt.total_questions) || 0;
 		const score = Number(attempt.score) || 0;
 		const percent = total ? Math.round((score / total) * 100) : 0;

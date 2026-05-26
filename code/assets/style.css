@@ -819,6 +819,29 @@ textarea:focus {
 	margin: 0 0 0.9rem;
 }
 
+#dashboardRecentQuiz {
+	max-height: 160px;
+	overflow-y: auto;
+	padding-right: 4px;
+}
+
+#dashboardRecentQuiz::-webkit-scrollbar {
+	width: 6px;
+}
+
+#dashboardRecentQuiz::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+#dashboardRecentQuiz::-webkit-scrollbar-thumb {
+	background: var(--line);
+	border-radius: 99px;
+}
+
+#dashboardRecentQuiz::-webkit-scrollbar-thumb:hover {
+	background: var(--ink-700);
+}
+
 .dashboard-activity-item {
 	border: 2px solid var(--line);
 	border-radius: var(--radius-sm);
