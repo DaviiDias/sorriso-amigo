@@ -812,59 +812,36 @@ textarea:focus {
 
 .dashboard-activity-list {
 	list-style: none;
-	display: grid;
-	grid-template-columns: repeat(7, minmax(0, 1fr));
-	gap: 0.5rem;
-	margin-bottom: 0.9rem;
-}
-
-/* Recent Quiz: pattern 1 full-width item, then two items side-by-side repeating
-   Ensure all items have equal height and content doesn't get cut */
-#dashboardRecentQuiz {
-	display: grid;
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.6rem;
-	align-items: stretch;
-	padding: 0;
-	grid-auto-rows: auto;
-}
-
-#dashboardRecentQuiz > li {
-	list-style: none;
-	margin: 0;
 	display: flex;
 	flex-direction: column;
-	height: 100%;
-	box-sizing: border-box;
-	overflow: auto; /* allow internal scroll if content exceeds fixed height */
-	padding: 0.4rem;
-}
-
-/* Two items per row, uniform columns. Removed nth-child full-width rule. */
-
-@media (max-width: 640px) {
-	#dashboardRecentQuiz {
-		grid-template-columns: 1fr;
-		--recent-quiz-item-h: auto;
-		grid-auto-rows: auto;
-	}
-	#dashboardRecentQuiz > li:nth-child(3n+1) {
-		grid-column: auto;
-	}
+	gap: 0.55rem;
+	padding: 0;
+	margin: 0 0 0.9rem;
 }
 
 .dashboard-activity-item {
 	border: 2px solid var(--line);
 	border-radius: var(--radius-sm);
-	padding: 0.65rem 0.75rem;
+	padding: 0.65rem 0.95rem;
 	background: var(--paper-soft);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	gap: 1rem;
+	transition: border-color 0.15s, transform 0.15s;
+}
+
+.dashboard-activity-item:hover {
+	border-color: rgba(72, 183, 255, 0.4);
+	transform: translateY(-1px);
 }
 
 .dashboard-activity-item strong {
 	display: block;
 	font-size: 0.85rem;
 	color: var(--ink-900);
-	margin-bottom: 0.2rem;
+	font-family: "Baloo 2", system-ui, sans-serif;
+	font-weight: 700;
 }
 
 .dashboard-activity-item span {
@@ -872,6 +849,18 @@ textarea:focus {
 	color: var(--ink-700);
 	font-weight: 600;
 	line-height: 1.35;
+	text-align: right;
+}
+
+@media (max-width: 480px) {
+	.dashboard-activity-item {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 0.25rem;
+	}
+	.dashboard-activity-item span {
+		text-align: left;
+	}
 }
 
 .dashboard-activity-item .activity-meta {
@@ -2920,4 +2909,50 @@ body.mode-blue input,
 body.mode-blue select, 
 body.mode-blue textarea {
 	background: var(--paper);
+}
+
+/* =========================================
+   PAGINAÇÃO DO DASHBOARD
+   ========================================= */
+.dashboard-pagination-footer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: 0.4rem;
+	margin-top: 0.85rem;
+}
+
+.pagination-btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 32px;
+	height: 32px;
+	padding: 0 0.5rem;
+	border: 2px solid var(--line);
+	border-radius: 8px;
+	background: var(--paper);
+	color: var(--ink-700);
+	font-family: "Baloo 2", system-ui, sans-serif;
+	font-weight: 700;
+	font-size: 0.85rem;
+	cursor: pointer;
+	transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.pagination-btn:hover:not(:disabled) {
+	background: rgba(72, 183, 255, 0.08);
+	border-color: rgba(72, 183, 255, 0.4);
+	transform: translateY(-1px);
+}
+
+.pagination-btn.active {
+	background: rgba(72, 183, 255, 0.15);
+	border-color: var(--mint-500);
+	color: var(--mint-600);
+}
+
+.pagination-btn:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
 }

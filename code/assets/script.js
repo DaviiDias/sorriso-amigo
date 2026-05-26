@@ -45,6 +45,7 @@ const dom = {
 	dashboardHeatmapLegend: document.querySelector(".dashboard-heatmap-legend"),
 	dashboardPeriodBars: document.querySelector("#dashboardPeriodBars"),
 	dashboardAttentionList: document.querySelector("#dashboardAttentionList"),
+	dashboardAttentionPagination: document.querySelector("#dashboardAttentionPagination"),
 	dashboardQuizSummary: document.querySelector("#dashboardQuizSummary"),
 	dashboardRecentQuiz: document.querySelector("#dashboardRecentQuiz"),
 	dashboardChartToggleButtons: Array.from(document.querySelectorAll("[data-chart-range]")),
@@ -95,7 +96,8 @@ const dashboardCache = {
 	monthItems: [],
 	recentItems: [],
 	attempts: [],
-	chartRange: "month"
+	chartRange: "month",
+	attentionPage: 1
 };
 
 document.addEventListener("DOMContentLoaded", init);
@@ -837,8 +839,7 @@ function getAttentionDays(items) {
 			const highResistance = item.resistance_level === "moderate" || item.resistance_level === "severe";
 			return incomplete || highResistance;
 		})
-		.sort((a, b) => (a.checklist_date < b.checklist_date ? 1 : -1))
-		.slice(0, 6);
+		.sort((a, b) => (a.checklist_date < b.checklist_date ? 1 : -1));
 }
 
 function renderAttentionList(items) {
@@ -846,6 +847,10 @@ function renderAttentionList(items) {
 
 	const attentionDays = getAttentionDays(items);
 	dom.dashboardAttentionList.innerHTML = "";
+	
+	if (dom.dashboardAttentionPagination) {
+		dom.dashboardAttentionPagination.innerHTML = "";
+	}
 
 	if (!attentionDays.length) {
 		dom.dashboardAttentionList.innerHTML =
@@ -853,7 +858,23 @@ function renderAttentionList(items) {
 		return;
 	}
 
-	attentionDays.forEach((item) => {
+	const itemsPerPage = 5;
+	const totalItems = attentionDays.length;
+	const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+	// Valida página corrente
+	if (dashboardCache.attentionPage > totalPages) {
+		dashboardCache.attentionPage = totalPages;
+	}
+	if (dashboardCache.attentionPage < 1) {
+		dashboardCache.attentionPage = 1;
+	}
+
+	const startIndex = (dashboardCache.attentionPage - 1) * itemsPerPage;
+	const endIndex = Math.min(startIndex + itemsPerPage, totalItems);
+	const paginatedItems = attentionDays.slice(startIndex, endIndex);
+
+	paginatedItems.forEach((item) => {
 		const brushings = countBrushingsForItem(item);
 		const li = document.createElement("li");
 		li.className = "dashboard-activity-item";
@@ -863,6 +884,46 @@ function renderAttentionList(items) {
 		`;
 		dom.dashboardAttentionList.appendChild(li);
 	});
+
+	// Renderiza os controles de paginação se houver mais de 1 página
+	if (totalPages > 1 && dom.dashboardAttentionPagination) {
+		// Botão Anterior
+		const prevBtn = document.createElement("button");
+		prevBtn.type = "button";
+		prevBtn.className = "pagination-btn";
+		prevBtn.innerHTML = '<i class="ph ph-caret-left"></i>';
+		prevBtn.disabled = dashboardCache.attentionPage === 1;
+		prevBtn.addEventListener("click", () => {
+			dashboardCache.attentionPage -= 1;
+			renderAttentionList(items);
+		});
+		dom.dashboardAttentionPagination.appendChild(prevBtn);
+
+		// Botões numéricos
+		for (let i = 1; i <= totalPages; i += 1) {
+			const pageBtn = document.createElement("button");
+			pageBtn.type = "button";
+			pageBtn.className = `pagination-btn${dashboardCache.attentionPage === i ? " active" : ""}`;
+			pageBtn.textContent = i;
+			pageBtn.addEventListener("click", () => {
+				dashboardCache.attentionPage = i;
+				renderAttentionList(items);
+			});
+			dom.dashboardAttentionPagination.appendChild(pageBtn);
+		}
+
+		// Botão Próximo
+		const nextBtn = document.createElement("button");
+		nextBtn.type = "button";
+		nextBtn.className = "pagination-btn";
+		nextBtn.innerHTML = '<i class="ph ph-caret-right"></i>';
+		nextBtn.disabled = dashboardCache.attentionPage === totalPages;
+		nextBtn.addEventListener("click", () => {
+			dashboardCache.attentionPage += 1;
+			renderAttentionList(items);
+		});
+		dom.dashboardAttentionPagination.appendChild(nextBtn);
+	}
 }
 
 function renderDashboardQuizBlock(attempts) {
@@ -932,6 +993,7 @@ function setDashboardChartRange(range) {
 }
 
 async function loadDashboard(month) {
+	dashboardCache.attentionPage = 1;
 	const monthValue = month || new Date().toISOString().slice(0, 7);
 	const { start, end } = parseMonthBounds(monthValue);
 
