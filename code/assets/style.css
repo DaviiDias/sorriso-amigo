@@ -778,7 +778,7 @@ textarea:focus {
 	align-items: start;
 }
 
-.month-grid {
+.datepicker-grid.month-grid {
 	grid-template-columns: repeat(3, minmax(0, 1fr));
 	gap: 0.4rem;
 	padding-top: 0.25rem;
@@ -796,23 +796,13 @@ textarea:focus {
 }
 
 .month-day:hover {
-	grid-template-columns: repeat(2, minmax(0, 1fr));
-	gap: 0.6rem;
+	background: rgba(72, 183, 255, 0.15);
+	border-color: rgba(72, 183, 255, 0.3);
 }
 
 .month-day.selected {
 	background: rgba(72, 183, 255, 0.18);
 	border-color: rgba(72, 183, 255, 0.5);
-	min-height: 50px;
-	padding: 0.75rem 0.5rem;
-	font-size: 0.82rem;
-	margin: 0 0 0.65rem;
-	font-size: 0.95rem;
-	font-family: "Baloo 2", system-ui, sans-serif;
-	color: var(--ink-900);
-	display: flex;
-	align-items: center;
-	gap: 0.4rem;
 }
 
 .dashboard-activity-block h4 i {

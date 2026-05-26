@@ -217,8 +217,7 @@ function createCalendarPicker({ input, container, monthYear, days, prev, next, m
 		monthYear.textContent = mode === "month" ? String(year) : `${monthNames[month]} ${year}`;
 		prev.setAttribute("aria-label", mode === "month" ? "Ano anterior" : "Mês anterior");
 		next.setAttribute("aria-label", mode === "month" ? "Próximo ano" : "Próximo mês");
-		prev.innerHTML = mode === "month" ? '<i class="ph ph-caret-left"></i>' : '<i class="ph ph-caret-left"></i>';
-		next.innerHTML = mode === "month" ? '<i class="ph ph-caret-right"></i>' : '<i class="ph ph-caret-right"></i>';
+
 
 		if (mode === "month") {
 			days.classList.add("month-grid");
@@ -323,7 +322,8 @@ function createCalendarPicker({ input, container, monthYear, days, prev, next, m
 	});
 
 	document.addEventListener("click", (event) => {
-		if (!input.contains(event.target) && !container.contains(event.target)) {
+		const path = event.composedPath();
+		if (!path.includes(input) && !path.includes(container)) {
 			container.classList.add("hidden");
 		}
 	});
