@@ -39,7 +39,7 @@ router.get("/", async (req, res, next) => {
     const result = await query(
       `
       SELECT
-        checklist_date,
+        checklist_date::text AS checklist_date,
         brushing_morning,
         brushing_afternoon,
         brushing_night,
@@ -73,7 +73,7 @@ router.get("/stats", async (req, res, next) => {
 
     const result = await query(
       `
-      SELECT checklist_date, brushing_morning, brushing_afternoon, brushing_night, resistance_level
+      SELECT checklist_date::text AS checklist_date, brushing_morning, brushing_afternoon, brushing_night, resistance_level
       FROM daily_checklists
       WHERE user_id = $1
         AND checklist_date BETWEEN $2 AND $3
@@ -162,7 +162,17 @@ router.put("/:date", async (req, res, next) => {
         resistance_level = EXCLUDED.resistance_level,
         notes = EXCLUDED.notes,
         updated_at = NOW()
-      RETURNING *
+      RETURNING
+        id,
+        user_id,
+        checklist_date::text AS checklist_date,
+        brushing_morning,
+        brushing_afternoon,
+        brushing_night,
+        resistance_level,
+        notes,
+        created_at,
+        updated_at
       `,
       [
         req.user.sub,

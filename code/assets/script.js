@@ -12,13 +12,15 @@ const state = {
 	currentQuestionIndex: 0,
 	selectedOptionId: null,
 	quizAnswers: [],
-	quizState: "start"
+	quizState: "start",
+	offlineMode: false
 };
 
 // Modo temporario para demonstracao sem backend ativo.
-const QUICK_ACCESS_MODE = true;
+const QUICK_ACCESS_MODE = false;
 const QUICK_ACCESS_TOKEN = "quick-access-demo-token";
 const demoStore = createDemoStore();
+const OFFLINE_STORE_KEY = "sorriso_offline_store";
 
 const dom = {
 	landing: document.querySelector("#landing"),
@@ -102,16 +104,16 @@ const dashboardCache = {
 
 document.addEventListener("DOMContentLoaded", init);
 
-function init() {
+async function init() {
 	bindEvents();
 	applyDefaultDates();
 
 	if (state.token) {
-		bootstrapSession();
+		await bootstrapSession();
 		return;
 	}
 
-	setAuthMode("login");
+	await autoAuthenticate();
 }
 
 function bindEvents() {
@@ -378,6 +380,113 @@ function setActiveSection(sectionName) {
 
 }
 
+function createOfflineStore() {
+	return {
+		token: "",
+		user: null,
+		password: "",
+		checklists: [],
+		preferences: {
+			reminder_enabled: true,
+			reminder_times: ["08:00", "13:00", "20:00"],
+			accessibility_mode: "default",
+			theme_mode: "light"
+		},
+		quizAttempts: []
+	};
+}
+
+function loadOfflineStore() {
+	try {
+		const raw = localStorage.getItem(OFFLINE_STORE_KEY);
+		if (!raw) return createOfflineStore();
+
+		const parsed = JSON.parse(raw);
+		return {
+			...createOfflineStore(),
+			...parsed,
+			checklists: Array.isArray(parsed?.checklists) ? parsed.checklists : [],
+			quizAttempts: Array.isArray(parsed?.quizAttempts) ? parsed.quizAttempts : []
+		};
+	} catch (error) {
+		return createOfflineStore();
+	}
+}
+
+function saveOfflineStore(store) {
+	localStorage.setItem(OFFLINE_STORE_KEY, JSON.stringify(store));
+}
+
+function getChecklistRange(checklists, start, end) {
+	return checklists
+		.filter((item) => item.checklist_date >= start && item.checklist_date <= end)
+		.sort((a, b) => (a.checklist_date < b.checklist_date ? 1 : -1));
+}
+
+function computeChecklistStats(checklists, month) {
+	const [yearText, monthText] = month.split("-");
+	const monthStart = `${month}-01`;
+	const monthLastDay = new Date(Number(yearText), Number(monthText), 0).getDate();
+	const monthEnd = `${month}-${String(monthLastDay).padStart(2, "0")}`;
+	const entries = getChecklistRange(checklists, monthStart, monthEnd);
+
+	const resistance = {
+		none: 0,
+		light: 0,
+		moderate: 0,
+		severe: 0
+	};
+
+	let completedBrushings = 0;
+
+	entries.forEach((item) => {
+		completedBrushings += Number(item.brushing_morning);
+		completedBrushings += Number(item.brushing_afternoon);
+		completedBrushings += Number(item.brushing_night);
+		resistance[item.resistance_level] += 1;
+	});
+
+	const now = new Date();
+	const isCurrentMonth =
+		Number(yearText) === now.getFullYear() && Number(monthText) - 1 === now.getMonth();
+	const trackedDays = isCurrentMonth ? now.getDate() : monthLastDay;
+	const expectedBrushings = trackedDays * 3;
+	const adherenceRate = expectedBrushings
+		? Math.round((completedBrushings / expectedBrushings) * 100)
+		: 0;
+
+	return {
+		month,
+		completedBrushings,
+		expectedBrushings,
+		adherenceRate,
+		resistance,
+		entries: entries.length
+	};
+}
+
+function upsertChecklist(checklists, date, payload) {
+	const nextItem = {
+		checklist_date: date,
+		brushing_morning: Boolean(payload.morning),
+		brushing_afternoon: Boolean(payload.afternoon),
+		brushing_night: Boolean(payload.night),
+		resistance_level: payload.resistanceLevel || "none",
+		notes: String(payload.notes || "").trim(),
+		updated_at: new Date().toISOString()
+	};
+
+	const existingIndex = checklists.findIndex((item) => item.checklist_date === date);
+
+	if (existingIndex >= 0) {
+		checklists[existingIndex] = nextItem;
+	} else {
+		checklists.push(nextItem);
+	}
+
+	return nextItem;
+}
+
 async function api(path, options = {}) {
 	if (QUICK_ACCESS_MODE) {
 		return mockApi(path, options);
@@ -394,11 +503,26 @@ async function api(path, options = {}) {
 		headers.Authorization = `Bearer ${state.token}`;
 	}
 
-	const response = await fetch(`${API_BASE}${path}`, {
-		method,
-		headers,
-		body: body !== undefined ? JSON.stringify(body) : undefined
-	});
+	if (state.offlineMode) {
+		return offlineApi(path, options);
+	}
+
+	let response;
+
+	try {
+		response = await fetch(`${API_BASE}${path}`, {
+			method,
+			headers,
+			body: body !== undefined ? JSON.stringify(body) : undefined
+		});
+	} catch (error) {
+		if (path.startsWith("/auth/") || path.startsWith("/checklists")) {
+			state.offlineMode = true;
+			return offlineApi(path, options);
+		}
+
+		throw error;
+	}
 
 	const data = await response.json().catch(() => ({}));
 
@@ -536,12 +660,78 @@ function logout(silent) {
 	localStorage.removeItem("sorriso_token");
 	stopReminderEngine();
 
-	dom.appShell.classList.add("hidden");
-	dom.landing.classList.remove("hidden");
-	setAuthMode("login");
+	autoAuthenticate();
 
 	if (!silent) {
-		setStatus("Sessao encerrada.", "info");
+		setStatus("Sessão reiniciada automaticamente.", "info");
+	}
+}
+
+async function autoAuthenticate() {
+	const defaultEmail = "visitante@sorrisoamigo.org";
+	const defaultPassword = "DefaultVisitante123!";
+	const defaultName = "Visitante";
+
+	try {
+		setStatus("Autenticando automaticamente...", "info");
+		
+		let result;
+		try {
+			const response = await fetch(`${API_BASE}/auth/login`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: defaultEmail,
+					password: defaultPassword
+				})
+			});
+			
+			if (response.ok) {
+				result = await response.json();
+			} else {
+				// Se o login falhar (ex: usuário não existe), tenta cadastrar
+				const regResponse = await fetch(`${API_BASE}/auth/register`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						fullName: defaultName,
+						email: defaultEmail,
+						password: defaultPassword,
+						role: "caregiver",
+						acceptTerms: true
+					})
+				});
+				
+				if (regResponse.ok) {
+					result = await regResponse.json();
+				} else {
+					const data = await regResponse.json().catch(() => ({}));
+					throw new Error(data.message || "Erro no cadastro automático.");
+				}
+			}
+		} catch (err) {
+			console.error("Falha no login/cadastro automático, tentando fallback local.", err);
+			throw err;
+		}
+
+		if (result && result.token) {
+			activateSession(result.token, result.user);
+			setStatus("Autenticação automática concluída.", "success");
+		}
+	} catch (error) {
+		console.error("Erro na autenticação automática, usando fallback mockado local:", error);
+		if (QUICK_ACCESS_MODE) {
+			setStatus("Servidor indisponível. Iniciando sessão local offline.", "warning");
+			activateSession("quick-access-demo-token", {
+				id: 1,
+				full_name: "Visitante (Local)",
+				email: defaultEmail,
+				role: "caregiver"
+			});
+			return;
+		}
+
+		setStatus("Servidor indisponível. Não foi possível carregar o Dashboard real.", "error");
 	}
 }
 
@@ -687,19 +877,24 @@ function renderDashboardWeekCalendar(items) {
 	const byDate = new Map(items.map((item) => [item.checklist_date, item]));
 	const weekdayFormatter = new Intl.DateTimeFormat("pt-BR", { weekday: "short" });
 	const dateFormatter = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" });
-	const weekdayLabels = ["D", "S", "T", "Q", "Q", "S", "S"];
 	const today = new Date();
 	today.setHours(12, 0, 0, 0);
-
-	let html = '<div class="heatmap-weekdays">';
-	weekdayLabels.forEach((label) => {
-		html += `<span class="heatmap-weekday">${label}</span>`;
-	});
-	html += '</div><div class="heatmap-grid heatmap-week-strip">';
+	const weekDates = [];
 
 	for (let offset = 6; offset >= 0; offset -= 1) {
 		const date = new Date(today);
 		date.setDate(today.getDate() - offset);
+		weekDates.push(date);
+	}
+
+	let html = '<div class="heatmap-weekdays">';
+	weekDates.forEach((date) => {
+		const weekdayLabel = weekdayFormatter.format(date).replace(".", "").toUpperCase();
+		html += `<span class="heatmap-weekday" title="${escapeHtml(dateFormatter.format(date))}">${escapeHtml(weekdayLabel)}</span>`;
+	});
+	html += '</div><div class="heatmap-grid heatmap-week-strip">';
+
+	weekDates.forEach((date) => {
 		const isoDate = date.toISOString().slice(0, 10);
 		const item = byDate.get(isoDate);
 		const brushings = countBrushingsForItem(item);
@@ -709,7 +904,7 @@ function renderDashboardWeekCalendar(items) {
 		html += `
 			<span class="heatmap-day ${level} heatmap-week-day" title="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}" aria-label="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}">${date.getDate()}</span>
 		`;
-	}
+	});
 
 	html += '</div>';
 	dom.dashboardMonthHeatmap.innerHTML = html;
@@ -997,51 +1192,67 @@ async function loadDashboard(month) {
 	const monthValue = month || new Date().toISOString().slice(0, 7);
 	const { start, end } = parseMonthBounds(monthValue);
 
-	try {
-		const today = new Date();
-		const recentStart = new Date();
-		recentStart.setDate(today.getDate() - 6);
+	const today = new Date();
+	const recentStart = new Date();
+	recentStart.setDate(today.getDate() - 6);
 
-		const [statsResult, monthChecklists, recentChecklists, quizResult] = await Promise.all([
-			api(`/checklists/stats?month=${encodeURIComponent(monthValue)}`),
-			api(`/checklists?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),
-			api(
-				`/checklists?start=${recentStart.toISOString().slice(0, 10)}&end=${today.toISOString().slice(0, 10)}`
-			),
-			api("/quiz/history?limit=6")
-		]);
+	// Busca todos os dados em paralelo, sem deixar uma falha derubar tudo
+	const results = await Promise.allSettled([
+		api(`/checklists/stats?month=${encodeURIComponent(monthValue)}`),
+		api(`/checklists?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`),
+		api(`/checklists?start=${recentStart.toISOString().slice(0, 10)}&end=${today.toISOString().slice(0, 10)}`),
+		api("/quiz/history?limit=6")
+	]);
 
-		const highResistance =
-			(statsResult.resistance.moderate || 0) + (statsResult.resistance.severe || 0);
+	// Extrai valores ou usa estado vazio real (sem mock)
+	const statsResult = results[0].status === "fulfilled" ? results[0].value : null;
+	const monthChecklists = results[1].status === "fulfilled" ? results[1].value : null;
+	const recentChecklists = results[2].status === "fulfilled" ? results[2].value : null;
+	const quizResult = results[3].status === "fulfilled" ? results[3].value : null;
 
-		dom.adherenceValue.textContent = `${statsResult.adherenceRate}%`;
-		dom.completedValue.textContent = `${statsResult.completedBrushings}/${statsResult.expectedBrushings}`;
-
-		if (dom.brushingsGoalHint) {
-			dom.brushingsGoalHint.textContent = `${statsResult.expectedBrushings} previstas no mês (até 3 por dia)`;
-		}
-
-		if (dom.trackedDaysValue) {
-			dom.trackedDaysValue.textContent = String(statsResult.entries || 0);
-		}
-
-		if (dom.resistanceHint) {
-			dom.resistanceHint.textContent = `Resistência moderada/grave: ${highResistance} dia(s)`;
-		}
-
-		dashboardCache.month = monthValue;
-		dashboardCache.monthItems = monthChecklists.items || [];
-		dashboardCache.recentItems = recentChecklists.items || [];
-		dashboardCache.attempts = quizResult.attempts || [];
-
-		renderMonthHeatmap(dashboardCache.monthItems, monthValue);
-		renderPeriodBars(dashboardCache.monthItems);
-		renderAttentionList(dashboardCache.monthItems);
-		renderDashboardQuizBlock(dashboardCache.attempts);
-		setDashboardChartRange(dashboardCache.chartRange);
-	} catch (error) {
-		setStatus(error.message, "error");
+	if (results[0].status === "rejected") {
+		console.warn("Falha ao buscar estatísticas:", results[0].reason?.message);
 	}
+
+	// Estado vazio se não há dados ou se a API falhou
+	const stats = statsResult || {
+		adherenceRate: 0,
+		completedBrushings: 0,
+		expectedBrushings: 0,
+		entries: 0,
+		resistance: { none: 0, light: 0, moderate: 0, severe: 0 }
+	};
+	const monthItems = monthChecklists?.items || [];
+	const recentItems = recentChecklists?.items || [];
+	const attempts = quizResult?.attempts || [];
+
+	const highResistance = (stats.resistance?.moderate || 0) + (stats.resistance?.severe || 0);
+
+	dom.adherenceValue.textContent = `${stats.adherenceRate}%`;
+	dom.completedValue.textContent = `${stats.completedBrushings}/${stats.expectedBrushings}`;
+
+	if (dom.brushingsGoalHint) {
+		dom.brushingsGoalHint.textContent = `${stats.expectedBrushings} previstas no mês (até 3 por dia)`;
+	}
+
+	if (dom.trackedDaysValue) {
+		dom.trackedDaysValue.textContent = String(stats.entries || 0);
+	}
+
+	if (dom.resistanceHint) {
+		dom.resistanceHint.textContent = `Resistência moderada/grave: ${highResistance} dia(s)`;
+	}
+
+	dashboardCache.month = monthValue;
+	dashboardCache.monthItems = monthItems;
+	dashboardCache.recentItems = recentItems;
+	dashboardCache.attempts = attempts;
+
+	renderMonthHeatmap(dashboardCache.monthItems, monthValue);
+	renderPeriodBars(dashboardCache.monthItems);
+	renderAttentionList(dashboardCache.monthItems);
+	renderDashboardQuizBlock(dashboardCache.attempts);
+	setDashboardChartRange(dashboardCache.chartRange);
 }
 
 async function loadChecklistForDate(dateValue) {
@@ -1049,42 +1260,44 @@ async function loadChecklistForDate(dateValue) {
 		return;
 	}
 
+	let item = null;
 	try {
 		const result = await api(
 			`/checklists?start=${encodeURIComponent(dateValue)}&end=${encodeURIComponent(dateValue)}`
 		);
-
-		const item = result.items[0];
-		const form = dom.checklistForm;
-
-		if (item) {
-			form.morning.checked = Boolean(item.brushing_morning);
-			form.afternoon.checked = Boolean(item.brushing_afternoon);
-			form.night.checked = Boolean(item.brushing_night);
-			form.resistanceLevel.value = item.resistance_level || "none";
-			form.notes.value = item.notes || "";
-		} else {
-			// Sem registro: Limpa os campos e auto-seleciona o turno atual
-			form.morning.checked = false;
-			form.afternoon.checked = false;
-			form.night.checked = false;
-			form.resistanceLevel.value = "light"; /* Default to neutral */
-			form.notes.value = "";
-
-			const hour = new Date().getHours();
-			if (hour >= 5 && hour < 12) {
-				form.morning.checked = true;
-			} else if (hour >= 12 && hour < 18) {
-				form.afternoon.checked = true;
-			} else {
-				form.night.checked = true;
-			}
-		}
-
-		syncChecklistUI();
+		item = result?.items?.[0] || null;
 	} catch (error) {
-		setStatus(error.message, "error");
+		// Se a API falhar, mantém o formulário vazio (sem dados mockados)
+		console.warn("Falha ao buscar checklist. O formulário ficará em branco para preenchimento.", error);
 	}
+
+	const form = dom.checklistForm;
+
+	if (item) {
+		form.morning.checked = Boolean(item.brushing_morning);
+		form.afternoon.checked = Boolean(item.brushing_afternoon);
+		form.night.checked = Boolean(item.brushing_night);
+		form.resistanceLevel.value = item.resistance_level || "none";
+		form.notes.value = item.notes || "";
+	} else {
+		// Sem registro: Limpa os campos e auto-seleciona o turno atual
+		form.morning.checked = false;
+		form.afternoon.checked = false;
+		form.night.checked = false;
+		form.resistanceLevel.value = "light";
+		form.notes.value = "";
+
+		const hour = new Date().getHours();
+		if (hour >= 5 && hour < 12) {
+			form.morning.checked = true;
+		} else if (hour >= 12 && hour < 18) {
+			form.afternoon.checked = true;
+		} else {
+			form.night.checked = true;
+		}
+	}
+
+	syncChecklistUI();
 }
 
 async function onChecklistSubmit(event) {
@@ -1118,44 +1331,55 @@ async function onChecklistSubmit(event) {
 }
 
 async function loadGuideSteps() {
+	let steps = [];
 	try {
 		const result = await api("/guide/steps");
-		dom.guideContainer.innerHTML = "";
-
-		if (!result.steps.length) {
-			dom.guideContainer.innerHTML = "<p>Nenhuma etapa cadastrada.</p>";
-			return;
-		}
-
-		result.steps.forEach((step) => {
-			const item = document.createElement("div");
-			item.className = "timeline-item";
-			item.innerHTML = `
-				<div class="timeline-badge">${step.step_order}</div>
-				<article class="guide-card">
-					<div class="guide-card-img-wrapper">
-						<img src="${step.image_url}" alt="${escapeHtml(step.title)}" loading="lazy" />
-					</div>
-					<div class="inner">
-						<h4>${escapeHtml(step.title)}</h4>
-						<p>${escapeHtml(step.description)}</p>
-					</div>
-				</article>
-			`;
-			dom.guideContainer.appendChild(item);
-		});
+		steps = result?.steps || [];
 	} catch (error) {
-		setStatus(error.message, "error");
+		console.warn("Falha ao buscar guia do servidor. Usando dados estáticos de fallback.", error);
 	}
+
+	// Se retornar vazio do banco ou der erro na tabela, usa o fallback estático
+	if (!steps || !steps.length) {
+		steps = demoStore.guideSteps;
+	}
+
+	dom.guideContainer.innerHTML = "";
+
+	steps.forEach((step) => {
+		const item = document.createElement("div");
+		item.className = "timeline-item";
+		item.innerHTML = `
+			<div class="timeline-badge">${step.step_order}</div>
+			<article class="guide-card">
+				<div class="guide-card-img-wrapper">
+					<img src="${step.image_url}" alt="${escapeHtml(step.title)}" loading="lazy" />
+				</div>
+				<div class="inner">
+					<h4>${escapeHtml(step.title)}</h4>
+					<p>${escapeHtml(step.description)}</p>
+				</div>
+			</article>
+		`;
+		dom.guideContainer.appendChild(item);
+	});
 }
 
 async function loadQuizQuestions() {
+	let questions = [];
 	try {
 		const result = await api("/quiz/questions");
-		state.quizQuestions = result.questions;
+		questions = result?.questions || [];
 	} catch (error) {
-		setStatus(error.message, "error");
+		console.warn("Falha ao buscar quiz do servidor. Usando dados estáticos de fallback.", error);
 	}
+
+	// Se retornar vazio do banco ou der erro na tabela, usa o fallback estático
+	if (!questions || !questions.length) {
+		questions = demoStore.quizQuestions;
+	}
+
+	state.quizQuestions = questions;
 }
 
 function startQuiz() {
@@ -1470,60 +1694,68 @@ async function loadQuizHistory() {
 }
 
 async function loadVideos() {
+	let videos = [];
 	try {
 		const result = await api("/videos");
-		dom.videoContainer.innerHTML = "";
-
-		if (!result.videos.length) {
-			dom.videoContainer.innerHTML = "<p>Sem videos cadastrados no momento.</p>";
-			return;
-		}
-
-		result.videos.forEach((video) => {
-			const card = document.createElement("article");
-			card.className = "video-card";
-			card.innerHTML = `
-				<iframe
-					src="${toEmbedUrl(video.url)}"
-					title="${escapeHtml(video.title)}"
-					loading="lazy"
-					allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-					allowfullscreen
-				></iframe>
-				<div class="video-content">
-					<h4>${escapeHtml(video.title)}</h4>
-					<p>${escapeHtml(video.description)}</p>
-				</div>
-			`;
-			dom.videoContainer.appendChild(card);
-		});
+		videos = result?.videos || [];
 	} catch (error) {
-		setStatus(error.message, "error");
+		console.warn("Falha ao buscar vídeos do servidor. Usando dados estáticos de fallback.", error);
 	}
+
+	// Se retornar vazio do banco ou der erro na tabela, usa o fallback estático
+	if (!videos || !videos.length) {
+		videos = demoStore.videos;
+	}
+
+	dom.videoContainer.innerHTML = "";
+
+	videos.forEach((video) => {
+		const card = document.createElement("article");
+		card.className = "video-card";
+		card.innerHTML = `
+			<iframe
+				src="${toEmbedUrl(video.url)}"
+				title="${escapeHtml(video.title)}"
+				loading="lazy"
+				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+				allowfullscreen
+			></iframe>
+			<div class="video-content">
+				<h4>${escapeHtml(video.title)}</h4>
+				<p>${escapeHtml(video.description)}</p>
+			</div>
+		`;
+		dom.videoContainer.appendChild(card);
+	});
 }
 
 async function loadPreferences() {
+	let preferences = null;
 	try {
 		const result = await api("/user/preferences");
-		const preferences = result.preferences;
-
-		dom.reminderEnabled.checked = Boolean(preferences.reminder_enabled);
-
-		const times = Array.isArray(preferences.reminder_times)
-			? preferences.reminder_times
-			: [];
-
-		dom.reminderTimes.value = times.join(",");
-		dom.accessibilityMode.value = preferences.accessibility_mode || "default";
-		const savedTheme = localStorage.getItem("sorriso_theme") || preferences.theme_mode || "light";
-		dom.themeMode.value = savedTheme;
-
-		applyAccessibility(dom.accessibilityMode.value);
-		applyTheme(savedTheme);
-		setupReminderEngine(dom.reminderEnabled.checked, times);
+		preferences = result?.preferences || null;
 	} catch (error) {
-		setStatus(error.message, "error");
+		console.warn("Falha ao buscar preferências do servidor. Usando fallback estático local.", error);
 	}
+
+	if (!preferences) {
+		preferences = demoStore.preferences;
+	}
+
+	dom.reminderEnabled.checked = Boolean(preferences.reminder_enabled);
+
+	const times = Array.isArray(preferences.reminder_times)
+		? preferences.reminder_times
+		: [];
+
+	dom.reminderTimes.value = times.join(",");
+	dom.accessibilityMode.value = preferences.accessibility_mode || "default";
+	const savedTheme = localStorage.getItem("sorriso_theme") || preferences.theme_mode || "light";
+	dom.themeMode.value = savedTheme;
+
+	applyAccessibility(dom.accessibilityMode.value);
+	applyTheme(savedTheme);
+	setupReminderEngine(dom.reminderEnabled.checked, times);
 }
 
 async function onPreferencesSubmit(event) {
@@ -2108,6 +2340,126 @@ async function mockApi(path, options = {}) {
 	}
 
 	throw new Error(`Endpoint nao implementado no modo demonstracao: ${pathname}`);
+}
+
+async function offlineApi(path, options = {}) {
+	const { method = "GET", body, auth = true } = options;
+	const url = new URL(path, "http://offline.local");
+	const pathname = url.pathname;
+	const normalizedMethod = method.toUpperCase();
+	const store = loadOfflineStore();
+
+	if (auth && pathname !== "/auth/login" && pathname !== "/auth/register") {
+		if (!store.token || !store.user) {
+			throw new Error("Token de acesso ausente.");
+		}
+	}
+
+	if (pathname === "/auth/register" && normalizedMethod === "POST") {
+		const fullName = String(body?.fullName || "Visitante").trim() || "Visitante";
+		const email = String(body?.email || "visitante@sorriso.local").trim() || "visitante@sorriso.local";
+		const role = String(body?.role || "caregiver");
+		const token = `offline-token-${Date.now()}`;
+
+		store.user = {
+			id: store.user?.id || 1,
+			full_name: fullName,
+			email,
+			role
+		};
+		store.password = String(body?.password || "");
+		store.token = token;
+		saveOfflineStore(store);
+
+		return { token, user: store.user };
+	}
+
+	if (pathname === "/auth/login" && normalizedMethod === "POST") {
+		const email = String(body?.email || "").trim();
+		const password = String(body?.password || "");
+
+		if (!store.user || store.user.email !== email || store.password !== password) {
+			throw new Error("E-mail ou senha incorretos.");
+		}
+
+		if (!store.token) {
+			store.token = `offline-token-${Date.now()}`;
+			saveOfflineStore(store);
+		}
+
+		return { token: store.token, user: store.user };
+	}
+
+	if (pathname === "/auth/me" && normalizedMethod === "GET") {
+		if (!store.user) {
+			throw new Error("Usuario nao encontrado.");
+		}
+
+		return { user: store.user };
+	}
+
+	if (pathname === "/checklists" && normalizedMethod === "GET") {
+		const start = url.searchParams.get("start") || "1900-01-01";
+		const end = url.searchParams.get("end") || "2999-12-31";
+		return { items: getChecklistRange(store.checklists, start, end) };
+	}
+
+	if (pathname === "/checklists/stats" && normalizedMethod === "GET") {
+		const month = url.searchParams.get("month") || new Date().toISOString().slice(0, 7);
+		return computeChecklistStats(store.checklists, month);
+	}
+
+	const checklistMatch = pathname.match(/^\/checklists\/(\d{4}-\d{2}-\d{2})$/);
+	if (checklistMatch && normalizedMethod === "PUT") {
+		const item = upsertChecklist(store.checklists, checklistMatch[1], body || {});
+		saveOfflineStore(store);
+		return { item };
+	}
+
+	if (pathname === "/quiz/history" && normalizedMethod === "GET") {
+		return { attempts: [] };
+	}
+
+	if (pathname === "/guide/steps" && normalizedMethod === "GET") {
+		return { steps: demoStore.guideSteps };
+	}
+
+	if (pathname === "/quiz/questions" && normalizedMethod === "GET") {
+		return {
+			questions: demoStore.quizQuestions.map((question) => ({
+				id: question.id,
+				question: question.question,
+				category: question.category,
+				options: question.options.map((option) => ({
+					id: option.id,
+					text: option.text,
+					isCorrect: Boolean(option.isCorrect),
+					explanation: option.explanation || ""
+				}))
+			}))
+		};
+	}
+
+	if (pathname === "/videos" && normalizedMethod === "GET") {
+		return { videos: demoStore.videos };
+	}
+
+	if (pathname === "/user/preferences" && normalizedMethod === "GET") {
+		return { preferences: store.preferences || createOfflineStore().preferences };
+	}
+
+	if (pathname === "/user/preferences" && normalizedMethod === "PUT") {
+		store.preferences = {
+			reminder_enabled: Boolean(body?.reminderEnabled),
+			reminder_times: Array.isArray(body?.reminderTimes) ? body.reminderTimes : [],
+			accessibility_mode: body?.accessibilityMode || "default",
+			theme_mode: body?.themeMode || "light"
+		};
+		saveOfflineStore(store);
+		return { preferences: store.preferences };
+	}
+
+	throw new Error("Falha na comunicacao com o servidor.");
 }
 
 function translateResistance(value) {
