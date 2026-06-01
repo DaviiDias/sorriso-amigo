@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Preparar a escova">
+  <rect width="800" height="600" rx="40" fill="#1b2227"/>
+  <circle cx="130" cy="120" r="60" fill="#48b7ff" opacity="0.18"/>
+  <circle cx="680" cy="120" r="70" fill="#6dc6fe" opacity="0.16"/>
+  <rect x="190" y="150" width="420" height="280" rx="36" fill="#222c33" stroke="#3c454d" stroke-width="6"/>
+  <rect x="240" y="220" width="140" height="28" rx="14" fill="#e9feff" opacity="0.92"/>
+  <rect x="240" y="260" width="220" height="22" rx="11" fill="#9bd9fe" opacity="0.75"/>
+  <rect x="240" y="302" width="180" height="22" rx="11" fill="#48b7ff" opacity="0.7"/>
+  <rect x="510" y="196" width="54" height="210" rx="27" fill="#f2a04e"/>
+  <rect x="500" y="180" width="74" height="44" rx="18" fill="#e9feff"/>
+  <path d="M526 228c-20 0-36 16-36 36v8h72v-8c0-20-16-36-36-36Z" fill="#9bd9fe"/>
+  <path d="M492 396h70" stroke="#ef8a29" stroke-width="10" stroke-linecap="round"/>
+  <text x="400" y="500" text-anchor="middle" fill="#9bd9fe" font-family="Lexend, sans-serif" font-size="28" font-weight="700">Preparar a escova</text>
+</svg>

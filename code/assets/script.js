@@ -1347,13 +1347,14 @@ async function loadGuideSteps() {
 	dom.guideContainer.innerHTML = "";
 
 	steps.forEach((step) => {
+		const imageUrl = getGuideStepImageUrl(step);
 		const item = document.createElement("div");
 		item.className = "timeline-item";
 		item.innerHTML = `
 			<div class="timeline-badge">${step.step_order}</div>
 			<article class="guide-card">
 				<div class="guide-card-img-wrapper">
-					<img src="${step.image_url}" alt="${escapeHtml(step.title)}" loading="lazy" />
+					<img src="${imageUrl}" alt="${escapeHtml(step.title)}" loading="lazy" />
 				</div>
 				<div class="inner">
 					<h4>${escapeHtml(step.title)}</h4>
@@ -1363,6 +1364,23 @@ async function loadGuideSteps() {
 		`;
 		dom.guideContainer.appendChild(item);
 	});
+}
+
+function getGuideStepImageUrl(step) {
+	const localImages = {
+		1: "./assets/illustrations/guide-1.svg",
+		2: "./assets/illustrations/guide-2.svg",
+		3: "./assets/illustrations/guide-3.svg",
+		4: "./assets/illustrations/guide-4.svg",
+		5: "./assets/illustrations/guide-5.svg"
+	};
+
+	const remoteUrl = String(step?.image_url || "").trim();
+	if (!remoteUrl || /^https?:\/\//i.test(remoteUrl)) {
+		return localImages[Number(step?.step_order)] || localImages[Number(step?.id)] || "./assets/illustrations/guide-1.svg";
+	}
+
+	return remoteUrl;
 }
 
 async function loadQuizQuestions() {
@@ -1958,40 +1976,35 @@ function createDemoStore() {
 				step_order: 1,
 				title: "Preparar a escova",
 				description: "Separe escova macia e copo com agua para iniciar de forma previsivel.",
-				image_url:
-					"https://images.unsplash.com/photo-1588776814546-daab30f310ce?auto=format&fit=crop&w=800&q=80"
+				image_url: "./assets/illustrations/guide-1.svg"
 			},
 			{
 				id: 2,
 				step_order: 2,
 				title: "Molhar a escova",
 				description: "Molhe levemente a escova para reduzir incomodo sensorial.",
-				image_url:
-					"https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&w=800&q=80"
+				image_url: "./assets/illustrations/guide-2.svg"
 			},
 			{
 				id: 3,
 				step_order: 3,
 				title: "Aplicar pasta dental",
 				description: "Use quantidade pequena (grao de ervilha).",
-				image_url:
-					"https://images.unsplash.com/photo-1559599101-f09722fb4948?auto=format&fit=crop&w=800&q=80"
+				image_url: "./assets/illustrations/guide-3.svg"
 			},
 			{
 				id: 4,
 				step_order: 4,
 				title: "Escovar com ritmo",
 				description: "Movimentos suaves por cerca de 2 minutos.",
-				image_url:
-					"https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80"
+				image_url: "./assets/illustrations/guide-4.svg"
 			},
 			{
 				id: 5,
 				step_order: 5,
 				title: "Finalizar e elogiar",
 				description: "Finalize com reforco positivo para manter a rotina.",
-				image_url:
-					"https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80"
+				image_url: "./assets/illustrations/guide-5.svg"
 			}
 		],
 		quizQuestions: [

@@ -927,6 +927,54 @@ textarea:focus {
 	background: rgba(255, 75, 75, 0.1);
 }
 
+/* Local icon fallback so localhost keeps showing symbols even without CDN */
+i.ph {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-style: normal;
+	line-height: 1;
+	font-family: "Segoe UI Symbol", "Noto Color Emoji", sans-serif;
+}
+
+i.ph::before {
+	display: inline-block;
+	line-height: 1;
+}
+
+i.ph-house::before { content: "⌂"; }
+i.ph-check-square-offset::before { content: "☑"; }
+i.ph-book-open-text::before { content: "📖"; }
+i.ph-game-controller::before { content: "🎮"; }
+i.ph-video::before { content: "🎬"; }
+i.ph-gear::before { content: "⚙"; }
+i.ph-sign-out::before { content: "↦"; }
+i.ph-chart-line-up::before { content: "↗"; }
+i.ph-tooth::before { content: "🦷"; }
+i.ph-calendar-check::before { content: "📅"; }
+i.ph-warning-circle::before,
+i.ph-warning::before { content: "⚠"; }
+i.ph-caret-left::before { content: "‹"; }
+i.ph-caret-right::before { content: "›"; }
+i.ph-sun-horizon::before { content: "🌅"; }
+i.ph-sun::before { content: "☀"; }
+i.ph-moon-stars::before { content: "🌙"; }
+i.ph-smiley-angry::before { content: "😠"; }
+i.ph-smiley-sad::before { content: "☹"; }
+i.ph-smiley-meh::before { content: "😐"; }
+i.ph-smiley::before { content: "☺"; }
+i.ph-smiley-wink::before { content: "😉"; }
+i.ph-play::before { content: "▶"; }
+i.ph-x::before { content: "×"; }
+i.ph-trophy::before { content: "🏆"; }
+i.ph-check-circle::before { content: "✔"; }
+i.ph-x-circle::before { content: "✖"; }
+
+i.ph-fill.ph-check-circle::before { content: "✔"; }
+i.ph-fill.ph-x-circle::before { content: "✖"; }
+i.ph-fill.ph-trophy::before { content: "🏆"; }
+i.ph-fill.ph-play::before { content: "▶"; }
+
 .stats-grid {
 	display: grid;
 	grid-template-columns: repeat(3, minmax(0, 1fr));

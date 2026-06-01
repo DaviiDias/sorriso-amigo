@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" role="img" aria-label="Escovar com ritmo">
+  <rect width="800" height="600" rx="40" fill="#1b2227"/>
+  <rect x="180" y="150" width="440" height="300" rx="36" fill="#222c33" stroke="#3c454d" stroke-width="6"/>
+  <path d="M245 300h310" stroke="#48b7ff" stroke-width="18" stroke-linecap="round"/>
+  <path d="M255 260c30 26 30 54 0 80" stroke="#9bd9fe" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <path d="M545 260c-30 26-30 54 0 80" stroke="#9bd9fe" stroke-width="14" stroke-linecap="round" fill="none"/>
+  <path d="M340 230l-60 110" stroke="#ef8a29" stroke-width="22" stroke-linecap="round"/>
+  <rect x="320" y="210" width="34" height="170" rx="17" fill="#e9feff"/>
+  <rect x="500" y="240" width="60" height="50" rx="24" fill="#6dc6fe" opacity="0.9"/>
+  <text x="400" y="500" text-anchor="middle" fill="#9bd9fe" font-family="Lexend, sans-serif" font-size="28" font-weight="700">Escovar com ritmo</text>
+</svg>

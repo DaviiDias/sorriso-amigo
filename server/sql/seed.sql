@@ -4,11 +4,11 @@ TRUNCATE TABLE guide_steps, quiz_options, quiz_questions, educational_videos CAS
 -- Inserir Etapas do Guia Lúdico (exatamente conforme o mock)
 INSERT INTO guide_steps (step_order, title, description, image_url)
 VALUES
-  (1, 'Preparar a escova', 'Separe escova macia e copo com agua para iniciar de forma previsivel.', 'https://images.unsplash.com/photo-1588776814546-daab30f310ce?auto=format&fit=crop&w=800&q=80'),
-  (2, 'Molhar a escova', 'Molhe levemente a escova para reduzir incomodo sensorial.', 'https://images.unsplash.com/photo-1607619056574-7b8d3ee536b2?auto=format&fit=crop&w=800&q=80'),
-  (3, 'Aplicar pasta dental', 'Use quantidade pequena (grao de ervilha).', 'https://images.unsplash.com/photo-1559599101-f09722fb4948?auto=format&fit=crop&w=800&q=80'),
-  (4, 'Escovar com ritmo', 'Movimentos suaves por cerca de 2 minutos.', 'https://images.unsplash.com/photo-1579684385127-1ef15d508118?auto=format&fit=crop&w=800&q=80'),
-  (5, 'Finalizar e elogiar', 'Finalize com reforco positivo para manter a rotina.', 'https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80');
+  (1, 'Preparar a escova', 'Separe escova macia e copo com agua para iniciar de forma previsivel.', './assets/illustrations/guide-1.svg'),
+  (2, 'Molhar a escova', 'Molhe levemente a escova para reduzir incomodo sensorial.', './assets/illustrations/guide-2.svg'),
+  (3, 'Aplicar pasta dental', 'Use quantidade pequena (grao de ervilha).', './assets/illustrations/guide-3.svg'),
+  (4, 'Escovar com ritmo', 'Movimentos suaves por cerca de 2 minutos.', './assets/illustrations/guide-4.svg'),
+  (5, 'Finalizar e elogiar', 'Finalize com reforco positivo para manter a rotina.', './assets/illustrations/guide-5.svg');
 
 -- Inserir Perguntas do Quiz (exatamente conforme o mock)
 INSERT INTO quiz_questions (id, question_text, category)
