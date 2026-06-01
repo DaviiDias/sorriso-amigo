@@ -19,7 +19,7 @@ async function createPublicUser() {
       [PUBLIC_USER_NAME, PUBLIC_USER_EMAIL, passwordHash, PUBLIC_USER_ROLE]
     );
 
-    return result.rows[0];
+    return normalizePublicUser(result.rows[0]);
   } catch (error) {
     if (error.code !== "23505") {
       throw error;
@@ -34,7 +34,7 @@ async function createPublicUser() {
       [PUBLIC_USER_EMAIL]
     );
 
-    return result.rows[0];
+    return normalizePublicUser(result.rows[0]);
   }
 }
 
@@ -49,8 +49,19 @@ export async function getPublicUser() {
   );
 
   if (existing.rowCount) {
-    return existing.rows[0];
+    return normalizePublicUser(existing.rows[0]);
   }
 
   return createPublicUser();
+}
+
+function normalizePublicUser(user) {
+  if (!user) {
+    return user;
+  }
+
+  return {
+    ...user,
+    sub: user.sub ?? user.id
+  };
 }
