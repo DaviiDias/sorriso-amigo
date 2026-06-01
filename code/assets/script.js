@@ -76,7 +76,6 @@ const dom = {
 	quizResultsPercentage: document.querySelector("#quizResultsPercentage"),
 	quizResultsFeedbackList: document.querySelector("#quizResultsFeedbackList"),
 	quizRestartBtn: document.querySelector("#quizRestartBtn"),
-	quizHistoryList: document.querySelector("#quizHistoryList"),
 	videoContainer: document.querySelector("#videoContainer"),
 	preferencesForm: document.querySelector("#preferencesForm"),
 	reminderEnabled: document.querySelector("#reminderEnabled"),
@@ -405,6 +404,10 @@ function setActiveSection(sectionName) {
 	dom.sections.forEach((section) => {
 		section.classList.toggle("active", section.id === `section-${sectionName}`);
 	});
+
+	if (sectionName === "dashboard") {
+		loadDashboard(dom.monthInput.value);
+	}
 
 }
 
@@ -784,7 +787,6 @@ async function loadAllData() {
 		loadChecklistForDate(dom.checklistDate.value),
 		loadGuideSteps(),
 		loadQuizQuestions(),
-		loadQuizHistory(),
 		loadVideos(),
 		loadPreferences()
 	]);
@@ -1476,7 +1478,6 @@ function showQuizStartScreen() {
 	dom.quizStateActive.classList.add("hidden");
 	dom.quizStateResults.classList.add("hidden");
 	dom.quizStateStart.classList.remove("hidden");
-	loadQuizHistory();
 }
 
 function bindConfirmModalEvents() {
@@ -1728,29 +1729,7 @@ async function submitQuizResults() {
 			dom.quizResultsFeedbackList.appendChild(li);
 		});
 
-		await loadQuizHistory();
-	} catch (error) {
-		setStatus(error.message, "error");
-	}
-}
-
-async function loadQuizHistory() {
-	try {
-		if (!dom.quizHistoryList) return;
-
-		const result = await api("/quiz/history?limit=8");
-		dom.quizHistoryList.innerHTML = "";
-
-		if (!result.attempts || !result.attempts.length) {
-			dom.quizHistoryList.innerHTML = "<li>Nenhuma tentativa registrada.</li>";
-			return;
-		}
-
-		result.attempts.forEach((attempt) => {
-			const item = document.createElement("li");
-			item.textContent = `${formatDateTime(attempt.created_at)} - ${attempt.score}/${attempt.total_questions}`;
-			dom.quizHistoryList.appendChild(item);
-		});
+		await loadDashboard(dom.monthInput.value);
 	} catch (error) {
 		setStatus(error.message, "error");
 	}

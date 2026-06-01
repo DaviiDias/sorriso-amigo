@@ -97,15 +97,10 @@ router.get("/stats", async (req, res, next) => {
     }
 
     const [yearText, monthText] = month.split("-");
-    const now = new Date();
     const monthIndex = Number(monthText) - 1;
-    const isCurrentMonth =
-      Number(yearText) === now.getFullYear() && monthIndex === now.getMonth();
 
     const daysInMonth = new Date(Number(yearText), Number(monthText), 0).getDate();
-    const trackedDays = isCurrentMonth ? now.getDate() : daysInMonth;
-
-    const expectedBrushings = trackedDays * 3;
+    const expectedBrushings = daysInMonth * 3;
     const adherenceRate = expectedBrushings
       ? Math.round((completedBrushings / expectedBrushings) * 100)
       : 0;
