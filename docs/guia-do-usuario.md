@@ -14,7 +14,7 @@ Este guia mostra como acessar o sistema e usar cada funcionalidade da plataforma
 
 1. Configure o backend com base em `server/.env.example`.
 2. Suba os servicos (`docker compose up --build`) ou rode backend e PostgreSQL manualmente.
-3. Acesse `http://localhost:4000`.
+3. Acesse `https://sorriso-amigo.onrender.com/`.
 4. Cadastre-se ou realize login.
 
 ## 2. Tela inicial (Acesso)
@@ -130,3 +130,26 @@ Selecione o modo e salve.
 
 - Conceda permissao de notificacao no navegador.
 - Revise formato dos horarios (`HH:MM`).
+
+## 10. Versao da entrega
+
+- Repositorio GitHub: `https://github.com/DaviiDias/sorriso-amigo`
+- Branch principal entregue: `master`
+- Commit da entrega inicial: `31d66d7e578f7d6b3ae0c7f512cee1a7e58a7b15`
+- Tag da entrega inicial: `v1.0.0-entrega`
+- Commit com governanca e validacao: `c881945602bf4f5ee1fa9120f5fc86dfad5ad118`
+- Tag com governanca: `v1.0.1-entrega-com-governanca`
+- Commit de ajuste para deploy no Render: `b3b9311c0a8e08975a2057ab661a82f270b34f5c`
+
+## 11. Requisitos atendidos
+
+- Acesso inicial com tela de login e cadastro: atendido.
+- Menu principal com Dashboard, Checklist, Guia, Quiz, Videos e Configuracoes: atendido.
+- Checklist diario com horario e nivel de resistencia: atendido.
+- Guia ludico passo a passo com imagens: atendido.
+- Quiz com feedback e historico: atendido.
+- Videos educativos: atendido.
+- Configuracoes, ajuda, termos e acessibilidade: atendido.
+- Banco relacional com leitura e gravacao pelos endpoints: implementado.
+- Deploy em servidor real (Render): configurado e publicado.
+- Modo demonstracao sem backend para visualizacao: disponivel temporariamente.

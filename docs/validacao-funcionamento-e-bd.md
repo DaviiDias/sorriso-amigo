@@ -98,6 +98,19 @@ Esse script valida:
 
 ## Conclusao
 
-- Aplicacao pronta para validacao integrada com banco.
-- Camadas frontend, API e persistencia foram implementadas.
-- Falta apenas executar o ciclo integrado no ambiente com Docker Engine ativo para registrar a evidencia final de BD neste documento.
+- Funcionalidades principais implementadas e expostas pela API.
+- Frontend integrado aos endpoints de autenticao, checklist, quiz, videos e preferencias.
+- Estrutura de persistencia criada em PostgreSQL com tabelas para usuarios, checklist, quiz, preferencias, guia e videos.
+- Validacao integrada completa de leitura e gravacao depende de um ambiente com banco ativo e variaveis corretamente configuradas.
+
+## Mapa de requisitos
+
+- Login e cadastro: implementado.
+- Checklist diario: implementado.
+- Guia de escovacao: implementado.
+- Quiz com feedback: implementado.
+- Videos educativos: implementado.
+- Configuracoes e acessibilidade: implementado.
+- Protecao de acesso e uso de consentimento: implementado.
+- Persistencia em banco relacional: implementado.
+- Deploy em servidor web real: implementado.
