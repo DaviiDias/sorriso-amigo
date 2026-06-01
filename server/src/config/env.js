@@ -24,5 +24,6 @@ export const env = {
   databaseSsl: parseBoolean(process.env.DATABASE_SSL, false),
   jwtSecret: process.env.JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  frontendOrigin: process.env.FRONTEND_ORIGIN || ""
+  frontendOrigin: process.env.FRONTEND_ORIGIN || "",
+  publicAccessMode: parseBoolean(process.env.PUBLIC_ACCESS_MODE, true)
 };

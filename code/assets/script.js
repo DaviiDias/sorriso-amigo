@@ -16,6 +16,10 @@ const state = {
 	offlineMode: false
 };
 
+const runtimeConfig = {
+	publicAccessMode: false
+};
+
 // Modo temporario para demonstracao sem backend ativo.
 const QUICK_ACCESS_MODE = false;
 const QUICK_ACCESS_TOKEN = "quick-access-demo-token";
@@ -125,13 +129,20 @@ async function init() {
 	bindEvents();
 	applyDefaultDates();
 
-	if (state.token) {
-		await bootstrapSession();
+	if (shouldStartInLocalDemoMode()) {
+		enterGuestSession("local");
 		return;
 	}
 
-	if (shouldStartInLocalDemoMode()) {
-		enterLocalDemoSession();
+	await loadRuntimeConfig();
+
+	if (runtimeConfig.publicAccessMode) {
+		enterGuestSession("public");
+		return;
+	}
+
+	if (state.token) {
+		await bootstrapSession();
 		return;
 	}
 
@@ -143,21 +154,22 @@ function shouldStartInLocalDemoMode() {
 		return true;
 	}
 
-	if (!LOCAL_DEMO_HOSTS.has(window.location.hostname)) {
-		return false;
-	}
-
-	return window.location.port === "5501" || window.location.port === "5173" || window.location.port === "3000" || window.location.port === "8080";
+	return LOCAL_DEMO_HOSTS.has(window.location.hostname);
 }
 
-function enterLocalDemoSession() {
+function enterGuestSession(scope) {
 	activateSession(QUICK_ACCESS_TOKEN, {
 		id: 1,
-		full_name: "Visitante (Local)",
+		full_name: scope === "local" ? "Visitante (Local)" : "Visitante",
 		email: "visitante@sorrisoamigo.org",
 		role: "caregiver"
 	});
-	setStatus("Modo local ativo. Entrando direto no Dashboard.", "success");
+	setStatus(
+		scope === "local"
+			? "Modo local ativo. Entrando direto no Dashboard."
+			: "Acesso liberado. Entrando direto no Dashboard.",
+		"success"
+	);
 }
 
 function bindEvents() {
@@ -703,8 +715,8 @@ async function bootstrapSession() {
 		dom.appShell.classList.remove("hidden");
 		await loadAllData();
 	} catch (error) {
-		if (shouldStartInLocalDemoMode()) {
-			enterLocalDemoSession();
+		if (shouldStartInLocalDemoMode() || runtimeConfig.publicAccessMode) {
+			enterGuestSession(shouldStartInLocalDemoMode() ? "local" : "public");
 			return;
 		}
 
@@ -719,7 +731,7 @@ function logout(silent) {
 	stopReminderEngine();
 
 	if (shouldStartInLocalDemoMode()) {
-		enterLocalDemoSession();
+		enterGuestSession("local");
 		return;
 	}
 
@@ -736,7 +748,7 @@ async function autoAuthenticate() {
 	const defaultName = "Visitante";
 
 	if (shouldStartInLocalDemoMode()) {
-		enterLocalDemoSession();
+		enterGuestSession("local");
 		return;
 	}
 
@@ -800,6 +812,23 @@ async function autoAuthenticate() {
 		}
 
 		setStatus("Servidor indisponível. Não foi possível carregar o Dashboard real.", "error");
+	}
+}
+
+async function loadRuntimeConfig() {
+	try {
+		const response = await fetch(`${API_BASE}/config`, {
+			method: "GET"
+		});
+
+		if (!response.ok) {
+			return;
+		}
+
+		const data = await response.json().catch(() => ({}));
+		runtimeConfig.publicAccessMode = Boolean(data.publicAccessMode);
+	} catch (error) {
+		console.warn("Nao foi possivel carregar a configuracao de runtime.", error);
 	}
 }
 

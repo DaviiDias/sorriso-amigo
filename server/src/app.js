@@ -41,6 +41,12 @@ app.use(helmet());
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 
+app.get("/api/config", (req, res) => {
+  return res.json({
+    publicAccessMode: env.publicAccessMode
+  });
+});
+
 app.use("/api/health", healthRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/checklists", checklistRoutes);

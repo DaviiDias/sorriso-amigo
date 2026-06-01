@@ -1,6 +1,6 @@
 {
   "name": "sorriso-amigo-api",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "API e backend web do projeto Sorriso Amigo",
   "type": "module",
   "main": "src/server.js",

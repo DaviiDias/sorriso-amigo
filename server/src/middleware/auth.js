@@ -1,6 +1,17 @@
 import { verifyToken } from "../utils/jwt.js";
+import { env } from "../config/env.js";
+import { getPublicUser } from "../utils/public-user.js";
 
-export function requireAuth(req, res, next) {
+export async function requireAuth(req, res, next) {
+  if (env.publicAccessMode) {
+    try {
+      req.user = await getPublicUser();
+      return next();
+    } catch (error) {
+      return next(error);
+    }
+  }
+
   const authHeader = req.headers.authorization || "";
 
   if (!authHeader.startsWith("Bearer ")) {
