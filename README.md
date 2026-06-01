@@ -129,6 +129,52 @@ O frontend e servido automaticamente pelo backend em `/`.
 
 Veja o guia em [docs/implantacao-web-real.md](docs/implantacao-web-real.md).
 
+## Deploy com Kubernetes
+
+Os manifests ativos estao em [deployment](deployment). O conteudo em [deployment/davi](deployment/davi) e legado e nao precisa ser aplicado para o backend atual.
+
+### Aplicar no cluster
+
+```bash
+kubectl apply -f deployment/namespace.yaml
+kubectl apply -f deployment/postgres-pv.yaml
+kubectl apply -f deployment/postgres.yaml
+kubectl apply -f deployment/sorriso-amigo.yaml
+kubectl apply -f deployment/ingress.yaml
+```
+
+### Acessar com port-forward
+
+Se quiser testar sem ingress, encaminhe a porta do service:
+
+```bash
+kubectl port-forward -n davi service/sorriso-amigo 4000:4000
+```
+
+Depois acesse:
+
+- http://localhost:4000
+- http://localhost:4000/api/health
+
+Se preferir usar o nome do pod, primeiro descubra o pod com:
+
+```bash
+kubectl get pods -n davi
+```
+
+E depois rode:
+
+```bash
+kubectl port-forward -n davi pod/<nome-do-pod> 4000:4000
+```
+
+### Acessar pela URL
+
+Com o `Ingress` aplicado e o DNS apontando para o cluster, a aplicacao fica disponivel em:
+
+- http://davi.kevyn.com.br
+- https://davi.kevyn.com.br
+
 ## Acompanhamento e governanca
 
 - Controle de versao da entrega: [docs/controle-de-versao-entrega.md](docs/controle-de-versao-entrega.md)

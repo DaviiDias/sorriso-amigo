@@ -1,0 +1,48 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sorriso-amigo-ingress-http
+  namespace: davi
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.middlewares: davi-redirect-https@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+  - host: davi.kevyn.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: sorriso-amigo
+            port:
+              number: 4000
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sorriso-amigo-ingress
+  namespace: davi
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - davi.kevyn.com.br
+    secretName: sorriso-amigo-tls
+  rules:
+  - host: davi.kevyn.com.br
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: sorriso-amigo
+            port:
+              number: 4000
