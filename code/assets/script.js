@@ -1675,6 +1675,8 @@ async function submitQuizResults() {
 
 async function loadQuizHistory() {
 	try {
+		if (!dom.quizHistoryList) return;
+
 		const result = await api("/quiz/history?limit=8");
 		dom.quizHistoryList.innerHTML = "";
 
