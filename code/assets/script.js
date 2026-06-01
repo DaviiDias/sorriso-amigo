@@ -78,6 +78,20 @@ const dom = {
 	quizRestartBtn: document.querySelector("#quizRestartBtn"),
 	videoContainer: document.querySelector("#videoContainer"),
 	preferencesForm: document.querySelector("#preferencesForm"),
+	dashboardDayDetailModal: document.querySelector("#dashboardDayDetailModal"),
+	dashboardDayDetailModalBackdrop: document.querySelector("#dashboardDayDetailModalBackdrop"),
+	dashboardDayDetailModalClose: document.querySelector("#dashboardDayDetailModalClose"),
+	dashboardDayDetailModalTitle: document.querySelector("#dashboardDayDetailModalTitle"),
+	dashboardDayDetailModalSubtitle: document.querySelector("#dashboardDayDetailModalSubtitle"),
+	dashboardDayDetailMorningPeriodIcon: document.querySelector("#dashboardDayDetailMorningPeriodIcon"),
+	dashboardDayDetailMorningResistanceIcon: document.querySelector("#dashboardDayDetailMorningResistanceIcon"),
+	dashboardDayDetailMorningNote: document.querySelector("#dashboardDayDetailMorningNote"),
+	dashboardDayDetailAfternoonPeriodIcon: document.querySelector("#dashboardDayDetailAfternoonPeriodIcon"),
+	dashboardDayDetailAfternoonResistanceIcon: document.querySelector("#dashboardDayDetailAfternoonResistanceIcon"),
+	dashboardDayDetailAfternoonNote: document.querySelector("#dashboardDayDetailAfternoonNote"),
+	dashboardDayDetailNightPeriodIcon: document.querySelector("#dashboardDayDetailNightPeriodIcon"),
+	dashboardDayDetailNightResistanceIcon: document.querySelector("#dashboardDayDetailNightResistanceIcon"),
+	dashboardDayDetailNightNote: document.querySelector("#dashboardDayDetailNightNote"),
 	reminderEnabled: document.querySelector("#reminderEnabled"),
 	reminderTimes: document.querySelector("#reminderTimes"),
 	accessibilityMode: document.querySelector("#accessibilityMode"),
@@ -166,6 +180,10 @@ function bindEvents() {
 	});
 
 	dom.checklistForm.addEventListener("submit", onChecklistSubmit);
+
+	if (dom.dashboardMonthHeatmap) {
+		dom.dashboardMonthHeatmap.addEventListener("click", handleDashboardHeatmapClick);
+	}
 	
 	// Ouvintes do Quiz Interativo (estilo Duolingo)
 	if (dom.quizStartBtn) {
@@ -179,6 +197,7 @@ function bindEvents() {
 	dom.preferencesForm.addEventListener("submit", onPreferencesSubmit);
 
 	bindConfirmModalEvents();
+	bindDayDetailModalEvents();
 
 	// Custom Checklist UI events
 	const timeBtns = document.querySelectorAll(".time-btn");
@@ -863,22 +882,25 @@ function buildMonthWeeklySeries(items, month) {
 
 	for (let weekStart = 1; weekStart <= lastDay; weekStart += 7) {
 		const weekEnd = Math.min(weekStart + 6, lastDay);
-		let percentSum = 0;
-		let daysWithRecord = 0;
+		let completedBrushings = 0;
 
 		for (let day = weekStart; day <= weekEnd; day += 1) {
 			const isoDate = `${month}-${String(day).padStart(2, "0")}`;
 			const item = byDate.get(isoDate);
-			if (!item) continue;
-			daysWithRecord += 1;
-			percentSum += computeDayAdherencePercent(item);
+			completedBrushings += countBrushingsForItem(item);
 		}
+
+		const expectedBrushings = (weekEnd - weekStart + 1) * 3;
+		const percent = expectedBrushings
+			? Math.round((completedBrushings / expectedBrushings) * 100)
+			: 0;
 
 		series.push({
 			label: `Dia ${weekStart}–${weekEnd}`,
-			percent: daysWithRecord ? Math.round(percentSum / daysWithRecord) : 0,
-			tooltip: daysWithRecord
-				? `Média da semana com ${daysWithRecord} dia(s) registrado(s)`
+			percent,
+			brushings: completedBrushings,
+			tooltip: expectedBrushings
+				? `${completedBrushings}/${expectedBrushings} escovações no período`
 				: "Sem registros nesta semana"
 		});
 	}
@@ -947,7 +969,7 @@ function renderDashboardWeekCalendar(items) {
 		const label = weekdayFormatter.format(date).replace(".", "");
 
 		html += `
-			<span class="heatmap-day ${level} heatmap-week-day" title="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}" aria-label="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}">${date.getDate()}</span>
+			<span class="heatmap-day ${level} heatmap-week-day" data-date="${isoDate}" title="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}" aria-label="${escapeHtml(item ? `${label} · ${dateFormatter.format(date)} · ${brushings}/3 escovações` : `${label} · ${dateFormatter.format(date)} · sem registro`)}">${date.getDate()}</span>
 		`;
 	});
 
@@ -1011,6 +1033,7 @@ function renderMonthHeatmap(items, month) {
 		html += `
 			<span
 				class="heatmap-day ${level}"
+				data-date="${isoDate}"
 				title="${escapeHtml(title)}"
 				aria-label="${escapeHtml(title)}"
 			>${day}</span>
@@ -1074,10 +1097,7 @@ function renderPeriodBars(items) {
 function getAttentionDays(items) {
 	return items
 		.filter((item) => {
-			const brushings = countBrushingsForItem(item);
-			const incomplete = brushings < 3;
-			const highResistance = item.resistance_level === "moderate" || item.resistance_level === "severe";
-			return incomplete || highResistance;
+			return item.resistance_level === "moderate" || item.resistance_level === "severe";
 		})
 		.sort((a, b) => (a.checklist_date < b.checklist_date ? 1 : -1));
 }
@@ -1534,6 +1554,132 @@ function closeConfirmModal(confirmed) {
 		confirmModalResolver(Boolean(confirmed));
 		confirmModalResolver = null;
 	}
+}
+
+function bindDayDetailModalEvents() {
+	if (!dom.dashboardDayDetailModal) return;
+
+	if (dom.dashboardDayDetailModalBackdrop) {
+		dom.dashboardDayDetailModalBackdrop.addEventListener("click", () => closeDayDetailModal());
+	}
+
+	if (dom.dashboardDayDetailModalClose) {
+		dom.dashboardDayDetailModalClose.addEventListener("click", () => closeDayDetailModal());
+	}
+
+	document.addEventListener("keydown", (event) => {
+		if (event.key === "Escape" && !dom.dashboardDayDetailModal.classList.contains("hidden")) {
+			closeDayDetailModal();
+		}
+	});
+}
+
+function handleDashboardHeatmapClick(event) {
+	const target = event.target.closest(".heatmap-day[data-date]");
+	if (!target || !dom.dashboardMonthHeatmap?.contains(target)) return;
+
+	openDayDetailModal(target.dataset.date || "");
+}
+
+function getChecklistItemForDate(date) {
+	return (
+		dashboardCache.monthItems.find((item) => item.checklist_date === date) ||
+		dashboardCache.recentItems.find((item) => item.checklist_date === date) ||
+		null
+	);
+}
+
+function getPeriodIconClass(period) {
+	const map = {
+		morning: "ph-sun-horizon",
+		afternoon: "ph-sun",
+		night: "ph-moon-stars"
+	};
+
+	return map[period] || "ph-circle";
+}
+
+function getResistanceIconClass(value) {
+	const map = {
+		none: "ph-smiley",
+		light: "ph-smiley-meh",
+		moderate: "ph-smiley-sad",
+		severe: "ph-smiley-angry"
+	};
+
+	return map[value] || "ph-circle";
+}
+
+function setDayDetailRow(periodIconElement, resistanceIconElement, noteElement, shouldShowData, item, period) {
+	if (!periodIconElement || !resistanceIconElement || !noteElement) return;
+
+	if (!shouldShowData || !item) {
+		periodIconElement.innerHTML = "";
+		resistanceIconElement.innerHTML = "";
+		noteElement.textContent = "";
+		return;
+	}
+
+	periodIconElement.innerHTML = `<i class="ph-fill ${getPeriodIconClass(period)}"></i>`;
+	resistanceIconElement.innerHTML = `<i class="ph-fill ${getResistanceIconClass(item.resistance_level)}"></i>`;
+	noteElement.textContent = String(item.notes || "").trim();
+}
+
+function openDayDetailModal(date) {
+	if (!dom.dashboardDayDetailModal || !date) return;
+
+	const item = getChecklistItemForDate(date);
+	const dateObject = new Date(`${date}T12:00:00`);
+	const displayDate = Number.isNaN(dateObject.getTime())
+		? date
+		: new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(dateObject);
+
+	if (dom.dashboardDayDetailModalTitle) {
+		dom.dashboardDayDetailModalTitle.textContent = displayDate;
+	}
+
+	if (dom.dashboardDayDetailModalSubtitle) {
+		dom.dashboardDayDetailModalSubtitle.textContent = item
+			? "Resistência e observação registradas por turno."
+			: "Nenhum registro encontrado para este dia.";
+	}
+
+	setDayDetailRow(
+		dom.dashboardDayDetailMorningPeriodIcon,
+		dom.dashboardDayDetailMorningResistanceIcon,
+		dom.dashboardDayDetailMorningNote,
+		Boolean(item?.brushing_morning),
+		item,
+		"morning"
+	);
+	setDayDetailRow(
+		dom.dashboardDayDetailAfternoonPeriodIcon,
+		dom.dashboardDayDetailAfternoonResistanceIcon,
+		dom.dashboardDayDetailAfternoonNote,
+		Boolean(item?.brushing_afternoon),
+		item,
+		"afternoon"
+	);
+	setDayDetailRow(
+		dom.dashboardDayDetailNightPeriodIcon,
+		dom.dashboardDayDetailNightResistanceIcon,
+		dom.dashboardDayDetailNightNote,
+		Boolean(item?.brushing_night),
+		item,
+		"night"
+	);
+
+	dom.dashboardDayDetailModal.classList.remove("hidden");
+	dom.dashboardDayDetailModal.setAttribute("aria-hidden", "false");
+	document.body.classList.add("modal-open");
+}
+
+function closeDayDetailModal() {
+	if (!dom.dashboardDayDetailModal) return;
+
+	dom.dashboardDayDetailModal.classList.add("hidden");
+	dom.dashboardDayDetailModal.setAttribute("aria-hidden", "true");
+	document.body.classList.remove("modal-open");
 }
 
 async function exitQuiz() {

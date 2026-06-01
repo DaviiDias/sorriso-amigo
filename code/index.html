@@ -465,6 +465,81 @@
 			</div>
 		</div>
 
+        <div id="dashboardDayDetailModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dashboardDayDetailModalTitle" aria-hidden="true">
+            <button type="button" class="app-modal-backdrop" id="dashboardDayDetailModalBackdrop" aria-label="Fechar"></button>
+            <div class="app-modal-card dashboard-detail-modal-card">
+                <div class="dashboard-detail-modal-header">
+                    <div>
+                        <p class="dashboard-detail-modal-kicker">Detalhe do dia</p>
+                        <h3 id="dashboardDayDetailModalTitle" class="app-modal-title">--/--/----</h3>
+                        <p id="dashboardDayDetailModalSubtitle" class="app-modal-message">Resumo por turno</p>
+                    </div>
+                    <button type="button" id="dashboardDayDetailModalClose" class="dashboard-detail-modal-close" aria-label="Fechar detalhe do dia">
+                        <i class="ph ph-x"></i>
+                    </button>
+                </div>
+
+                <div class="dashboard-day-detail-grid">
+                    <article class="dashboard-day-detail-row">
+                        <div class="dashboard-day-detail-columns-head">
+                            <span>Periodo</span>
+                            <span>Resistencia</span>
+                            <span>Observação</span>
+                        </div>
+                        <div class="dashboard-day-detail-row-body">
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailMorningPeriodIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailMorningResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-note">
+                                <div id="dashboardDayDetailMorningNote" class="dashboard-detail-note-box"></div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="dashboard-day-detail-row">
+                        <div class="dashboard-day-detail-columns-head">
+                            <span>Periodo</span>
+                            <span>Resistencia</span>
+                            <span>Observação</span>
+                        </div>
+                        <div class="dashboard-day-detail-row-body">
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailAfternoonPeriodIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailAfternoonResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-note">
+                                <div id="dashboardDayDetailAfternoonNote" class="dashboard-detail-note-box"></div>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="dashboard-day-detail-row">
+                        <div class="dashboard-day-detail-columns-head">
+                            <span>Periodo</span>
+                            <span>Resistencia</span>
+                            <span>Observação</span>
+                        </div>
+                        <div class="dashboard-day-detail-row-body">
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailNightPeriodIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailNightResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-note">
+                                <div id="dashboardDayDetailNightNote" class="dashboard-detail-note-box"></div>
+                            </div>
+                        </div>
+                    </article>
+                </div>
+            </div>
+        </div>
+
 		<!-- Global Toast Notifications -->
 		<div id="toast-container" class="toast-container"></div>
 		<script src="./assets/script.js" defer></script>
