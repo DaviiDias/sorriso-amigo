@@ -83,6 +83,9 @@ const dom = {
 	dashboardDayDetailModalClose: document.querySelector("#dashboardDayDetailModalClose"),
 	dashboardDayDetailModalTitle: document.querySelector("#dashboardDayDetailModalTitle"),
 	dashboardDayDetailModalSubtitle: document.querySelector("#dashboardDayDetailModalSubtitle"),
+	dashboardDayDetailRowMorning: document.querySelector("#dashboardDayDetailRowMorning"),
+	dashboardDayDetailRowAfternoon: document.querySelector("#dashboardDayDetailRowAfternoon"),
+	dashboardDayDetailRowNight: document.querySelector("#dashboardDayDetailRowNight"),
 	dashboardDayDetailMorningPeriodIcon: document.querySelector("#dashboardDayDetailMorningPeriodIcon"),
 	dashboardDayDetailMorningResistanceIcon: document.querySelector("#dashboardDayDetailMorningResistanceIcon"),
 	dashboardDayDetailMorningNote: document.querySelector("#dashboardDayDetailMorningNote"),
@@ -1610,16 +1613,49 @@ function getResistanceIconClass(value) {
 	return map[value] || "ph-circle";
 }
 
+function getResistanceToneClass(value) {
+	const map = {
+		none: "tone-positive",
+		light: "tone-neutral",
+		moderate: "tone-negative",
+		severe: "tone-extreme-negative"
+	};
+
+	return map[value] || "tone-neutral";
+}
+
+function getPeriodToneClass(period) {
+	const map = {
+		morning: "tone-morning",
+		afternoon: "tone-afternoon",
+		night: "tone-night"
+	};
+
+	return map[period] || "tone-morning";
+}
+
+function setRowVisibility(rowElement, visible) {
+	if (!rowElement) return;
+	rowElement.classList.toggle("hidden", !visible);
+}
+
 function setDayDetailRow(periodIconElement, resistanceIconElement, noteElement, shouldShowData, item, period) {
 	if (!periodIconElement || !resistanceIconElement || !noteElement) return;
 
+	const rowElement = periodIconElement.closest(".dashboard-day-detail-row");
+	setRowVisibility(rowElement, shouldShowData && Boolean(item));
+
 	if (!shouldShowData || !item) {
 		periodIconElement.innerHTML = "";
+		periodIconElement.className = "dashboard-detail-icon-circle";
 		resistanceIconElement.innerHTML = "";
+		resistanceIconElement.className = "dashboard-detail-icon-circle";
 		noteElement.textContent = "";
 		return;
 	}
 
+	periodIconElement.className = `dashboard-detail-icon-circle ${getPeriodToneClass(period)}`;
+	resistanceIconElement.className = `dashboard-detail-icon-circle ${getResistanceToneClass(item.resistance_level)}`;
 	periodIconElement.innerHTML = `<i class="ph-fill ${getPeriodIconClass(period)}"></i>`;
 	resistanceIconElement.innerHTML = `<i class="ph-fill ${getResistanceIconClass(item.resistance_level)}"></i>`;
 	noteElement.textContent = String(item.notes || "").trim();
