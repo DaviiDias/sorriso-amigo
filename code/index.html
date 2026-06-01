@@ -3,252 +3,470 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Sorriso Amigo | Saude Bucal TEA</title>
+		<title>Sorriso Amigo | Saúde Bucal e Acompanhamento TEA</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
-			href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Nunito+Sans:wght@400;600;700;800&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Lexend:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap"
 			rel="stylesheet"
 		/>
+        <!-- Phosphor Icons for minimalist Duolingo style -->
+        <script src="https://unpkg.com/@phosphor-icons/web"></script>
 		<link rel="stylesheet" href="./assets/style.css" />
 	</head>
-	<body>
-		<div class="bg-glow bg-glow-a"></div>
-		<div class="bg-glow bg-glow-b"></div>
+	<body class="mode-light">
+        <!-- Landing Auth remains structurally similar but will be styled minimally -->
+		<section id="landing" class="panel auth-panel">
+			<div class="brand-column">
+				<p class="eyebrow">Projeto Educativo Digital</p>
+				<h1>Sorriso Amigo</h1>
+				<p class="subtitle">Suporte contínuo para rotina de saúde bucal de pessoas com TEA e seus cuidadores.</p>
+				<ul class="feature-list">
+					<li>Checklist diário com nível de resistência</li>
+					<li>Guia lúdico de escovação por etapas</li>
+					<li>Quiz educativo com feedback imediato</li>
+					<li>Conteúdos em vídeo para familiares e profissionais</li>
+				</ul>
+			</div>
 
-		<main class="layout">
-			<section id="landing" class="panel auth-panel">
-				<div class="brand-column">
-					<p class="eyebrow">Projeto Educativo Digital</p>
-					<h1>Sorriso Amigo</h1>
-					<p class="subtitle">Suporte continuo para rotina de saude bucal de pessoas com TEA.</p>
-					<ul class="feature-list">
-						<li>Checklist diario com nivel de resistencia</li>
-						<li>Guia ludico de escovacao por etapas</li>
-						<li>Quiz educativo com feedback imediato</li>
-						<li>Conteudos em video para familiares e profissionais</li>
-					</ul>
+			<div class="auth-column">
+				<div class="auth-switch">
+					<button id="showLoginBtn" class="switch-btn active" type="button">Entrar</button>
+					<button id="showRegisterBtn" class="switch-btn" type="button">Criar conta</button>
 				</div>
 
-				<div class="auth-column">
-					<div class="auth-switch">
-						<button id="showLoginBtn" class="switch-btn active" type="button">Entrar</button>
-						<button id="showRegisterBtn" class="switch-btn" type="button">Criar conta</button>
-					</div>
+				<form id="loginForm" class="auth-form" novalidate>
+					<h2>Acesso seguro</h2>
+					<label>
+						E-mail
+						<input type="email" name="email" placeholder="voce@email.com" required />
+					</label>
+					<label>
+						Senha
+						<input type="password" name="password" placeholder="Mínimo 8 caracteres" required />
+					</label>
+					<button type="submit" class="btn btn-primary">Entrar na plataforma</button>
+				</form>
 
-					<form id="loginForm" class="auth-form" novalidate>
-						<h2>Acesso seguro</h2>
-						<label>
-							E-mail
-							<input type="email" name="email" placeholder="voce@email.com" required />
-						</label>
-						<label>
-							Senha
-							<input type="password" name="password" placeholder="Minimo 8 caracteres" required />
-						</label>
-						<button type="submit" class="btn btn-primary">Entrar na plataforma</button>
-					</form>
-
-					<form id="registerForm" class="auth-form hidden">
-						<h2>Novo cadastro</h2>
-						<label>
-							Nome completo
-							<input type="text" name="fullName" placeholder="Nome e sobrenome" required />
-						</label>
-						<label>
-							E-mail
-							<input type="email" name="email" placeholder="voce@email.com" required />
-						</label>
-						<label>
-							Perfil
-							<select name="role">
-								<option value="caregiver">Cuidador(a)</option>
-								<option value="family">Familiar</option>
-								<option value="professional">Profissional de saude</option>
-							</select>
-						</label>
-						<label>
-							Senha
-							<input type="password" name="password" placeholder="Minimo 8 caracteres" required />
-						</label>
-
-						<label class="consent-label">
-							<input type="checkbox" name="acceptTerms" required />
-							Li e aceito os termos de uso e consentimento.
-						</label>
-
-						<details class="terms-box">
-							<summary>Visualizar termo resumido</summary>
-							<p>
-								Os dados do usuario sao usados somente para educacao em saude bucal e acompanhamento de rotina.
-								O acesso e protegido por autenticacao e boas praticas de seguranca.
-							</p>
-							<p>
-								O conteudo tem base educativa e nao substitui consulta profissional individual.
-							</p>
-						</details>
-
-						<button type="submit" class="btn btn-primary">Criar conta e iniciar</button>
-					</form>
-				</div>
-			</section>
-
-			<section id="appShell" class="panel app-shell hidden">
-				<header class="app-header">
-					<div>
-						<p class="eyebrow">Sorriso TEA</p>
-						<h2 id="welcomeName">Bem-vindo(a)</h2>
-					</div>
-					<button id="logoutBtn" class="btn btn-ghost" type="button">Sair</button>
-				</header>
-
-				<nav class="tab-nav" aria-label="Navegacao principal">
-					<button class="tab-btn active" data-section="dashboard" type="button">Dashboard</button>
-					<button class="tab-btn" data-section="checklist" type="button">Checklist</button>
-					<button class="tab-btn" data-section="guide" type="button">Guia</button>
-					<button class="tab-btn" data-section="quiz" type="button">Quiz</button>
-					<button class="tab-btn" data-section="videos" type="button">Videos</button>
-					<button class="tab-btn" data-section="settings" type="button">Configuracoes</button>
-				</nav>
-
-				<p id="statusBar" class="status-bar" aria-live="polite"></p>
-
-				<section id="section-dashboard" class="app-section active">
-					<div class="stats-grid">
-						<article class="stat-card">
-							<h3>Adesao mensal</h3>
-							<p id="adherenceValue">0%</p>
-						</article>
-						<article class="stat-card">
-							<h3>Escovacoes concluidas</h3>
-							<p id="completedValue">0</p>
-						</article>
-						<article class="stat-card">
-							<h3>Resistencia moderada/grave</h3>
-							<p id="resistanceValue">0</p>
-						</article>
-					</div>
-
-					<label class="inline-control">
-						Mes de referencia
-						<input id="monthInput" type="month" />
+				<form id="registerForm" class="auth-form hidden">
+					<h2>Novo cadastro</h2>
+					<label>
+						Nome completo
+						<input type="text" name="fullName" placeholder="Nome e sobrenome" required />
+					</label>
+					<label>
+						E-mail
+						<input type="email" name="email" placeholder="voce@email.com" required />
+					</label>
+					<label>
+						Perfil
+						<select name="role">
+							<option value="caregiver">Cuidador(a)</option>
+							<option value="family">Familiar</option>
+							<option value="professional">Profissional de saúde</option>
+						</select>
+					</label>
+					<label>
+						Senha
+						<input type="password" name="password" placeholder="Mínimo 8 caracteres" required />
 					</label>
 
-					<div class="history-box">
-						<h3>Historico recente</h3>
-						<table>
-							<thead>
-								<tr>
-									<th>Data</th>
-									<th>Manha</th>
-									<th>Tarde</th>
-									<th>Noite</th>
-									<th>Resistencia</th>
-								</tr>
-							</thead>
-							<tbody id="historyTableBody"></tbody>
-						</table>
-					</div>
-				</section>
+					<label class="consent-label">
+						<input type="checkbox" name="acceptTerms" required />
+						Li e aceito os termos de uso e consentimento.
+					</label>
 
-				<section id="section-checklist" class="app-section">
-					<div class="card">
-						<h3>Checklist diario de escovacao</h3>
-						<form id="checklistForm" class="stack-form">
-							<label>
-								Data
-								<input id="checklistDate" type="date" required />
-							</label>
+					<details class="terms-box">
+						<summary>Visualizar termo resumido</summary>
+						<p>Os dados do usuário são usados somente para educação em saúde bucal...</p>
+					</details>
 
-							<div class="checkbox-line">
-								<label><input type="checkbox" name="morning" /> Escovou de manha</label>
-								<label><input type="checkbox" name="afternoon" /> Escovou de tarde</label>
-								<label><input type="checkbox" name="night" /> Escovou a noite</label>
-							</div>
+					<button type="submit" class="btn btn-primary">Criar conta e iniciar</button>
+				</form>
+			</div>
+		</section>
 
-							<label>
-								Nivel de resistencia
-								<select name="resistanceLevel">
-									<option value="none">Nenhuma</option>
-									<option value="light">Leve</option>
-									<option value="moderate">Moderada</option>
-									<option value="severe">Grave</option>
-								</select>
-							</label>
+        <!-- New Layout App Shell -->
+		<section id="appShell" class="app-layout hidden">
+            <!-- Sidebar / Navbar (Duolingo Style) -->
+            <aside class="sidebar">
+                <div class="sidebar-brand">
+                    <h2 class="brand-title">Sorriso Amigo</h2>
+                </div>
+                
+                <nav class="sidebar-nav">
+                    <!-- Added Phosphor icons & kept data-section for JS -->
+                    <button class="tab-btn active" data-section="dashboard" type="button">
+                        <i class="ph ph-house"></i>
+                        <span>Dashboard</span>
+                    </button>
+                    <button class="tab-btn" data-section="checklist" type="button">
+                        <i class="ph ph-check-square-offset"></i>
+                        <span>Checklist</span>
+                    </button>
+                    <button class="tab-btn" data-section="guide" type="button">
+                        <i class="ph ph-book-open-text"></i>
+                        <span>Guia</span>
+                    </button>
+                    <button class="tab-btn" data-section="quiz" type="button">
+                        <i class="ph ph-game-controller"></i>
+                        <span>Quizz</span>
+                    </button>
+                    <button class="tab-btn" data-section="videos" type="button">
+                        <i class="ph ph-video"></i>
+                        <span>Vídeo</span>
+                    </button>
+                    <button class="tab-btn" data-section="settings" type="button">
+                        <i class="ph ph-gear"></i>
+                        <span>Configurações</span>
+                    </button>
+                </nav>
 
-							<label>
-								Observacoes
-								<textarea name="notes" rows="4" placeholder="Ex.: aceitou melhor apos recurso visual."></textarea>
-							</label>
+                <div class="sidebar-footer">
+                    <button id="logoutBtn" class="btn-logout" type="button">
+                        <i class="ph ph-sign-out"></i>
+                        <span>Sair</span>
+                    </button>
+                </div>
+            </aside>
 
-							<button class="btn btn-primary" type="submit">Salvar registro</button>
-						</form>
-					</div>
-				</section>
+            <!-- Main Content Area -->
+            <main class="content-area">
+                <h2 id="dashboardPageTitle" class="page-section-title page-title-dashboard">Dashboard</h2>
+                <h2 id="videosPageTitle" class="page-section-title page-title-videos">Vídeos e conteúdos educativos</h2>
+                <div class="content-wrapper">
+                    <!-- Sections exist to not break script.js -->
+                    <section id="section-dashboard" class="app-section active">
+                        <div class="dashboard-layout">
+                            <div class="dashboard-toolbar">
+                                <label class="dashboard-month-control relative-group">
+                                    <span>Mês de referência</span>
+                                    <input id="monthInput" type="month" class="date-input dashboard-month-input" readonly />
+                                    <div id="dashboardMonthPicker" class="custom-datepicker hidden">
+                                        <div class="datepicker-header">
+                                            <button type="button" id="dashboardMonthPrev"><i class="ph ph-caret-left"></i></button>
+                                            <span id="dashboardMonthYear"></span>
+                                            <button type="button" id="dashboardMonthNext"><i class="ph ph-caret-right"></i></button>
+                                        </div>
+                                        <div id="dashboardMonthDays" class="datepicker-grid days-body"></div>
+                                    </div>
+                                </label>
+                            </div>
 
-				<section id="section-guide" class="app-section">
-					<h3>Guia ludico de escovacao</h3>
-					<div id="guideContainer" class="guide-grid"></div>
-				</section>
+                            <div class="dashboard-kpi-row">
+                                <article class="dashboard-stat-card">
+                                    <div class="dashboard-stat-icon" aria-hidden="true">
+                                        <i class="ph-fill ph-chart-line-up"></i>
+                                    </div>
+                                    <div class="dashboard-stat-body">
+                                        <h3>Adesão do mês</h3>
+                                        <p id="adherenceValue" class="dashboard-stat-value">0%</p>
+                                        <span class="dashboard-stat-hint">Escovações feitas vs. meta diária</span>
+                                    </div>
+                                </article>
+                                <article class="dashboard-stat-card">
+                                    <div class="dashboard-stat-icon" aria-hidden="true">
+                                        <i class="ph-fill ph-tooth"></i>
+                                    </div>
+                                    <div class="dashboard-stat-body">
+                                        <h3>Escovações realizadas</h3>
+                                        <p id="completedValue" class="dashboard-stat-value">0</p>
+                                        <span id="brushingsGoalHint" class="dashboard-stat-hint">de 0 previstas no mês</span>
+                                    </div>
+                                </article>
+                                <article class="dashboard-stat-card">
+                                    <div class="dashboard-stat-icon" aria-hidden="true">
+                                        <i class="ph-fill ph-calendar-check"></i>
+                                    </div>
+                                    <div class="dashboard-stat-body">
+                                        <h3>Dias com registro</h3>
+                                        <p id="trackedDaysValue" class="dashboard-stat-value">0</p>
+                                        <span id="resistanceHint" class="dashboard-stat-hint">Resistência moderada/grave: 0</span>
+                                    </div>
+                                </article>
+                            </div>
 
-				<section id="section-quiz" class="app-section">
-					<h3>Quiz educativo</h3>
-					<form id="quizForm" class="stack-form"></form>
-					<button id="quizSubmitBtn" class="btn btn-primary" type="button">Enviar respostas</button>
-					<div id="quizResult" class="card hidden"></div>
-					<div class="history-box">
-						<h3>Ultimas tentativas</h3>
-						<ul id="quizHistoryList" class="attempt-list"></ul>
-					</div>
-				</section>
+                            <article class="dashboard-panel dashboard-chart-panel">
+                                <header class="dashboard-panel-header dashboard-panel-header-split">
+                                    <div>
+                                        <h3>Visão do mês</h3>
+                                        <p class="dashboard-panel-subtitle">Cada quadrado = 1 dia (0 a 3 escovações). Passe o mouse para ver o detalhe.</p>
+                                    </div>
+                                    <div class="dashboard-chart-toggle" role="tablist" aria-label="Período do gráfico">
+                                        <button type="button" class="dashboard-toggle-btn active" data-chart-range="month">Semanas do mês</button>
+                                        <button type="button" class="dashboard-toggle-btn" data-chart-range="week">Últimos 7 dias</button>
+                                    </div>
+                                </header>
+                                <div id="dashboardMonthHeatmap" class="dashboard-heatmap" aria-label="Mapa de adesão do mês"></div>
+                                <div class="dashboard-heatmap-legend" aria-hidden="true">
+                                    <span><i class="legend-swatch level-none"></i> Sem registro</span>
+                                    <span><i class="legend-swatch level-low"></i> 1 escovação</span>
+                                    <span><i class="legend-swatch level-mid"></i> 2 escovações</span>
+                                    <span><i class="legend-swatch level-high"></i> 3 escovações</span>
+                                </div>
+                                <div id="dashboardChart" class="dashboard-chart" role="img" aria-label="Gráfico de adesão"></div>
+                            </article>
 
-				<section id="section-videos" class="app-section">
-					<h3>Videos e conteudos educativos</h3>
-					<div id="videoContainer" class="video-grid"></div>
-				</section>
+                            <article class="dashboard-panel dashboard-activity-panel">
+                                <header class="dashboard-panel-header">
+                                    <div>
+                                        <h3>Resumo prático</h3>
+                                        <p class="dashboard-panel-subtitle">Totais do mês e só o que precisa de atenção — detalhe dia a dia fica no Checklist</p>
+                                    </div>
+                                </header>
+                                <div class="dashboard-attention-block">
+                                    <h4 class="dashboard-subheading"><i class="ph ph-warning"></i> Dias que merecem atenção</h4>
+                                    <ul id="dashboardAttentionList" class="dashboard-activity-list dashboard-attention-list"></ul>
+                                    <div id="dashboardAttentionPagination" class="dashboard-pagination-footer"></div>
+                                </div>
+                                <div class="dashboard-activity-grid">
+                                    <div class="dashboard-activity-block">
+                                        <h4><i class="ph ph-sun-horizon"></i> Escovações por turno (mês)</h4>
+                                        <div id="dashboardPeriodBars" class="dashboard-period-bars"></div>
+                                    </div>
+                                    <div class="dashboard-activity-block">
+                                        <h4><i class="ph ph-game-controller"></i> Quizz (últimas tentativas)</h4>
+                                        <p id="dashboardQuizSummary" class="dashboard-quiz-summary"></p>
+                                        <ul id="dashboardRecentQuiz" class="dashboard-activity-list"></ul>
+                                    </div>
+                                </div>
+                            </article>
+                        </div>
+                    </section>
 
-				<section id="section-settings" class="app-section">
-					<div class="card">
-						<h3>Configuracoes</h3>
-						<form id="preferencesForm" class="stack-form">
-							<label class="consent-label">
-								<input id="reminderEnabled" type="checkbox" />
-								Ativar lembretes de escovacao no navegador
-							</label>
+                    <section id="section-checklist" class="app-section">
+                        <h2 class="checklist-title">Checklist da escovação</h2>
+                        <div class="card checklist-card">
+                            <form id="checklistForm" class="stack-form">
+                                <div class="form-group relative-group">
+                                    <label>Data da Escovação</label>
+                                    <input id="checklistDate" type="text" readonly required class="custom-input date-input" />
+                                    <!-- Custom Datepicker Wrapper -->
+                                    <div id="customDatePicker" class="custom-datepicker hidden">
+                                        <div class="datepicker-header">
+                                            <button type="button" id="dpPrev"><i class="ph ph-caret-left"></i></button>
+                                            <span id="dpMonthYear"></span>
+                                            <button type="button" id="dpNext"><i class="ph ph-caret-right"></i></button>
+                                        </div>
+                                        <div class="datepicker-grid days-header">
+                                            <span>Dom</span><span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span>
+                                        </div>
+                                        <div id="dpDays" class="datepicker-grid days-body"></div>
+                                    </div>
+                                </div>
 
-							<label>
-								Horarios (HH:MM, separados por virgula)
-								<input id="reminderTimes" type="text" placeholder="08:00,13:00,20:00" />
-							</label>
+                                <div class="form-group time-group">
+                                    <label class="text-center">Turno / Período do dia</label>
+                                    <div class="time-selector">
+                                        <button type="button" class="time-btn" data-time="morning" title="Manhã">
+                                            <i class="ph ph-sun-horizon"></i>
+                                        </button>
+                                        <button type="button" class="time-btn" data-time="afternoon" title="Tarde">
+                                            <i class="ph ph-sun"></i>
+                                        </button>
+                                        <button type="button" class="time-btn" data-time="night" title="Noite">
+                                            <i class="ph ph-moon-stars"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Hidden inputs to keep script.js compatibility -->
+                                    <input type="checkbox" name="morning" id="input-morning" class="hidden" />
+                                    <input type="checkbox" name="afternoon" id="input-afternoon" class="hidden" />
+                                    <input type="checkbox" name="night" id="input-night" class="hidden" />
+                                </div>
 
-							<label>
-								Acessibilidade
-								<select id="accessibilityMode">
-									<option value="default">Padrao</option>
-									<option value="high-contrast">Alto contraste</option>
-									<option value="large-text">Texto ampliado</option>
-								</select>
-							</label>
+                                <div class="form-group resistance-group">
+                                    <label class="text-center">Nível de Resistência</label>
+                                    <div class="resistance-selector">
+                                        <button type="button" class="res-btn extreme-negative" data-level="severe" title="Extremamente Negativa">
+                                            <i class="ph-fill ph-smiley-angry"></i>
+                                        </button>
+                                        <button type="button" class="res-btn negative" data-level="moderate" title="Negativa">
+                                            <i class="ph-fill ph-smiley-sad"></i>
+                                        </button>
+                                        <button type="button" class="res-btn neutral" data-level="light" title="Neutra">
+                                            <i class="ph-fill ph-smiley-meh"></i>
+                                        </button>
+                                        <button type="button" class="res-btn positive" data-level="none" title="Positiva">
+                                            <i class="ph-fill ph-smiley"></i>
+                                        </button>
+                                        <button type="button" class="res-btn extreme-positive" data-level="super-none" title="Extremamente Positiva">
+                                            <i class="ph-fill ph-smiley-wink"></i>
+                                        </button>
+                                    </div>
+                                    <!-- Hidden input to keep script.js compatibility -->
+                                    <input type="hidden" name="resistanceLevel" id="input-resistance" value="none" />
+                                </div>
 
-							<button class="btn btn-primary" type="submit">Salvar preferencias</button>
-						</form>
+                                <div class="form-group">
+                                    <label>Observação</label>
+                                    <textarea name="notes" rows="4" maxlength="150" placeholder="Ex.: aceitou melhor após recurso visual." class="custom-input custom-textarea"></textarea>
+                                </div>
 
-						<hr />
+                                <button class="btn btn-primary" type="submit">Salvar registro</button>
+                            </form>
+                        </div>
+                    </section>
 
-						<h4>Ajuda e contato</h4>
-						<p>Email institucional sugerido: contato@sorrisoamigo.org</p>
-						<p>Telefone sugerido: (00) 0000-0000</p>
 
-						<h4>Termos de uso</h4>
-						<p>
-							Este sistema tem objetivo educativo e de apoio de rotina. Nao substitui avaliacao clinica
-							odontologica individual.
-						</p>
-					</div>
-				</section>
-			</section>
-		</main>
+                    <section id="section-guide" class="app-section">
+                        <h3>Guia lúdico de escovação</h3>
+                        <div id="guideContainer" class="guide-grid mt-4"></div>
+                    </section>
 
+                    <section id="section-quiz" class="app-section">
+                        <div id="quizContainerBox" class="quiz-container-box">
+                            
+                            <!-- Tela de Início -->
+                            <div id="quizStateStart" class="quiz-state-view">
+                                <div class="quiz-start-card">
+                                    <h3>Começar Quizz de Escovação?</h3>
+                                    <button id="quizStartBtn" class="quiz-play-btn" type="button" title="Começar Quiz">
+                                        <i class="ph-fill ph-play"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Tela de Quiz Ativo (Estilo Duolingo) -->
+                            <div id="quizStateActive" class="quiz-state-view hidden">
+                                <div class="quiz-header">
+                                    <button id="quizExitHeaderBtn" class="quiz-close-btn" type="button" title="Sair do Quiz">
+                                        <i class="ph ph-x"></i>
+                                    </button>
+                                    <div class="quiz-progress-wrapper">
+                                        <div class="quiz-progress-track">
+                                            <div id="quizProgressBar" class="quiz-progress-fill" style="width: 0%;"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="quiz-question-container">
+                                    <div class="quiz-question-head">
+                                        <span id="quizQuestionCategory" class="quiz-category-badge">Categoria</span>
+                                        <h2 id="quizQuestionText" class="quiz-question-title">Pergunta do Quiz</h2>
+                                    </div>
+                                    <div id="quizOptionsGrid" class="quiz-options-stack">
+                                        <!-- Renderizado dinamicamente -->
+                                    </div>
+                                </div>
+
+                                <div class="quiz-footer">
+                                    <hr class="quiz-footer-divider" />
+                                    <div class="quiz-footer-buttons">
+                                        <button id="quizExitFooterBtn" class="quiz-btn-exit" type="button">Sair</button>
+                                        <div id="quizFeedbackContainer" class="quiz-feedback-banner hidden">
+                                            <div class="feedback-content">
+                                                <i id="quizFeedbackIcon" class="ph-fill"></i>
+                                                <div class="feedback-text">
+                                                    <strong id="quizFeedbackTitle">Correto!</strong>
+                                                    <p id="quizFeedbackExplanation">Explicação lúdica da resposta.</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <button id="quizActionBtn" class="quiz-btn-action" type="button" disabled>Verificar</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tela de Resultados -->
+                            <div id="quizStateResults" class="quiz-state-view hidden">
+                                <div class="quiz-results-card">
+                                    <div class="results-header">
+                                        <i class="ph-fill ph-trophy trophy-icon"></i>
+                                        <h2>Fim do Quiz!</h2>
+                                        <p class="results-subtitle">Veja o seu desempenho nas perguntas de hoje.</p>
+                                    </div>
+                                    <div class="results-stats">
+                                        <div class="result-stat-item">
+                                            <span class="stat-label">Pontuação</span>
+                                            <span id="quizResultsScore" class="stat-value">0/0</span>
+                                        </div>
+                                        <div class="result-stat-item">
+                                            <span class="stat-label">Aproveitamento</span>
+                                            <span id="quizResultsPercentage" class="stat-value">0%</span>
+                                        </div>
+                                    </div>
+                                    <div class="results-feedback-list">
+                                        <h3>Revisão das respostas</h3>
+                                        <ul id="quizResultsFeedbackList" class="results-review-list"></ul>
+                                    </div>
+                                    <button id="quizRestartBtn" class="btn btn-primary mt-4" type="button">Voltar ao início</button>
+                                </div>
+                            </div>
+
+                        </div>
+                    </section>
+
+                    <section id="section-videos" class="app-section">
+                        <div id="videoContainer" class="video-grid mt-4"></div>
+                    </section>
+
+                    <section id="section-settings" class="app-section">
+                        <div class="card">
+                            <h3>Configurações</h3>
+                            <form id="preferencesForm" class="stack-form mt-4">
+                                <label class="consent-label">
+                                    <input id="reminderEnabled" type="checkbox" />
+                                    Ativar lembretes de escovação no navegador
+                                </label>
+
+                                <label>
+                                    Horários (HH:MM, separados por vírgula)
+                                    <input id="reminderTimes" type="text" placeholder="08:00,13:00,20:00" />
+                                </label>
+
+                                <label>
+                                    Acessibilidade
+                                    <select id="accessibilityMode">
+                                        <option value="default">Padrão</option>
+                                        <option value="high-contrast">Alto contraste</option>
+                                        <option value="large-text">Texto ampliado</option>
+                                    </select>
+                                </label>
+
+                                <label>
+                                    Tema Visual
+                                    <select id="themeMode">
+                                        <option value="light">Claro (Padrão / TEA-Friendly)</option>
+                                        <option value="dark">Escuro</option>
+                                        <option value="blue">Claro (Azul Bebê)</option>
+                                    </select>
+                                </label>
+
+                                <button class="btn btn-primary" type="submit">Salvar preferências</button>
+                            </form>
+
+                            <hr />
+
+                            <h4>Ajuda e contato</h4>
+                            <p>Email institucional sugerido: contato@sorrisoamigo.org</p>
+                            <p>Telefone sugerido: (00) 0000-0000</p>
+
+                            <h4>Termos de uso</h4>
+                            <p>Este sistema tem objetivo educativo e de apoio de rotina. Não substitui avaliação clínica odontológica individual.</p>
+                        </div>
+                    </section>
+                </div>
+            </main>
+		</section>
+
+		<!-- Modal de confirmação (padrão do sistema) -->
+		<div id="confirmModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmModalTitle" aria-hidden="true">
+			<button type="button" class="app-modal-backdrop" id="confirmModalBackdrop" aria-label="Fechar"></button>
+			<div class="app-modal-card">
+				<div class="app-modal-icon" id="confirmModalIcon" aria-hidden="true">
+					<i class="ph-fill ph-warning-circle"></i>
+				</div>
+				<h3 id="confirmModalTitle" class="app-modal-title">Confirmar ação</h3>
+				<p id="confirmModalMessage" class="app-modal-message"></p>
+				<div class="app-modal-actions">
+					<button type="button" id="confirmModalCancel" class="app-modal-btn app-modal-btn-cancel">Cancelar</button>
+					<button type="button" id="confirmModalConfirm" class="app-modal-btn app-modal-btn-confirm">Confirmar</button>
+				</div>
+			</div>
+		</div>
+
+		<!-- Global Toast Notifications -->
+		<div id="toast-container" class="toast-container"></div>
 		<script src="./assets/script.js" defer></script>
 	</body>
 </html>

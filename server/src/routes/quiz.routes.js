@@ -15,7 +15,9 @@ router.get("/questions", async (req, res, next) => {
         q.question_text,
         q.category,
         o.id AS option_id,
-        o.option_text
+        o.option_text,
+        o.is_correct,
+        o.explanation
       FROM quiz_questions q
       JOIN quiz_options o ON o.question_id = q.id
       ORDER BY q.id ASC, o.id ASC
@@ -36,7 +38,9 @@ router.get("/questions", async (req, res, next) => {
 
       grouped.get(row.question_id).options.push({
         id: row.option_id,
-        text: row.option_text
+        text: row.option_text,
+        isCorrect: Boolean(row.is_correct),
+        explanation: row.explanation || ""
       });
     }
 
