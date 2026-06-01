@@ -28,6 +28,10 @@ const allowedOrigins = env.frontendOrigin
 app.use(
   cors({
     origin(origin, callback) {
+      if (env.publicAccessMode) {
+        return callback(null, true);
+      }
+
       if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
