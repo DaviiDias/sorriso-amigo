@@ -21,6 +21,7 @@ const QUICK_ACCESS_MODE = false;
 const QUICK_ACCESS_TOKEN = "quick-access-demo-token";
 const demoStore = createDemoStore();
 const OFFLINE_STORE_KEY = "sorriso_offline_store";
+const LOCAL_DEMO_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
 const dom = {
 	landing: document.querySelector("#landing"),
@@ -113,7 +114,34 @@ async function init() {
 		return;
 	}
 
+	if (shouldStartInLocalDemoMode()) {
+		enterLocalDemoSession();
+		return;
+	}
+
 	await autoAuthenticate();
+}
+
+function shouldStartInLocalDemoMode() {
+	if (window.location.protocol === "file:") {
+		return true;
+	}
+
+	if (!LOCAL_DEMO_HOSTS.has(window.location.hostname)) {
+		return false;
+	}
+
+	return window.location.port === "5501" || window.location.port === "5173" || window.location.port === "3000" || window.location.port === "8080";
+}
+
+function enterLocalDemoSession() {
+	activateSession(QUICK_ACCESS_TOKEN, {
+		id: 1,
+		full_name: "Visitante (Local)",
+		email: "visitante@sorrisoamigo.org",
+		role: "caregiver"
+	});
+	setStatus("Modo local ativo. Entrando direto no Dashboard.", "success");
 }
 
 function bindEvents() {
@@ -650,6 +678,11 @@ async function bootstrapSession() {
 		dom.appShell.classList.remove("hidden");
 		await loadAllData();
 	} catch (error) {
+		if (shouldStartInLocalDemoMode()) {
+			enterLocalDemoSession();
+			return;
+		}
+
 		logout(true);
 	}
 }
@@ -659,6 +692,11 @@ function logout(silent) {
 	state.user = null;
 	localStorage.removeItem("sorriso_token");
 	stopReminderEngine();
+
+	if (shouldStartInLocalDemoMode()) {
+		enterLocalDemoSession();
+		return;
+	}
 
 	autoAuthenticate();
 
@@ -671,6 +709,11 @@ async function autoAuthenticate() {
 	const defaultEmail = "visitante@sorrisoamigo.org";
 	const defaultPassword = "DefaultVisitante123!";
 	const defaultName = "Visitante";
+
+	if (shouldStartInLocalDemoMode()) {
+		enterLocalDemoSession();
+		return;
+	}
 
 	try {
 		setStatus("Autenticando automaticamente...", "info");
