@@ -95,9 +95,13 @@
                 </div>
                 
                 <nav class="sidebar-nav">
-                    <!-- Added Phosphor icons & kept data-section for JS -->
-                    <button class="tab-btn active" data-section="dashboard" type="button">
+                    <button class="tab-btn active" data-section="inicio" type="button">
                         <i class="ph ph-house"></i>
+                        <span>Início</span>
+                    </button>
+                    <!-- Added Phosphor icons & kept data-section for JS -->
+                    <button class="tab-btn" data-section="dashboard" type="button">
+                        <i class="ph ph-squares-four"></i>
                         <span>Dashboard</span>
                     </button>
                     <button class="tab-btn" data-section="checklist" type="button">
@@ -136,7 +140,28 @@
                 <h2 id="videosPageTitle" class="page-section-title page-title-videos">Vídeos e conteúdos educativos</h2>
                 <div class="content-wrapper">
                     <!-- Sections exist to not break script.js -->
-                    <section id="section-dashboard" class="app-section active">
+                    <section id="section-inicio" class="app-section active">
+                        <div class="intro-layout">
+                            <article class="intro-hero card">
+                                <p class="intro-kicker">Página institucional</p>
+                                <h3>Espaço inicial do Sorriso Amigo</h3>
+                                <p>
+                                    Aqui entrarão as informações da escola, da faculdade e outros conteúdos institucionais que serão adicionados na próxima etapa.
+                                </p>
+                            </article>
+
+                            <section class="institution-section">
+                                <div class="institution-section-head">
+                                    <p class="intro-kicker">Instituições</p>
+                                    <h3>Logos das instituições parceiras</h3>
+                                    <p>Clique em cada logo para ler as informações completas em uma modal rolável.</p>
+                                </div>
+                                <div id="institutionLogosGrid" class="institution-grid"></div>
+                            </section>
+                        </div>
+                    </section>
+
+                    <section id="section-dashboard" class="app-section">
                         <div class="dashboard-layout">
                             <div class="dashboard-toolbar">
                                 <label class="dashboard-month-control relative-group">
@@ -310,6 +335,8 @@
 
                     <section id="section-guide" class="app-section">
                         <h3>Guia lúdico de escovação</h3>
+                        <p class="guide-section-note">Toque em cada etapa para ver as instruções completas e conclua uma etapa por vez.</p>
+                        <p id="guideProgressSummary" class="guide-progress-summary">0 de 7 etapas concluídas</p>
                         <div id="guideContainer" class="guide-grid mt-4"></div>
                     </section>
 
@@ -464,6 +491,50 @@
 				</div>
 			</div>
 		</div>
+
+        <div id="guideStepModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="guideStepModalTitle" aria-hidden="true">
+            <button type="button" class="app-modal-backdrop" id="guideStepModalBackdrop" aria-label="Fechar"></button>
+            <div class="app-modal-card guide-modal-card">
+                <div class="guide-modal-media-shell">
+                    <div class="guide-carousel">
+                        <button type="button" id="guideCarouselPrev" class="guide-carousel-nav" aria-label="Imagem anterior">
+                            <i class="ph ph-caret-left"></i>
+                        </button>
+                        <div class="guide-carousel-viewport">
+                            <div id="guideCarouselTrack" class="guide-carousel-track"></div>
+                        </div>
+                        <button type="button" id="guideCarouselNext" class="guide-carousel-nav" aria-label="Próxima imagem">
+                            <i class="ph ph-caret-right"></i>
+                        </button>
+                    </div>
+                    <div id="guideCarouselCounter" class="guide-carousel-counter" aria-live="polite"></div>
+                </div>
+                <div class="guide-modal-content">
+                    <p id="guideModalKicker" class="app-modal-kicker">Etapa</p>
+                    <h3 id="guideStepModalTitle" class="app-modal-title">Etapa do guia</h3>
+                    <p id="guideStepModalDescription" class="app-modal-message guide-modal-description"></p>
+                    <div id="guideStepModalDetails" class="guide-modal-details"></div>
+                </div>
+                <div class="app-modal-actions guide-modal-actions">
+                    <button type="button" id="guideStepModalConclude" class="app-modal-btn app-modal-btn-confirm">Concluir</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="institutionModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="institutionModalTitle" aria-hidden="true">
+            <button type="button" class="app-modal-backdrop" id="institutionModalBackdrop" aria-label="Fechar"></button>
+            <div class="app-modal-card institution-modal-card">
+                <div class="institution-modal-preview" id="institutionModalPreview"></div>
+                <div class="institution-modal-scroll">
+                    <p id="institutionModalKicker" class="app-modal-kicker">Instituição</p>
+                    <h3 id="institutionModalTitle" class="app-modal-title">Título</h3>
+                    <div id="institutionModalContent" class="institution-modal-content"></div>
+                </div>
+                <div class="app-modal-actions institution-modal-actions">
+                    <button type="button" id="institutionModalClose" class="app-modal-btn app-modal-btn-confirm">Fechar</button>
+                </div>
+            </div>
+        </div>
 
         <div id="dashboardDayDetailModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="dashboardDayDetailModalTitle" aria-hidden="true">
             <button type="button" class="app-modal-backdrop" id="dashboardDayDetailModalBackdrop" aria-label="Fechar"></button>

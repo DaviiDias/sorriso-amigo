@@ -7,13 +7,16 @@ const state = {
 	token: localStorage.getItem("sorriso_token") || "",
 	user: null,
 	quizQuestions: [],
+	guideModalStep: null,
+	guideCarouselIndex: 0,
 	reminderTimer: null,
 	lastNotificationKey: "",
 	currentQuestionIndex: 0,
 	selectedOptionId: null,
 	quizAnswers: [],
 	quizState: "start",
-	offlineMode: false
+	offlineMode: false,
+	completedGuideStepIds: new Set()
 };
 
 const runtimeConfig = {
@@ -59,6 +62,26 @@ const dom = {
 	checklistForm: document.querySelector("#checklistForm"),
 	checklistDate: document.querySelector("#checklistDate"),
 	guideContainer: document.querySelector("#guideContainer"),
+	guideProgressSummary: document.querySelector("#guideProgressSummary"),
+	guideStepModal: document.querySelector("#guideStepModal"),
+	guideStepModalBackdrop: document.querySelector("#guideStepModalBackdrop"),
+	guideCarouselPrev: document.querySelector("#guideCarouselPrev"),
+	guideCarouselNext: document.querySelector("#guideCarouselNext"),
+	guideCarouselTrack: document.querySelector("#guideCarouselTrack"),
+	guideCarouselCounter: document.querySelector("#guideCarouselCounter"),
+	guideModalKicker: document.querySelector("#guideModalKicker"),
+	guideStepModalTitle: document.querySelector("#guideStepModalTitle"),
+	guideStepModalDescription: document.querySelector("#guideStepModalDescription"),
+	guideStepModalDetails: document.querySelector("#guideStepModalDetails"),
+	guideStepModalConclude: document.querySelector("#guideStepModalConclude"),
+	institutionLogosGrid: document.querySelector("#institutionLogosGrid"),
+	institutionModal: document.querySelector("#institutionModal"),
+	institutionModalBackdrop: document.querySelector("#institutionModalBackdrop"),
+	institutionModalPreview: document.querySelector("#institutionModalPreview"),
+	institutionModalKicker: document.querySelector("#institutionModalKicker"),
+	institutionModalTitle: document.querySelector("#institutionModalTitle"),
+	institutionModalContent: document.querySelector("#institutionModalContent"),
+	institutionModalClose: document.querySelector("#institutionModalClose"),
 	quizContainerBox: document.querySelector("#quizContainerBox"),
 	quizStateStart: document.querySelector("#quizStateStart"),
 	quizStateActive: document.querySelector("#quizStateActive"),
@@ -122,6 +145,308 @@ const dashboardCache = {
 	chartRange: "month",
 	attentionPage: 1
 };
+
+const institutionCards = [
+	{
+		id: "unesp",
+		title: "UNESP",
+		kicker: "Universidade parceira",
+		logoUrl: "./assets/instituições_logos/Logo - Unesp.png",
+		previewType: "image",
+		accent: "#119be0",
+		content: [
+			{
+				headline: "Sobre a UNESP",
+				text: 'Universidade Estadual Paulista "Júlio de Mesquita Filho" (Unesp) é uma universidade pública brasileira, com atuação no ensino, na pesquisa e na extensão de serviços à comunidade. A instituição é uma das quatro universidades mantidas pelo governo do estado de São Paulo, ao lado da Universidade de São Paulo (USP), Universidade Estadual de Campinas (Unicamp) e da Universidade Virtual do Estado de São Paulo (Univesp). Em 2024, a Unesp foi eleita a quinta melhor universidade da América Latina pela revista Times Higher Education.'
+			},
+			{
+				headline: "História e Estrutura",
+				text: 'Criada em 1976 a partir de institutos isolados de ensino superior que existiam em várias regiões do estado, a Unesp possui cerca de 40 mil estudantes e 3 mil professores espalhados por 32 faculdades e institutos, que oferecem 168 cursos de graduação e 114 cursos de pós-graduação, em 64 profissões de nível superior.'
+			},
+			{
+				headline: "Reconhecimento Internacional",
+				text: 'A instituição é considerada uma das melhores universidades do Brasil, da América Latina, dos BRICS, dos países emergentes e uma das 100 melhores universidades jovens do mundo por diferentes classificações internacionais. Além disso, a UNESCO apontou a Unesp como a segunda universidade brasileira em números de artigos científicos de nível internacional, sendo responsável por 8% da produção científica nacional, ao lado da Unicamp e atrás apenas da USP.'
+			}
+		]
+	},
+	{
+		id: "saude-coletiva",
+		title: "Saúde Coletiva",
+		kicker: "Programa de pós-graduação",
+		logoUrl: "./assets/instituições_logos/Logo - Saúde Coletiva.png",
+		previewType: "image",
+		accent: "#0f9f6e",
+		content: [
+			{
+				headline: "Avaliação CAPES",
+				text: "4"
+			},
+			{
+				headline: "Descrição do Programa",
+				text: 'A estrutura do Programa de Pós-Graduação em Saúde Coletiva em Odontologia da Faculdade de Odontologia de Araçatuba FOA/UNESP objetiva a formação de um profissional de saúde capaz de produzir mudanças positivas na problemática de saúde da comunidade, gerando e aplicando conhecimentos e tecnologia capazes de interferir positivamente no ambiente em que atua. Essa estrutura é embasada nos conhecimentos das matérias básicas e complementares e, instrumentada pelas experiências de aprendizagem capazes de produzir, ao fim do curso, um profissional apto a interferir eficazmente no binômio saúde-doença, na área da Odontologia e Saúde Coletiva.'
+			},
+			{
+				headline: "Missão do Programa",
+				text: 'A missão do Programa de Pós-graduação em Saúde Coletiva em Odontologia é formar mestres e doutores, com experiência em saúde pública, capazes de atuar nas universidades, nos serviços públicos e privados de saúde e em instituições relacionadas à área da saúde, desenvolvendo atividades de ensino, pesquisa, extensão e gestão na área da saúde coletiva, com vistas à melhoria das condições de saúde e ao desenvolvimento social da população.'
+			},
+			{
+				headline: "Objetivos do Programa",
+				text: 'O Programa de Pós-Graduação em Saúde Coletiva em Odontologia tem por finalidade formar um profissional de saúde polivalente, apto a desempenhar funções de ensino, pesquisa, extensão e administração, com prática de atuação comunitária, capacitado para analisar, planejar, executar e avaliar, em nível administrativo e operacional, projetos para a promoção de saúde e resolução dos problemas de Odontologia e Saúde da comunidade.'
+			},
+			{
+				headline: "Mestrado",
+				text: 'No curso de Mestrado, os objetivos estão centrados na formação do docente-pesquisador na área da saúde coletiva, com habilidades e competências para atuar como agente multiplicador e formar recursos humanos para a área da saúde, em instituições de ensino e serviços de saúde, na lógica da educação permanente, devendo ser capaz de analisar, planejar, executar e avaliar programas de saúde, em nível administrativo e operacional.'
+			},
+			{
+				headline: "Doutorado",
+				text: 'No curso de Doutorado, os objetivos são direcionados à formação do pesquisador qualificado na área de saúde coletiva, com competências e habilidades para gerar novos conhecimentos, atuar na gestão da saúde em suas diferentes dimensões, com capacidade de analisar criticamente a realidade do meio onde atua. O aluno do curso de Doutorado deverá ser capaz de identificar os problemas relacionados à saúde, no seu conceito amplo, levantando hipóteses que gerem pesquisas, inovação e desenvolvimento tecnológico, com vistas à transformação social.'
+			}
+		]
+	},
+	{
+		id: "capes",
+		title: "CAPES",
+		kicker: "Portal institucional",
+		logoUrl: "./assets/instituições_logos/Logo - CAPES.png",
+		previewType: "image",
+		accent: "#1a8ed8",
+		content: [
+			{
+				headline: "Acesso oficial",
+				text: "O acesso será direcionado para o portal institucional da CAPES."
+			},
+			{
+				headline: "Link de destino",
+				text: "https://www.gov.br/capes/pt-br"
+			}
+		],
+		linkUrl: "https://www.gov.br/capes/pt-br"
+	},
+	{
+		id: "nepesco",
+		title: "NEPESCO",
+		kicker: "NEPESCO",
+		logoUrl: "./assets/instituições_logos/Logo - NEPESCO.png",
+		previewType: "image",
+		accent: "#1c73d1",
+		content: [
+			{
+				headline: "Sobre o NEPESCO",
+				text: 'O NEPESCO surgiu na década de 90 na FOA pela necessidade de se promover o desenvolvimento de pesquisas e estudos nas áreas de Educação para a Saúde, Epidemiologia, Cariologia, Métodos e Técnicas em Odontologia Preventiva e Administração em Saúde Coletiva.'
+			},
+			{
+				headline: "Missão",
+				text: 'Além do mais, a valorização da formação do profissional de saúde com competências e habilidades generalistas e voltadas para a lógica do sistema de saúde brasileiro, conforme regem as diretrizes curriculares, embute na Odontologia Preventiva e Social um importante papel articulador dessa formação. O NEPESCO existe justamente inserido nessa abordagem inovadora de produção de conhecimento e prestação de serviço.'
+			},
+			{
+				headline: "Áreas de Atuação",
+				text: 'Educação para a Saúde, Epidemiologia, Cariologia, Métodos e Técnicas em Odontologia Preventiva, Administração em Saúde Coletiva.'
+			}
+		]
+	}
+];
+
+const GUIDE_STEPS_CATALOG = [
+	{
+		id: 1,
+		step_order: 1,
+		title: "Preparação do Ambiente",
+		description: "Organize o espaço e deixe os materiais visíveis antes de iniciar.",
+		coverImage: "./assets/etapas_guia/Etapa 1/Capa - 1 foto.jpg",
+		bannerImages: [
+			"./assets/etapas_guia/Etapa 1/Capa - 1 foto.jpg",
+			"./assets/etapas_guia/Etapa 1/2 foto_.jpg",
+			"./assets/etapas_guia/Etapa 1/3 foto_.jpg"
+		],
+		instructions: [
+			"Dirija-se ao local onde será realizada a escovação.",
+			"Separe todos os materiais.",
+			"Coloque a escova e a pasta de dente à frente.",
+			"Separe o fio dental e deixe visível."
+		],
+		adaptations: {
+			n1: "O responsável nomeia os objetos. O indivíduo com TEA organiza de forma autônoma.",
+			n2: "O responsável organiza e aponta cada item. O indivíduo com TEA confirma olhando ou tocando em cada objeto.",
+			n3: "O responsável realiza a organização completa com apoio de pictogramas para mostrar cada etapa."
+		},
+		clinicalAttention:
+			"Um ambiente silencioso, organizado e com poucos estímulos visuais ajuda a tornar a escovação mais tranquila."
+	},
+	{
+		id: 2,
+		step_order: 2,
+		title: "Aplicação",
+		description: "Aplique a quantidade de dentifrício correta para cada faixa etária.",
+		coverImage: "./assets/etapas_guia/Etapa 2/Capa - 1 foto.jpg",
+		bannerImages: [
+			"./assets/etapas_guia/Etapa 2/Capa - 1 foto.jpg",
+			"./assets/etapas_guia/Etapa 2/2 foto.jpg",
+			"./assets/etapas_guia/Etapa 2/3 foto.jpg"
+		],
+		instructions: [
+			"Segure a escova com firmeza na mão dominante.",
+			"Abra a tampa da pasta de dente.",
+			"Aplique a quantidade indicada para a idade.",
+			"Feche a tampa da pasta e recoloque no lugar."
+		],
+		referenceVisual: {
+			title: "Referência visual - quantidade da pasta por idade",
+			items: [
+				{
+					label: "0 - 3 anos",
+					subtitle: "1/2 grão de arroz",
+					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Pasta - 0 - 3 anos - 01 foto.jpg"
+				},
+				{
+					label: "3 - 6 anos",
+					subtitle: "1 grão de arroz",
+					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Pasta - 3- 6 anos - 02 foto.png"
+				},
+				{
+					label: "Acima de 6 anos",
+					subtitle: "1 grão de feijão",
+					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Pasta - Acima de 6 anos - 03 foto.jpg"
+				}
+			]
+		},
+		adaptations: {
+			n1: "O indivíduo aplica de forma autônoma após ver a referência visual.",
+			n2: "O responsável aponta a quantidade certa e o indivíduo realiza com supervisão.",
+			n3: "O responsável realiza a aplicação, verbalizando cada ação."
+		},
+		clinicalAttention:
+			"Utilize dentifrício fluoretado com concentração mínima de 1.100 ppm de flúor para prevenção contra cárie dentária."
+	},
+	{
+		id: 3,
+		step_order: 3,
+		title: "Escovação",
+		description: "Escove a parte externa e superfície de mastigação com ritmo e contagem.",
+		coverImage: "./assets/etapas_guia/Etapa 3/Capa.jpg",
+		bannerImages: [
+			"./assets/etapas_guia/Etapa 3/Capa.jpg",
+			"./assets/etapas_guia/Etapa 3/02 foto.jpg",
+			"./assets/etapas_guia/Etapa 3/03 foto.jpg"
+		],
+		instructions: [
+			"Posicione as cerdas sobre os dentes da frente em ângulo de 45° em relação à gengiva.",
+			"Inicie sempre pelo mesmo lado (esquerda).",
+			"Realize movimentos circulares suaves, contando de 1 a 10 em cada região.",
+			"Avance para o centro e repita a contagem.",
+			"Avance para o lado oposto (direita).",
+			"Posicione as cerdas sobre a superfície de mastigação.",
+			"Realize movimentos de vai e vem contando de 1 a 10 repetições.",
+			"Avance para o lado oposto e finalize."
+		],
+		adaptations: {
+			n1: "O indivíduo escova de forma autônoma e o responsável auxilia na contagem.",
+			n2: "O responsável guia o movimento do pulso para escovação com apoio parcial.",
+			n3: "O responsável realiza a escovação, verbalizando cada passo."
+		},
+		clinicalAttention:
+			"Evite movimentos com muita força. A pressão excessiva pode causar desgaste do esmalte dentário e recessão gengival a longo prazo."
+	},
+	{
+		id: 4,
+		step_order: 4,
+		title: "Escovação Interna",
+		description: "Escove a parte interna da arcada, céu da boca e língua com movimentos suaves.",
+		coverImage: "./assets/etapas_guia/Etapa 4/Capa - 01 foto.jpg",
+		bannerImages: [
+			"./assets/etapas_guia/Etapa 4/Capa - 01 foto.jpg",
+			"./assets/etapas_guia/Etapa 4/02 foto.jpg",
+			"./assets/etapas_guia/Etapa 4/03 foto.jpg"
+		],
+		instructions: [
+			"Abra a boca.",
+			"Vire a escova para o interior da arcada (céu da boca e língua).",
+			"Posicione as cerdas junto à gengiva em ângulo de 45°.",
+			"Realize movimentos suaves até a ponta da língua."
+		],
+		adaptations: {
+			n1: "O indivíduo realiza com espelho como referência visual.",
+			n2: "O responsável conduz a abertura da boca com apoio verbal e aponta visualmente.",
+			n3: "O responsável realiza a escovação, com pausas para regulação sensorial."
+		},
+		clinicalAttention:
+			"Se houver sensibilidade ou vontade de vomitar, inicie com escova de dedo ou gaze e avance progressivamente para a escova convencional."
+	},
+	{
+		id: 5,
+		step_order: 5,
+		title: "Fio Dental",
+		description: "Use o fio dental em todos os espaços com movimento suave e controlado.",
+		coverImage: "./assets/etapas_guia/Etapa 5/Capa - 01 foto.jpg",
+		bannerImages: [
+			"./assets/etapas_guia/Etapa 5/Capa - 01 foto.jpg",
+			"./assets/etapas_guia/Etapa 5/02 foto.jpg",
+			"./assets/etapas_guia/Etapa 5/03 foto.jpg"
+		],
+		instructions: [
+			"Pegue o fio dental.",
+			"Introduza o fio suavemente entre os dentes em movimento de vai e vem.",
+			"Passe o fio de cima para baixo (superiores) e de baixo para cima (inferiores).",
+			"Utilize porção limpa do fio a cada novo espaço entre os dentes."
+		],
+		adaptations: {
+			n1: "O indivíduo usa fio dental de forma autônoma com supervisão visual.",
+			n2: "O responsável indica cada espaço verbalmente e o indivíduo executa.",
+			n3: "O responsável executa de forma independente enquanto o indivíduo mantém a boca aberta."
+		},
+		clinicalAttention:
+			"Para indivíduos com hipersensibilidade tátil, inicie com gaze úmida entre os dentes como etapa de dessensibilização antes de introduzir o fio dental."
+	},
+	{
+		id: 6,
+		step_order: 6,
+		title: "Enxágue",
+		description: "Faça bochecho guiado e descarte a água sem engolir.",
+		coverImage: "./assets/etapas_guia/Etapa 6/Capa - 01 foto.jpg",
+		bannerImages: [
+			"./assets/etapas_guia/Etapa 6/Capa - 01 foto.jpg",
+			"./assets/etapas_guia/Etapa 6/02 foto.jpg",
+			"./assets/etapas_guia/Etapa 6/03 foto.jpg"
+		],
+		instructions: [
+			"Pegue um copo e coloque água.",
+			"Coloque água na boca, sem engolir.",
+			"Faça bochecho contando até 10.",
+			"Ponha a água para fora."
+		],
+		adaptations: {
+			n1: "O indivíduo realiza o bochecho de forma autônoma.",
+			n2: "O responsável demonstra o movimento e o indivíduo executa.",
+			n3: "O responsável auxilia no enxágue e, se necessário, utiliza gaze."
+		},
+		clinicalAttention:
+			"O reforço positivo, com elogio imediato e específico à ação concluída, é uma estratégia importante no TEA."
+	},
+	{
+		id: 7,
+		step_order: 7,
+		title: "Organização",
+		description: "Guarde todos os materiais no lugar para encerrar a rotina.",
+		coverImage: "./assets/etapas_guia/Etapa 7/Capa - 01 foto.jpg",
+		bannerImages: [
+			"./assets/etapas_guia/Etapa 7/Capa - 01 foto.jpg",
+			"./assets/etapas_guia/Etapa 7/02 foto.jpg",
+			"./assets/etapas_guia/Etapa 7/03 foto.jpg"
+		],
+		instructions: [
+			"Lave a escova de dentes em água corrente.",
+			"Posicione a escova no suporte com as cerdas para cima.",
+			"Feche a tampa da pasta e devolva ao local habitual.",
+			"Guarde o fio dental e o copo em seus respectivos locais."
+		],
+		adaptations: {
+			n1: "O indivíduo organiza os materiais de forma autônoma.",
+			n2: "O responsável nomeia cada item a ser guardado e o indivíduo executa.",
+			n3: "O responsável realiza a organização junto com o indivíduo."
+		},
+		clinicalAttention:
+			"O reforço positivo, com elogio imediato e específico à ação concluída, é um dos pilares das estratégias comportamentais para o TEA."
+	}
+];
 
 document.addEventListener("DOMContentLoaded", init);
 
@@ -212,6 +537,8 @@ function bindEvents() {
 	dom.preferencesForm.addEventListener("submit", onPreferencesSubmit);
 
 	bindConfirmModalEvents();
+	bindInstitutionModalEvents();
+	bindGuideModalEvents();
 	bindDayDetailModalEvents();
 
 	// Custom Checklist UI events
@@ -430,7 +757,21 @@ function setAuthMode(mode) {
 	dom.registerForm.classList.toggle("hidden", isLogin);
 }
 
+function resetCompletedGuideSteps() {
+	state.completedGuideStepIds = new Set();
+	try {
+		const key = getGuideCompletionStorageKey();
+		localStorage.removeItem(key);
+	} catch (e) {}
+}
+
 function setActiveSection(sectionName) {
+	if (sectionName !== "guide") {
+		resetCompletedGuideSteps();
+	} else {
+		loadGuideSteps();
+	}
+
 	dom.tabButtons.forEach((button) => {
 		button.classList.toggle("active", button.dataset.section === sectionName);
 	});
@@ -442,7 +783,6 @@ function setActiveSection(sectionName) {
 	if (sectionName === "dashboard") {
 		loadDashboard(dom.monthInput.value);
 	}
-
 }
 
 function createOfflineStore() {
@@ -703,6 +1043,7 @@ function activateSession(token, user) {
 
 	dom.landing.classList.add("hidden");
 	dom.appShell.classList.remove("hidden");
+	setActiveSection("inicio");
 
 	loadAllData();
 }
@@ -713,6 +1054,7 @@ async function bootstrapSession() {
 		state.user = result.user;
 		dom.landing.classList.add("hidden");
 		dom.appShell.classList.remove("hidden");
+		setActiveSection("inicio");
 		await loadAllData();
 	} catch (error) {
 		if (shouldStartInLocalDemoMode() || runtimeConfig.publicAccessMode) {
@@ -834,6 +1176,7 @@ async function loadRuntimeConfig() {
 
 async function loadAllData() {
 	await Promise.allSettled([
+		loadInstitutionLogos(),
 		loadDashboard(dom.monthInput.value),
 		loadChecklistForDate(dom.checklistDate.value),
 		loadGuideSteps(),
@@ -841,6 +1184,103 @@ async function loadAllData() {
 		loadVideos(),
 		loadPreferences()
 	]);
+}
+
+async function loadInstitutionLogos() {
+	if (!dom.institutionLogosGrid) return;
+
+	dom.institutionLogosGrid.innerHTML = institutionCards
+		.map((item) => {
+			const previewMarkup = item.previewType === "pdf"
+				? `<object data="${item.logoUrl}" type="application/pdf" class="institution-logo-preview" aria-label="${escapeHtml(item.title)}"></object>`
+				: `<img src="${item.logoUrl}" alt="${escapeHtml(item.title)}" class="institution-logo-preview" loading="lazy" />`;
+
+			return `
+				<button type="button" class="institution-card" data-institution-id="${item.id}">
+					<span class="institution-card-accent" style="--institution-accent:${item.accent};"></span>
+					<div class="institution-card-logo">${previewMarkup}</div>
+					<div class="institution-card-body">
+						<p class="institution-card-kicker">${escapeHtml(item.kicker)}</p>
+						<h4>${escapeHtml(item.title)}</h4>
+						<span class="institution-card-cta">Abrir informações</span>
+					</div>
+				</button>
+			`;
+		})
+		.join("");
+
+	dom.institutionLogosGrid.querySelectorAll(".institution-card").forEach((button) => {
+		button.addEventListener("click", () => {
+			const institution = institutionCards.find((item) => item.id === button.dataset.institutionId);
+			if (institution) {
+				openInstitutionModal(institution);
+			}
+		});
+	});
+}
+
+function openInstitutionModal(institution) {
+	if (!dom.institutionModal || !institution) return;
+
+	if (dom.institutionModalKicker) {
+		dom.institutionModalKicker.textContent = institution.kicker;
+	}
+	if (dom.institutionModalTitle) {
+		dom.institutionModalTitle.textContent = institution.title;
+	}
+	if (dom.institutionModalContent) {
+		dom.institutionModalContent.innerHTML = institution.content.map((block) => `
+			<section class="institution-content-block">
+				<h4>${escapeHtml(block.headline)}</h4>
+				<p>${escapeHtml(block.text)}</p>
+			</section>
+		`).join("");
+
+		if (institution.linkUrl) {
+			dom.institutionModalContent.insertAdjacentHTML(
+				"beforeend",
+				`<a class="institution-link-button" href="${escapeHtml(institution.linkUrl)}" target="_blank" rel="noreferrer">Abrir portal oficial</a>`
+			);
+		}
+	}
+
+	if (dom.institutionModalPreview) {
+		dom.institutionModalPreview.innerHTML = institution.previewType === "pdf"
+			? `<object data="${institution.logoUrl}" type="application/pdf" class="institution-modal-logo" aria-label="${escapeHtml(institution.title)}"></object>`
+			: `<img src="${institution.logoUrl}" alt="${escapeHtml(institution.title)}" class="institution-modal-logo" loading="lazy" />`;
+	}
+
+	dom.institutionModal.classList.remove("hidden");
+	dom.institutionModal.setAttribute("aria-hidden", "false");
+	document.body.classList.add("modal-open");
+	if (dom.institutionModalClose) {
+		dom.institutionModalClose.focus();
+	}
+}
+
+function closeInstitutionModal() {
+	if (!dom.institutionModal) return;
+	dom.institutionModal.classList.add("hidden");
+	dom.institutionModal.setAttribute("aria-hidden", "true");
+	document.body.classList.remove("modal-open");
+}
+
+function bindInstitutionModalEvents() {
+	if (!dom.institutionModal) return;
+
+	if (dom.institutionModalBackdrop) {
+		dom.institutionModalBackdrop.addEventListener("click", () => closeInstitutionModal());
+	}
+
+	if (dom.institutionModalClose) {
+		dom.institutionModalClose.addEventListener("click", () => closeInstitutionModal());
+	}
+
+	document.addEventListener("keydown", (event) => {
+		if (event.key === "Escape" && !dom.institutionModal.classList.contains("hidden")) {
+			closeInstitutionModal();
+		}
+	});
 }
 
 function countBrushingsForItem(item) {
@@ -1428,56 +1868,250 @@ async function onChecklistSubmit(event) {
 }
 
 async function loadGuideSteps() {
-	let steps = [];
-	try {
-		const result = await api("/guide/steps");
-		steps = result?.steps || [];
-	} catch (error) {
-		console.warn("Falha ao buscar guia do servidor. Usando dados estáticos de fallback.", error);
-	}
-
-	// Se retornar vazio do banco ou der erro na tabela, usa o fallback estático
-	if (!steps || !steps.length) {
-		steps = demoStore.guideSteps;
-	}
-
+	const steps = GUIDE_STEPS_CATALOG;
+	const completedStepIds = getCompletedGuideStepIds();
 	dom.guideContainer.innerHTML = "";
+
+	if (dom.guideProgressSummary) {
+		dom.guideProgressSummary.textContent = `${completedStepIds.size} de ${steps.length} etapas concluídas`;
+	}
 
 	steps.forEach((step) => {
 		const imageUrl = getGuideStepImageUrl(step);
 		const item = document.createElement("div");
 		item.className = "timeline-item";
-		item.innerHTML = `
-			<div class="timeline-badge">${step.step_order}</div>
-			<article class="guide-card">
-				<div class="guide-card-img-wrapper">
-					<img src="${imageUrl}" alt="${escapeHtml(step.title)}" loading="lazy" />
-				</div>
-				<div class="inner">
-					<h4>${escapeHtml(step.title)}</h4>
-					<p>${escapeHtml(step.description)}</p>
-				</div>
-			</article>
+		const badge = document.createElement("div");
+		badge.className = "timeline-badge";
+		badge.textContent = step.step_order;
+		item.appendChild(badge);
+		const card = document.createElement("button");
+		card.type = "button";
+		card.className = "guide-card";
+		card.classList.toggle("is-completed", completedStepIds.has(String(step.id)));
+		card.setAttribute("aria-label", `Abrir etapa ${step.step_order}: ${step.title}`);
+		card.innerHTML = `
+			${completedStepIds.has(String(step.id)) ? '<span class="guide-card-complete-badge" aria-hidden="true"><i class="ph-fill ph-check"></i></span>' : ''}
+			<div class="guide-card-img-wrapper">
+				<img src="${imageUrl}" alt="${escapeHtml(step.title)}" loading="lazy" />
+			</div>
+			<div class="inner">
+				<h4>${escapeHtml(step.title)}</h4>
+				<p>${escapeHtml(step.description)}</p>
+			</div>
 		`;
+		card.addEventListener("click", () => openGuideStepModal(step));
+		item.appendChild(card);
 		dom.guideContainer.appendChild(item);
 	});
 }
 
-function getGuideStepImageUrl(step) {
-	const localImages = {
-		1: "./assets/illustrations/guide-1.svg",
-		2: "./assets/illustrations/guide-2.svg",
-		3: "./assets/illustrations/guide-3.svg",
-		4: "./assets/illustrations/guide-4.svg",
-		5: "./assets/illustrations/guide-5.svg"
-	};
+function getGuideCompletionStorageKey() {
+	const userId = state.user?.id || state.user?.email || "guest";
+	return `sorriso_guide_completed_steps_${userId}`;
+}
 
-	const remoteUrl = String(step?.image_url || "").trim();
-	if (!remoteUrl || /^https?:\/\//i.test(remoteUrl)) {
-		return localImages[Number(step?.step_order)] || localImages[Number(step?.id)] || "./assets/illustrations/guide-1.svg";
+function getCompletedGuideStepIds() {
+	if (!state.completedGuideStepIds) {
+		state.completedGuideStepIds = new Set();
+	}
+	return state.completedGuideStepIds;
+}
+
+function saveCompletedGuideStepIds(ids) {
+	state.completedGuideStepIds = ids;
+}
+
+function resolveAssetUrl(path) {
+	return encodeURI(String(path || ""));
+}
+
+function getGuideStepCarouselImages(step) {
+	const images = Array.isArray(step?.bannerImages) && step.bannerImages.length
+		? step.bannerImages
+		: [step?.coverImage || step?.image_url || "./assets/illustrations/guide-1.svg"];
+	return images.map(resolveAssetUrl);
+}
+
+function getGuideStepExpandedDetails(step) {
+	return Array.isArray(step?.instructions) ? step.instructions : [];
+}
+
+function updateGuideCarouselPosition() {
+	if (!dom.guideCarouselTrack) return;
+	const totalSlides = dom.guideCarouselTrack.children.length || 1;
+	const normalizedIndex = ((state.guideCarouselIndex % totalSlides) + totalSlides) % totalSlides;
+	state.guideCarouselIndex = normalizedIndex;
+	dom.guideCarouselTrack.style.transform = `translateX(-${normalizedIndex * 100}%)`;
+	if (dom.guideCarouselCounter) {
+		dom.guideCarouselCounter.textContent = `${normalizedIndex + 1}/${totalSlides}`;
+	}
+}
+
+function renderGuideStepModal(step) {
+	if (!dom.guideCarouselTrack || !dom.guideCarouselCounter) return;
+
+	const slides = getGuideStepCarouselImages(step);
+	dom.guideCarouselTrack.innerHTML = slides
+		.map((imageUrl, index) => `
+			<div class="guide-carousel-slide">
+				<img src="${imageUrl}" alt="${escapeHtml(step.title)} - imagem ${index + 1}" loading="lazy" />
+			</div>
+		`)
+		.join("");
+
+	state.guideCarouselIndex = 0;
+	updateGuideCarouselPosition();
+
+	if (dom.guideModalKicker) {
+		dom.guideModalKicker.textContent = `Etapa ${step.step_order}`;
+	}
+	if (dom.guideStepModalTitle) {
+		dom.guideStepModalTitle.textContent = step.title;
+	}
+	if (dom.guideStepModalDescription) {
+		dom.guideStepModalDescription.textContent = step.description;
+	}
+	if (dom.guideStepModalDetails) {
+		const instructionItems = getGuideStepExpandedDetails(step)
+			.map((instruction, index) => `
+				<li class="guide-instruction-item">
+					<span class="guide-instruction-index">${index + 1}</span>
+					<span>${escapeHtml(instruction)}</span>
+				</li>
+			`)
+			.join("");
+
+		const adaptation = step.adaptations || {};
+		const referenceVisual = step.referenceVisual;
+		const referenceVisualMarkup = referenceVisual
+			? `
+				<section class="guide-detail-block">
+					<h4>Referência visual</h4>
+					<p class="guide-detail-caption">${escapeHtml(referenceVisual.title)}</p>
+					<div class="guide-reference-grid">
+						${(referenceVisual.items || []).map((item) => `
+							<article class="guide-reference-card">
+								<img src="${resolveAssetUrl(item.image)}" alt="${escapeHtml(item.label)}" loading="lazy" />
+								<div>
+									<strong>${escapeHtml(item.label)}</strong>
+									<span>${escapeHtml(item.subtitle)}</span>
+								</div>
+							</article>
+						`).join("")}
+					</div>
+				</section>
+			`
+			: "";
+
+		dom.guideStepModalDetails.innerHTML = `
+			<section class="guide-detail-block">
+				<h4>Sequência de instruções</h4>
+				<ul class="guide-instruction-list">${instructionItems}</ul>
+			</section>
+			${referenceVisualMarkup}
+			<section class="guide-detail-block">
+				<h4>Adaptação por nível de suporte (DSM-5)</h4>
+				<div class="guide-adaptation-list">
+					<article class="guide-adaptation-card n1"><strong>N1</strong><p>${escapeHtml(adaptation.n1 || "")}</p></article>
+					<article class="guide-adaptation-card n2"><strong>N2</strong><p>${escapeHtml(adaptation.n2 || "")}</p></article>
+					<article class="guide-adaptation-card n3"><strong>N3</strong><p>${escapeHtml(adaptation.n3 || "")}</p></article>
+				</div>
+			</section>
+			<section class="guide-detail-block guide-attention-block">
+				<h4>Atenção clínica</h4>
+				<p>${escapeHtml(step.clinicalAttention || "")}</p>
+			</section>
+		`;
 	}
 
-	return remoteUrl;
+	if (dom.guideStepModalConclude) {
+		dom.guideStepModalConclude.textContent = isGuideStepCompleted(step.id) ? "Etapa concluída" : "Marcar como concluída";
+		dom.guideStepModalConclude.disabled = isGuideStepCompleted(step.id);
+	}
+}
+
+function isGuideStepCompleted(stepId) {
+	return getCompletedGuideStepIds().has(String(stepId));
+}
+
+function openGuideStepModal(step) {
+	if (!dom.guideStepModal || !step) return;
+
+	state.guideModalStep = step;
+	renderGuideStepModal(step);
+
+	const modalContent = dom.guideStepModal.querySelector(".guide-modal-content");
+	if (modalContent) {
+		modalContent.scrollTop = 0;
+	}
+
+	dom.guideStepModal.classList.remove("hidden");
+	dom.guideStepModal.setAttribute("aria-hidden", "false");
+	document.body.classList.add("modal-open");
+
+	if (modalContent) {
+		modalContent.scrollTop = 0;
+	}
+
+	if (dom.guideStepModalConclude && !dom.guideStepModalConclude.disabled) {
+		dom.guideStepModalConclude.focus({ preventScroll: true });
+	}
+}
+
+function closeGuideStepModal() {
+	if (!dom.guideStepModal) return;
+	dom.guideStepModal.classList.add("hidden");
+	dom.guideStepModal.setAttribute("aria-hidden", "true");
+	document.body.classList.remove("modal-open");
+	state.guideModalStep = null;
+}
+
+function markGuideStepAsCompleted(stepId) {
+	const completedIds = getCompletedGuideStepIds();
+	completedIds.add(String(stepId));
+	saveCompletedGuideStepIds(completedIds);
+	loadGuideSteps();
+}
+
+function bindGuideModalEvents() {
+	if (!dom.guideStepModal) return;
+
+	if (dom.guideStepModalBackdrop) {
+		dom.guideStepModalBackdrop.addEventListener("click", () => closeGuideStepModal());
+	}
+
+	if (dom.guideCarouselPrev) {
+		dom.guideCarouselPrev.addEventListener("click", () => {
+			state.guideCarouselIndex -= 1;
+			updateGuideCarouselPosition();
+		});
+	}
+
+	if (dom.guideCarouselNext) {
+		dom.guideCarouselNext.addEventListener("click", () => {
+			state.guideCarouselIndex += 1;
+			updateGuideCarouselPosition();
+		});
+	}
+
+	if (dom.guideStepModalConclude) {
+		dom.guideStepModalConclude.addEventListener("click", () => {
+			if (!state.guideModalStep) return;
+			markGuideStepAsCompleted(state.guideModalStep.id);
+			closeGuideStepModal();
+		});
+	}
+
+	document.addEventListener("keydown", (event) => {
+		if (event.key === "Escape" && !dom.guideStepModal.classList.contains("hidden")) {
+			closeGuideStepModal();
+		}
+	});
+}
+
+function getGuideStepImageUrl(step) {
+	const imagePath = String(step?.coverImage || step?.image_url || "./assets/illustrations/guide-1.svg").trim();
+	return resolveAssetUrl(imagePath);
 }
 
 async function loadQuizQuestions() {
