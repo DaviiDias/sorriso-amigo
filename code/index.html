@@ -15,76 +15,191 @@
 		<link rel="stylesheet" href="./assets/style.css" />
 	</head>
 	<body class="mode-light">
-        <!-- Landing Auth remains structurally similar but will be styled minimally -->
-		<section id="landing" class="panel auth-panel">
-			<div class="brand-column">
-				<p class="eyebrow">Projeto Educativo Digital</p>
-				<h1>Sorriso Amigo</h1>
-				<p class="subtitle">Suporte contínuo para rotina de saúde bucal de pessoas com TEA e seus cuidadores.</p>
-				<ul class="feature-list">
-					<li>Checklist diário com nível de resistência</li>
-					<li>Guia lúdico de escovação por etapas</li>
-					<li>Quiz educativo com feedback imediato</li>
-					<li>Conteúdos em vídeo para familiares e profissionais</li>
-				</ul>
-			</div>
+        <section id="landing" class="panel auth-panel">
+            <div class="auth-hero" id="authHero">
+                <div class="auth-hero-copy">
+                    <p class="eyebrow">Projeto Educativo Digital</p>
+                    <h1>Sorriso Amigo</h1>
 
-			<div class="auth-column">
-				<div class="auth-switch">
-					<button id="showLoginBtn" class="switch-btn active" type="button">Entrar</button>
-					<button id="showRegisterBtn" class="switch-btn" type="button">Criar conta</button>
-				</div>
+                    <div class="welcome-card">
+                        <img
+                            class="welcome-illustration"
+                            src="./assets/illustrations/dentist-welcome.svg"
+                            alt="Dentista sorridente acenando ao lado de um dente feliz"
+                            width="260"
+                            height="260"
+                            loading="eager"
+                        />
+                        <div class="welcome-text">
+                            <p class="welcome-greeting">Seja bem-vindo!</p>
+                            <p class="welcome-lead">
+                                Este é o nosso aplicativo para <strong>cuidadores, famílias e profissionais</strong>
+                                tornarem a escovação uma rotina mais leve e previsível.
+                            </p>
+                            <ul class="feature-list">
+                                <li><i class="ph-fill ph-check-square" aria-hidden="true"></i> Acompanhe a escovação do dia e o nível de resistência</li>
+                                <li><i class="ph-fill ph-list-checks" aria-hidden="true"></i> Siga um guia lúdico de escovação, etapa por etapa</li>
+                                <li><i class="ph-fill ph-game-controller" aria-hidden="true"></i> Aprenda com um quiz educativo e feedback na hora</li>
+                                <li><i class="ph-fill ph-play-circle" aria-hidden="true"></i> Assista a vídeos feitos para famílias e profissionais</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
 
-				<form id="loginForm" class="auth-form" novalidate>
-					<h2>Acesso seguro</h2>
-					<label>
-						E-mail
-						<input type="email" name="email" placeholder="voce@email.com" required />
-					</label>
-					<label>
-						Senha
-						<input type="password" name="password" placeholder="Mínimo 8 caracteres" required />
-					</label>
-					<button type="submit" class="btn btn-primary">Entrar na plataforma</button>
-				</form>
+                <section class="auth-institutions">
+                    <div class="institution-section-head">
+                        <p class="intro-kicker">Instituições parceiras</p>
+                        <h2>Logos das instituições</h2>
+                        <p>As instituições aparecem aqui como referência visual da rede do projeto.</p>
+                    </div>
+                    <div id="landingInstitutionLogosGrid" class="institution-grid institution-grid--landing"></div>
+                </section>
+            </div>
 
-				<form id="registerForm" class="auth-form hidden">
-					<h2>Novo cadastro</h2>
-					<label>
-						Nome completo
-						<input type="text" name="fullName" placeholder="Nome e sobrenome" required />
-					</label>
-					<label>
-						E-mail
-						<input type="email" name="email" placeholder="voce@email.com" required />
-					</label>
-					<label>
-						Perfil
-						<select name="role">
-							<option value="caregiver">Cuidador(a)</option>
-							<option value="family">Familiar</option>
-							<option value="professional">Profissional de saúde</option>
-						</select>
-					</label>
-					<label>
-						Senha
-						<input type="password" name="password" placeholder="Mínimo 8 caracteres" required />
-					</label>
+            <div class="auth-column">
+                <div class="auth-switch" role="tablist" aria-label="Modo de autenticação">
+                    <button id="showAboutBtn" class="switch-btn switch-btn--about" type="button">Sobre</button>
+                    <button id="showLoginBtn" class="switch-btn active" type="button">Entrar</button>
+                    <button id="showRegisterBtn" class="switch-btn" type="button">Criar login</button>
+                </div>
 
-					<label class="consent-label">
-						<input type="checkbox" name="acceptTerms" required />
-						Li e aceito os termos de uso e consentimento.
-					</label>
+                <form id="loginForm" class="auth-form" novalidate>
+                    <div class="form-head">
+                        <h2>Acesso seguro</h2>
+                        <p>Entre com seu número de telefone e sua senha.</p>
+                    </div>
+                    <label>
+                        Número de telefone
+                        <input type="tel" name="phone" id="loginPhone" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" maxlength="15" required />
+                    </label>
+                    <label>
+                        Senha
+                        <div class="password-field-group">
+                            <input type="password" name="password" autocomplete="current-password" placeholder="Mínimo 8 caracteres" required />
+                            <button type="button" class="btn-toggle-password" aria-label="Mostrar ou ocultar senha" tabindex="-1">
+                                <i class="ph ph-eye"></i>
+                            </button>
+                        </div>
+                    </label>
+                    <button type="button" id="forgotPasswordBtn" class="link-subtle">Esqueci minha senha</button>
+                    <button type="submit" class="btn btn-primary">Entrar na plataforma</button>
+                </form>
 
-					<details class="terms-box">
-						<summary>Visualizar termo resumido</summary>
-						<p>Os dados do usuário são usados somente para educação em saúde bucal...</p>
-					</details>
+                <form id="registerForm" class="auth-form hidden" novalidate>
+                    <div class="form-head">
+                        <h2>Criar login</h2>
+                        <p>Use um nome de usuário, confirme a senha e informe o telefone.</p>
+                    </div>
+                    <label>
+                        Nome de usuário
+                        <input type="text" name="username" autocomplete="username" placeholder="seu.usuario" required />
+                    </label>
+                    <label>
+                        Senha
+                        <div class="password-field-group">
+                            <input type="password" name="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required />
+                            <button type="button" class="btn-toggle-password" aria-label="Mostrar ou ocultar senha" tabindex="-1">
+                                <i class="ph ph-eye"></i>
+                            </button>
+                        </div>
+                    </label>
+                    <label>
+                        Confirmar senha
+                        <div class="password-field-group">
+                            <input type="password" name="confirmPassword" autocomplete="new-password" placeholder="Repita a senha" required />
+                            <button type="button" class="btn-toggle-password" aria-label="Mostrar ou ocultar senha" tabindex="-1">
+                                <i class="ph ph-eye"></i>
+                            </button>
+                        </div>
+                    </label>
+                    <label>
+                        Número de telefone
+                        <input type="tel" name="phone" id="registerPhone" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" maxlength="15" required />
+                    </label>
+                    <button type="submit" class="btn btn-primary">Criar acesso</button>
+                </form>
 
-					<button type="submit" class="btn btn-primary">Criar conta e iniciar</button>
-				</form>
-			</div>
-		</section>
+                <!-- Confirmação do código enviado por SMS no cadastro -->
+                <form id="verifyPhoneForm" class="auth-form hidden" novalidate>
+                    <div class="form-head">
+                        <h2>Confirme seu telefone</h2>
+                        <p>Enviamos um código de 6 dígitos por SMS para <strong id="verifyPhoneTarget">seu número</strong>. Digite-o abaixo para concluir o cadastro.</p>
+                    </div>
+                    <label>
+                        Código de confirmação
+                        <input type="text" name="code" id="verifyPhoneCode" class="code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="6" required />
+                    </label>
+                    <button type="submit" class="btn btn-primary">Confirmar código</button>
+                    <div class="auth-form-actions">
+                        <button type="button" id="resendVerifyCodeBtn" class="link-subtle">Reenviar código</button>
+                        <button type="button" data-auth-back="register" class="link-subtle">Voltar</button>
+                    </div>
+                </form>
+
+                <!-- Recuperação de senha: pedido do código -->
+                <form id="forgotPasswordForm" class="auth-form hidden" novalidate>
+                    <div class="form-head">
+                        <h2>Recuperar senha</h2>
+                        <p>Informe o número de telefone cadastrado para receber o código de recuperação.</p>
+                    </div>
+                    <label>
+                        Número de telefone
+                        <input type="tel" name="phone" id="forgotPhone" inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" maxlength="15" required />
+                    </label>
+                    <button type="submit" class="btn btn-primary">Enviar SMS de recuperação</button>
+                    <div class="auth-form-actions">
+                        <button type="button" data-auth-back="login" class="link-subtle">Voltar para o login</button>
+                    </div>
+                </form>
+
+                <!-- Recuperação de senha: validação do código -->
+                <form id="resetCodeForm" class="auth-form hidden" novalidate>
+                    <div class="form-head">
+                        <h2>Digite o código</h2>
+                        <p>Enviamos um código de 6 dígitos por SMS para <strong id="resetCodeTarget">seu número</strong>.</p>
+                    </div>
+                    <label>
+                        Código de recuperação
+                        <input type="text" name="code" id="resetCodeInput" class="code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="6" required />
+                    </label>
+                    <button type="submit" class="btn btn-primary">Validar código</button>
+                    <div class="auth-form-actions">
+                        <button type="button" id="resendResetCodeBtn" class="link-subtle">Reenviar código</button>
+                        <button type="button" data-auth-back="forgot" class="link-subtle">Voltar</button>
+                    </div>
+                </form>
+
+                <!-- Recuperação de senha: nova senha -->
+                <form id="newPasswordForm" class="auth-form hidden" novalidate>
+                    <div class="form-head">
+                        <h2>Nova senha</h2>
+                        <p>Escolha uma nova senha com no mínimo 8 caracteres.</p>
+                    </div>
+                    <label>
+                        Senha nova
+                        <div class="password-field-group">
+                            <input type="password" name="password" autocomplete="new-password" placeholder="Mínimo 8 caracteres" required />
+                            <button type="button" class="btn-toggle-password" aria-label="Mostrar ou ocultar senha" tabindex="-1">
+                                <i class="ph ph-eye"></i>
+                            </button>
+                        </div>
+                    </label>
+                    <label>
+                        Confirmar senha nova
+                        <div class="password-field-group">
+                            <input type="password" name="confirmPassword" autocomplete="new-password" placeholder="Repita a nova senha" required />
+                            <button type="button" class="btn-toggle-password" aria-label="Mostrar ou ocultar senha" tabindex="-1">
+                                <i class="ph ph-eye"></i>
+                            </button>
+                        </div>
+                    </label>
+                    <button type="submit" class="btn btn-primary">Salvar nova senha</button>
+                    <div class="auth-form-actions">
+                        <button type="button" data-auth-back="login" class="link-subtle">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+        </section>
 
         <!-- New Layout App Shell -->
 		<section id="appShell" class="app-layout hidden">
@@ -346,10 +461,30 @@
                             <!-- Tela de Início -->
                             <div id="quizStateStart" class="quiz-state-view">
                                 <div class="quiz-start-card">
-                                    <h3>Começar Quizz de Escovação?</h3>
-                                    <button id="quizStartBtn" class="quiz-play-btn" type="button" title="Começar Quiz">
-                                        <i class="ph-fill ph-play"></i>
-                                    </button>
+                                    <div class="quiz-start-hero">
+                                        <div class="quiz-mascot">
+                                            <img
+                                                class="quiz-mascot-img"
+                                                src="./assets/illustrations/dentist-quiz.svg"
+                                                alt="Dentista sorridente segurando uma placa com ponto de interrogação"
+                                                width="240"
+                                                height="240"
+                                                loading="eager"
+                                            />
+                                            <p class="quiz-mascot-bubble">Bora testar o que você já sabe?</p>
+                                        </div>
+                                        <div class="quiz-start-text">
+                                            <h3>Começar Quizz de Escovação?</h3>
+                                            <p class="quiz-start-lead">
+                                                Responda perguntas divertidas e vire um
+                                                <strong>super-herói do sorriso</strong>!
+                                            </p>
+                                            <button id="quizStartBtn" class="quiz-play-btn" type="button" title="Começar Quiz">
+                                                <i class="ph-fill ph-play"></i>
+                                            </button>
+                                            <p class="quiz-start-hint">Toque no play para começar</p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

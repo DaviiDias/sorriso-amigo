@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Ilustração de uma dentista sorridente segurando uma placa com ponto de interrogação ao lado de um dente feliz">
+  <defs>
+    <clipPath id="quizFaceClip">
+      <ellipse cx="112" cy="108" rx="40" ry="43"/>
+    </clipPath>
+    <clipPath id="quizHaloClip">
+      <circle cx="120" cy="120" r="112"/>
+    </clipPath>
+  </defs>
+
+  <!-- Halo de fundo -->
+  <circle cx="120" cy="120" r="112" fill="#E0F2FE"/>
+  <circle cx="120" cy="120" r="92" fill="#F0F9FF"/>
+
+  <g clip-path="url(#quizHaloClip)">
+    <!-- Cabelo: massa unica que desce pelos lados -->
+    <path d="M112 54c27 0 49 22 49 51 0 18 3 36 7 55 2 7-4 11-11 9-13-4-20-15-22-29-2-15-2-28-2-35h-43c0 7 0 20-2 35-2 14-9 25-22 29-7 2-13-2-11-9 4-19 7-37 7-55 0-29 22-51 49-51Z" fill="#5B4636"/>
+
+    <!-- Pescoco -->
+    <path d="M97 142h31v25a15.5 15.5 0 0 1-31 0Z" fill="#F0B78E"/>
+
+    <!-- Corpo / jaleco -->
+    <path d="M112 164c26 0 43 8 51 22 6 11 8 25 8 42v36H53v-36c0-17 2-31 8-42 8-14 25-22 51-22Z" fill="#FFFFFF" stroke="#D8E3EC" stroke-width="3"/>
+    <!-- Blusa por baixo -->
+    <path d="M96 166h32l-16 27Z" fill="#38BDF8"/>
+    <!-- Lapelas -->
+    <path d="M96 166l16 27-13 71H84l5-67Z" fill="#F8FAFC" stroke="#D8E3EC" stroke-width="2.5" stroke-linejoin="round"/>
+    <path d="M128 166l-16 27 13 71h15l-5-67Z" fill="#F8FAFC" stroke="#D8E3EC" stroke-width="2.5" stroke-linejoin="round"/>
+    <!-- Cracha -->
+    <rect x="130" y="210" width="22" height="16" rx="4" fill="#0284C7"/>
+    <circle cx="141" cy="218" r="3.3" fill="#E0F2FE"/>
+
+    <!-- Braco esquerdo apoiado na cintura -->
+    <path d="M72 186c-13 5-20 14-21 24" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" fill="none"/>
+    <path d="M72 186c-13 5-20 14-21 24" stroke="#D8E3EC" stroke-width="18" stroke-linecap="round" fill="none" opacity="0.3"/>
+    <!-- Mao esquerda na ponta do braco -->
+    <circle cx="51" cy="212" r="10.5" fill="#F8D3B8"/>
+
+    <!-- Braco direito erguido, segurando a placa -->
+    <path d="M152 186c12-6 20-18 22-32" stroke="#FFFFFF" stroke-width="18" stroke-linecap="round" fill="none"/>
+    <path d="M152 186c12-6 20-18 22-32" stroke="#D8E3EC" stroke-width="18" stroke-linecap="round" fill="none" opacity="0.3"/>
+  </g>
+
+  <!-- Rosto -->
+  <ellipse cx="112" cy="108" rx="40" ry="43" fill="#F8D3B8"/>
+  <!-- Franja -->
+  <g clip-path="url(#quizFaceClip)">
+    <path d="M70 95c3-29 22-44 42-44s39 15 42 44c-8-17-23-24-35-16-14 8-34 7-49 16Z" fill="#5B4636"/>
+  </g>
+  <!-- Orelhas -->
+  <ellipse cx="71" cy="113" rx="6.5" ry="9" fill="#F0B78E"/>
+  <ellipse cx="153" cy="113" rx="6.5" ry="9" fill="#F0B78E"/>
+
+  <!-- Sobrancelhas animadas (uma erguida, ar de desafio) -->
+  <path d="M89 91q9-7 18-2" stroke="#5B4636" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+  <path d="M117 87q9-6 18 1" stroke="#5B4636" stroke-width="3.6" stroke-linecap="round" fill="none"/>
+  <!-- Olhos -->
+  <circle cx="98" cy="110" r="6" fill="#3A2E26"/>
+  <circle cx="126" cy="110" r="6" fill="#3A2E26"/>
+  <circle cx="100.2" cy="107.8" r="2" fill="#FFFFFF"/>
+  <circle cx="128.2" cy="107.8" r="2" fill="#FFFFFF"/>
+  <!-- Bochechas -->
+  <ellipse cx="86" cy="127" rx="8" ry="5.5" fill="#F9A8B4" opacity="0.55"/>
+  <ellipse cx="138" cy="127" rx="8" ry="5.5" fill="#F9A8B4" opacity="0.55"/>
+  <!-- Sorriso aberto e animado -->
+  <path d="M99 128q13 14 26 0Z" fill="#B4553F"/>
+  <path d="M103.5 131.5q8.5 7 17 0Z" fill="#FFFFFF"/>
+
+  <!-- Placa com ponto de interrogacao (mao direita erguida) -->
+  <g transform="rotate(-12 182 96)">
+    <rect x="160" y="60" width="46" height="46" rx="12" fill="#38BDF8" stroke="#0284C7" stroke-width="3"/>
+    <text x="183" y="95" font-family="'Baloo 2', system-ui, sans-serif" font-size="36" font-weight="800" fill="#FFFFFF" text-anchor="middle">?</text>
+    <rect x="178" y="104" width="10" height="26" rx="5" fill="#0EA5E9"/>
+  </g>
+  <circle cx="177" cy="136" r="10.5" fill="#F8D3B8"/>
+
+  <!-- Dente mascote animando -->
+  <g transform="translate(22 150)">
+    <path d="M20 2c8 0 14 5 14 12 0 7-3 10-4 18-1 7-3 12-5 12-3 0-3-6-5-6s-2 6-5 6c-2 0-4-5-5-12-1-8-4-11-4-18C6 7 12 2 20 2Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2.5" stroke-linejoin="round"/>
+    <circle cx="14.5" cy="16" r="2.3" fill="#3A2E26"/>
+    <circle cx="25" cy="16" r="2.3" fill="#3A2E26"/>
+    <path d="M15.5 22.5q4.2 4.2 8.4 0" stroke="#3A2E26" stroke-width="2.2" stroke-linecap="round" fill="none"/>
+  </g>
+
+  <!-- Estrelas e brilhos (clima de jogo) -->
+  <path d="M196 30l4.5 9.5 10.5 1.5-7.5 7.3 1.8 10.4-9.3-4.9-9.3 4.9 1.8-10.4-7.5-7.3 10.5-1.5z" fill="#FBBF24"/>
+  <path d="M38 62l3 6.5 6.5 3-6.5 3-3 6.5-3-6.5-6.5-3 6.5-3z" fill="#7DD3FC"/>
+  <circle cx="214" cy="150" r="5" fill="#7DD3FC" opacity="0.7"/>
+  <circle cx="28" cy="112" r="4" fill="#FBBF24" opacity="0.7"/>
+  <circle cx="206" cy="176" r="3.2" fill="#FBBF24" opacity="0.6"/>
+</svg>

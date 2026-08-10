@@ -1,10 +1,11 @@
 import bcrypt from "bcryptjs";
 import { query } from "../config/db.js";
 
-const PUBLIC_USER_EMAIL = "visitante@sorrisoamigo.org";
 const PUBLIC_USER_NAME = "Visitante";
+const PUBLIC_USER_USERNAME = "visitante";
 const PUBLIC_USER_ROLE = "caregiver";
 const PUBLIC_USER_PASSWORD = "public-access-only";
+const PUBLIC_USER_PHONE = "00000000000";
 
 async function createPublicUser() {
   const passwordHash = await bcrypt.hash(PUBLIC_USER_PASSWORD, 12);
@@ -12,11 +13,11 @@ async function createPublicUser() {
   try {
     const result = await query(
       `
-      INSERT INTO users (full_name, email, password_hash, role, accepted_terms_at)
-      VALUES ($1, $2, $3, $4, NOW())
-      RETURNING id, full_name, email, role, created_at
+      INSERT INTO users (full_name, username, email, phone, password_hash, role, accepted_terms_at)
+      VALUES ($1, $2, $3, $4, $5, $6, NOW())
+      RETURNING id, full_name, username, email, phone, role, created_at
       `,
-      [PUBLIC_USER_NAME, PUBLIC_USER_EMAIL, passwordHash, PUBLIC_USER_ROLE]
+      [PUBLIC_USER_NAME, PUBLIC_USER_USERNAME, null, PUBLIC_USER_PHONE, passwordHash, PUBLIC_USER_ROLE]
     );
 
     return normalizePublicUser(result.rows[0]);
@@ -27,11 +28,11 @@ async function createPublicUser() {
 
     const result = await query(
       `
-      SELECT id, full_name, email, role, created_at
+      SELECT id, full_name, username, email, phone, role, created_at
       FROM users
-      WHERE email = $1
+      WHERE phone = $1
       `,
-      [PUBLIC_USER_EMAIL]
+      [PUBLIC_USER_PHONE]
     );
 
     return normalizePublicUser(result.rows[0]);
@@ -41,11 +42,11 @@ async function createPublicUser() {
 export async function getPublicUser() {
   const existing = await query(
     `
-    SELECT id, full_name, email, role, created_at
+    SELECT id, full_name, username, email, phone, role, created_at
     FROM users
-    WHERE email = $1
+    WHERE phone = $1
     `,
-    [PUBLIC_USER_EMAIL]
+    [PUBLIC_USER_PHONE]
   );
 
   if (existing.rowCount) {

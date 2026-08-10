@@ -1,7 +1,28 @@
-const API_BASE =
-	window.location.protocol === "file:"
-		? "http://localhost:4000/api"
-		: `${window.location.origin}/api`;
+// Porta em que a API roda quando o front e servido por outro servidor (ex.: Live Server).
+const API_PORT = "4000";
+
+function resolveApiBase() {
+	// Permite forcar a URL da API pelo console: localStorage.sorriso_api_base = "http://192.168.0.10:4000/api"
+	const override = localStorage.getItem("sorriso_api_base");
+	if (override) {
+		return override.replace(/\/$/, "");
+	}
+
+	if (window.location.protocol === "file:") {
+		return `http://localhost:${API_PORT}/api`;
+	}
+
+	// Front aberto em outra porta (Live Server, Vite, etc.): aponta para a API
+	// no mesmo host, trocando so a porta. Assim funciona tambem pelo IP da rede,
+	// o que permite testar pelo celular.
+	if (window.location.port && window.location.port !== API_PORT) {
+		return `${window.location.protocol}//${window.location.hostname}:${API_PORT}/api`;
+	}
+
+	return `${window.location.origin}/api`;
+}
+
+const API_BASE = resolveApiBase();
 
 const state = {
 	token: localStorage.getItem("sorriso_token") || "",
@@ -28,17 +49,33 @@ const QUICK_ACCESS_MODE = false;
 const QUICK_ACCESS_TOKEN = "quick-access-demo-token";
 const demoStore = createDemoStore();
 const OFFLINE_STORE_KEY = "sorriso_offline_store";
-const LOCAL_DEMO_HOSTS = new Set(["localhost", "127.0.0.1"]);
 
 const dom = {
 	landing: document.querySelector("#landing"),
 	appShell: document.querySelector("#appShell"),
+	authHero: document.querySelector("#authHero"),
+	authColumn: document.querySelector(".auth-column"),
+	authSwitch: document.querySelector(".auth-switch"),
+	showAboutBtn: document.querySelector("#showAboutBtn"),
 	showLoginBtn: document.querySelector("#showLoginBtn"),
 	showRegisterBtn: document.querySelector("#showRegisterBtn"),
 	loginForm: document.querySelector("#loginForm"),
 	registerForm: document.querySelector("#registerForm"),
+	verifyPhoneForm: document.querySelector("#verifyPhoneForm"),
+	verifyPhoneTarget: document.querySelector("#verifyPhoneTarget"),
+	verifyPhoneCode: document.querySelector("#verifyPhoneCode"),
+	resendVerifyCodeBtn: document.querySelector("#resendVerifyCodeBtn"),
+	forgotPasswordBtn: document.querySelector("#forgotPasswordBtn"),
+	forgotPasswordForm: document.querySelector("#forgotPasswordForm"),
+	forgotPhone: document.querySelector("#forgotPhone"),
+	resetCodeForm: document.querySelector("#resetCodeForm"),
+	resetCodeTarget: document.querySelector("#resetCodeTarget"),
+	resetCodeInput: document.querySelector("#resetCodeInput"),
+	resendResetCodeBtn: document.querySelector("#resendResetCodeBtn"),
+	newPasswordForm: document.querySelector("#newPasswordForm"),
 	logoutBtn: document.querySelector("#logoutBtn"),
 	statusBar: document.querySelector("#statusBar"),
+	landingInstitutionLogosGrid: document.querySelector("#landingInstitutionLogosGrid"),
 	tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
 	sections: Array.from(document.querySelectorAll(".app-section")),
 	monthInput: document.querySelector("#monthInput"),
@@ -453,11 +490,7 @@ document.addEventListener("DOMContentLoaded", init);
 async function init() {
 	bindEvents();
 	applyDefaultDates();
-
-	if (shouldStartInLocalDemoMode()) {
-		enterGuestSession("local");
-		return;
-	}
+	await loadInstitutionLogos();
 
 	await loadRuntimeConfig();
 
@@ -471,38 +504,66 @@ async function init() {
 		return;
 	}
 
-	await autoAuthenticate();
-}
-
-function shouldStartInLocalDemoMode() {
-	if (window.location.protocol === "file:") {
-		return true;
-	}
-
-	return LOCAL_DEMO_HOSTS.has(window.location.hostname);
+	showAuthLanding();
 }
 
 function enterGuestSession(scope) {
 	activateSession(QUICK_ACCESS_TOKEN, {
 		id: 1,
-		full_name: scope === "local" ? "Visitante (Local)" : "Visitante",
-		email: "visitante@sorrisoamigo.org",
+		full_name: scope === "public" ? "Visitante" : "Visitante (Local)",
+		username: scope === "public" ? "visitante" : "visitante-local",
+		email: null,
 		role: "caregiver"
 	});
 	setStatus(
-		scope === "local"
-			? "Modo local ativo. Entrando direto no Dashboard."
-			: "Acesso liberado. Entrando direto no Dashboard.",
+		"Acesso liberado. Entrando direto no Dashboard.",
 		"success"
 	);
 }
 
+function showAuthLanding() {
+	if (dom.landing) {
+		dom.landing.classList.remove("hidden");
+	}
+	if (dom.appShell) {
+		dom.appShell.classList.add("hidden");
+	}
+}
+
+function showAppShell() {
+	if (dom.landing) {
+		dom.landing.classList.add("hidden");
+	}
+	if (dom.appShell) {
+		dom.appShell.classList.remove("hidden");
+	}
+}
+
 function bindEvents() {
+	dom.showAboutBtn.addEventListener("click", () => setAuthMode("about"));
 	dom.showLoginBtn.addEventListener("click", () => setAuthMode("login"));
 	dom.showRegisterBtn.addEventListener("click", () => setAuthMode("register"));
 
+	syncAuthHeroPlacement();
+	window.addEventListener("resize", syncAuthHeroPlacement);
+
 	dom.loginForm.addEventListener("submit", onLoginSubmit);
 	dom.registerForm.addEventListener("submit", onRegisterSubmit);
+	dom.verifyPhoneForm.addEventListener("submit", onVerifyPhoneSubmit);
+	dom.forgotPasswordForm.addEventListener("submit", onForgotPasswordSubmit);
+	dom.resetCodeForm.addEventListener("submit", onResetCodeSubmit);
+	dom.newPasswordForm.addEventListener("submit", onNewPasswordSubmit);
+	dom.resendVerifyCodeBtn.addEventListener("click", onResendVerifyCode);
+	dom.resendResetCodeBtn.addEventListener("click", onResendResetCode);
+
+	dom.forgotPasswordBtn.addEventListener("click", () => {
+		dom.forgotPhone.value = dom.loginForm.querySelector('input[name="phone"]').value;
+		setAuthMode("forgot");
+	});
+
+	document.querySelectorAll("[data-auth-back]").forEach((button) => {
+		button.addEventListener("click", () => setAuthMode(button.dataset.authBack));
+	});
 	dom.logoutBtn.addEventListener("click", () => logout(false));
 
 	dom.tabButtons.forEach((button) => {
@@ -540,6 +601,8 @@ function bindEvents() {
 	bindInstitutionModalEvents();
 	bindGuideModalEvents();
 	bindDayDetailModalEvents();
+	bindPasswordToggleEvents();
+	bindPhoneMask();
 
 	// Custom Checklist UI events
 	const timeBtns = document.querySelectorAll(".time-btn");
@@ -749,12 +812,143 @@ function initDashboardMonthPicker() {
 	});
 }
 
+const AUTH_MOBILE_QUERY = window.matchMedia("(max-width: 980px)");
+// Breakpoint em que o app interno troca a sidebar pela barra inferior.
+const APP_MOBILE_QUERY = window.matchMedia("(max-width: 768px)");
+let currentAuthMode = "login";
+
+function isAuthMobile() {
+	return AUTH_MOBILE_QUERY.matches;
+}
+
+function isAppMobile() {
+	return APP_MOBILE_QUERY.matches;
+}
+
+/** No mobile o hero vira uma aba dentro da coluna de autenticação. */
+function syncAuthHeroPlacement() {
+	if (!dom.authHero || !dom.authColumn || !dom.landing) return;
+	if (isAuthMobile()) {
+		if (dom.authHero.parentElement !== dom.authColumn) {
+			// Primeira vez no mobile: o hero "Sobre" abre selecionado.
+			dom.authColumn.prepend(dom.authHero);
+			dom.authColumn.prepend(dom.authSwitch);
+			currentAuthMode = "about";
+		}
+		setAuthMode(currentAuthMode);
+	} else {
+		if (dom.authHero.parentElement !== dom.landing) {
+			dom.landing.insertBefore(dom.authHero, dom.authColumn);
+		}
+		dom.authHero.classList.remove("hidden");
+		if (currentAuthMode === "about") {
+			setAuthMode("login");
+		}
+	}
+}
+
+// Telas do fluxo de autenticacao e a aba do switch que cada uma destaca.
+const AUTH_SCREENS = {
+	login: { form: "loginForm", tab: "login" },
+	register: { form: "registerForm", tab: "register" },
+	verifyPhone: { form: "verifyPhoneForm", tab: "register" },
+	forgot: { form: "forgotPasswordForm", tab: "login" },
+	resetCode: { form: "resetCodeForm", tab: "login" },
+	newPassword: { form: "newPasswordForm", tab: "login" },
+	about: { form: null, tab: "about" }
+};
+
 function setAuthMode(mode) {
-	const isLogin = mode === "login";
-	dom.showLoginBtn.classList.toggle("active", isLogin);
-	dom.showRegisterBtn.classList.toggle("active", !isLogin);
-	dom.loginForm.classList.toggle("hidden", !isLogin);
-	dom.registerForm.classList.toggle("hidden", isLogin);
+	if (!AUTH_SCREENS[mode]) {
+		mode = "login";
+	}
+
+	if (mode === "about" && !isAuthMobile()) {
+		mode = "login";
+	}
+	currentAuthMode = mode;
+
+	const activeTab = AUTH_SCREENS[mode].tab;
+
+	dom.showAboutBtn.classList.toggle("active", activeTab === "about");
+	dom.showLoginBtn.classList.toggle("active", activeTab === "login");
+	dom.showRegisterBtn.classList.toggle("active", activeTab === "register");
+
+	Object.values(AUTH_SCREENS).forEach((screen) => {
+		if (!screen.form || !dom[screen.form]) return;
+		dom[screen.form].classList.add("hidden");
+	});
+
+	const activeForm = AUTH_SCREENS[mode].form;
+	if (activeForm && dom[activeForm]) {
+		dom[activeForm].classList.remove("hidden");
+	}
+
+	if (dom.authHero && isAuthMobile()) {
+		dom.authHero.classList.toggle("hidden", mode !== "about");
+	}
+}
+
+function bindPasswordToggleEvents() {
+	document.querySelectorAll(".btn-toggle-password").forEach((btn) => {
+		btn.addEventListener("click", (event) => {
+			event.preventDefault();
+			const container = btn.closest(".password-field-group");
+			if (!container) return;
+			const input = container.querySelector("input");
+			const icon = btn.querySelector("i");
+			if (!input || !icon) return;
+
+			if (input.type === "password") {
+				input.type = "text";
+				icon.className = "ph ph-eye-slash";
+				btn.setAttribute("aria-label", "Ocultar senha");
+			} else {
+				input.type = "password";
+				icon.className = "ph ph-eye";
+				btn.setAttribute("aria-label", "Mostrar senha");
+			}
+		});
+	});
+}
+
+function formatBrazilianPhone(value) {
+	const digits = value.replace(/\D/g, "").slice(0, 11);
+	if (!digits) return "";
+	if (digits.length <= 2) {
+		return `(${digits}`;
+	}
+	if (digits.length <= 6) {
+		return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+	}
+	if (digits.length <= 10) {
+		return `(${digits.slice(0, 2)}) ${digits.slice(2, 6)}-${digits.slice(6)}`;
+	}
+	return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
+function bindPhoneMask() {
+	document.querySelectorAll('input[name="phone"]').forEach((phoneInput) => {
+		phoneInput.addEventListener("input", (event) => {
+			const cursorPosition = phoneInput.selectionStart;
+			const oldLength = phoneInput.value.length;
+			phoneInput.value = formatBrazilianPhone(phoneInput.value);
+			const newLength = phoneInput.value.length;
+
+			if (cursorPosition !== null && event.inputType !== "deleteContentBackward") {
+				const diff = newLength - oldLength;
+				const newPos = Math.max(0, cursorPosition + diff);
+				phoneInput.setSelectionRange(newPos, newPos);
+			}
+		});
+	});
+
+	// Codigos de verificacao aceitam apenas digitos.
+	document.querySelectorAll(".code-input").forEach((input) => {
+		input.addEventListener("input", () => {
+			input.value = input.value.replace(/\D/g, "").slice(0, 6);
+		});
+	});
 }
 
 function resetCompletedGuideSteps() {
@@ -922,7 +1116,12 @@ async function api(path, options = {}) {
 		});
 	} catch (error) {
 		if (path.startsWith("/auth/") || path.startsWith("/checklists")) {
-			state.offlineMode = true;
+			if (!state.offlineMode) {
+				state.offlineMode = true;
+				console.warn(`[sorriso] API inacessivel em ${API_BASE}. Ativando modo offline simulado.`);
+				setStatus(`Servidor nao encontrado em ${API_BASE}. Modo offline simulado ativo.`, "warning");
+			}
+
 			return offlineApi(path, options);
 		}
 
@@ -975,33 +1174,115 @@ function setStatus(message, type = "info") {
 	showToast(type, message);
 }
 
+// Guarda o telefone em validacao e o token temporario de troca de senha.
+const authFlow = {
+	pendingRegisterPhone: "",
+	resetPhone: "",
+	resetToken: ""
+};
+
+function onlyDigits(value) {
+	return String(value || "").replace(/\D/g, "");
+}
+
+function isValidPhoneDigits(digits) {
+	return /^[1-9]{2}9?\d{8}$/.test(digits);
+}
+
 async function onRegisterSubmit(event) {
 	event.preventDefault();
 
 	const formData = new FormData(dom.registerForm);
 	const payload = {
-		fullName: String(formData.get("fullName") || "").trim(),
-		email: String(formData.get("email") || "").trim(),
+		username: String(formData.get("username") || "").trim(),
 		password: String(formData.get("password") || ""),
-		role: String(formData.get("role") || "caregiver"),
-		acceptTerms: formData.get("acceptTerms") === "on"
+		confirmPassword: String(formData.get("confirmPassword") || ""),
+		phone: onlyDigits(formData.get("phone"))
 	};
 
+	if (!payload.username || !payload.password || !payload.confirmPassword || !payload.phone) {
+		setStatus("Preencha todos os campos do cadastro.", "error");
+		return;
+	}
+
+	if (payload.password !== payload.confirmPassword) {
+		setStatus("As senhas precisam ser iguais.", "error");
+		return;
+	}
+
+	if (payload.password.length < 8) {
+		setStatus("A senha precisa ter no mínimo 8 caracteres.", "error");
+		return;
+	}
+
+	if (!isValidPhoneDigits(payload.phone)) {
+		setStatus("Informe um número de telefone válido com DDD.", "error");
+		return;
+	}
+
 	try {
-		setStatus("Criando conta...", "info");
-		const result = await api("/auth/register", {
+		setStatus("Enviando código de confirmação...", "info");
+		const result = await api("/auth/register/start", {
 			method: "POST",
 			auth: false,
 			body: payload
 		});
 
+		authFlow.pendingRegisterPhone = result.phone || payload.phone;
+		dom.verifyPhoneTarget.textContent = formatBrazilianPhone(authFlow.pendingRegisterPhone);
+		dom.verifyPhoneCode.value = "";
+		setAuthMode("verifyPhone");
+		dom.verifyPhoneCode.focus();
+		setStatus(result.message || "Código enviado por SMS.", "success");
+		announceDevCode(result.devCode);
+	} catch (error) {
+		setStatus(error.message, "error");
+	}
+}
+
+async function onVerifyPhoneSubmit(event) {
+	event.preventDefault();
+
+	const code = onlyDigits(new FormData(dom.verifyPhoneForm).get("code"));
+
+	if (code.length !== 6) {
+		setStatus("Digite os 6 dígitos do código recebido.", "error");
+		return;
+	}
+
+	try {
+		setStatus("Validando código...", "info");
+		const result = await api("/auth/register/verify", {
+			method: "POST",
+			auth: false,
+			body: { phone: authFlow.pendingRegisterPhone, code }
+		});
+
+		authFlow.pendingRegisterPhone = "";
+		dom.registerForm.reset();
+		dom.verifyPhoneForm.reset();
 		activateSession(result.token, result.user);
-		setStatus(
-			QUICK_ACCESS_MODE
-				? "Modo demonstracao ativo. Voce pode navegar em todas as telas."
-				: "Conta criada com sucesso.",
-			"success"
-		);
+		setStatus("Conta criada com sucesso.", "success");
+	} catch (error) {
+		setStatus(error.message, "error");
+	}
+}
+
+async function onResendVerifyCode() {
+	if (!authFlow.pendingRegisterPhone) {
+		setStatus("Refaça o cadastro para receber um novo código.", "error");
+		return;
+	}
+
+	try {
+		const result = await api("/auth/register/resend", {
+			method: "POST",
+			auth: false,
+			body: { phone: authFlow.pendingRegisterPhone }
+		});
+
+		setStatus(result.message || "Novo código enviado.", "success");
+		announceDevCode(result.devCode);
 	} catch (error) {
 		setStatus(error.message, "error");
 	}
@@ -1012,9 +1293,19 @@ async function onLoginSubmit(event) {
 
 	const formData = new FormData(dom.loginForm);
 	const payload = {
-		email: String(formData.get("email") || "").trim(),
+		phone: onlyDigits(formData.get("phone")),
 		password: String(formData.get("password") || "")
 	};
+
+	if (!payload.phone || !payload.password) {
+		setStatus("Informe seu número de telefone e senha.", "error");
+		return;
+	}
+
+	if (!isValidPhoneDigits(payload.phone)) {
+		setStatus("Informe um número de telefone válido com DDD.", "error");
+		return;
+	}
 
 	try {
 		setStatus("Validando acesso...", "info");
@@ -1036,13 +1327,138 @@ async function onLoginSubmit(event) {
 	}
 }
 
+async function onForgotPasswordSubmit(event) {
+	event.preventDefault();
+
+	const phone = onlyDigits(new FormData(dom.forgotPasswordForm).get("phone"));
+
+	if (!isValidPhoneDigits(phone)) {
+		setStatus("Informe um número de telefone válido com DDD.", "error");
+		return;
+	}
+
+	try {
+		setStatus("Enviando SMS de recuperação...", "info");
+		const result = await api("/auth/password/forgot", {
+			method: "POST",
+			auth: false,
+			body: { phone }
+		});
+
+		authFlow.resetPhone = result.phone || phone;
+		dom.resetCodeTarget.textContent = formatBrazilianPhone(authFlow.resetPhone);
+		dom.resetCodeInput.value = "";
+		setAuthMode("resetCode");
+		dom.resetCodeInput.focus();
+		setStatus(result.message || "Código enviado por SMS.", "success");
+		announceDevCode(result.devCode);
+	} catch (error) {
+		setStatus(error.message, "error");
+	}
+}
+
+async function onResetCodeSubmit(event) {
+	event.preventDefault();
+
+	const code = onlyDigits(new FormData(dom.resetCodeForm).get("code"));
+
+	if (code.length !== 6) {
+		setStatus("Digite os 6 dígitos do código recebido.", "error");
+		return;
+	}
+
+	try {
+		setStatus("Validando código...", "info");
+		const result = await api("/auth/password/verify", {
+			method: "POST",
+			auth: false,
+			body: { phone: authFlow.resetPhone, code }
+		});
+
+		authFlow.resetToken = result.resetToken;
+		dom.newPasswordForm.reset();
+		setAuthMode("newPassword");
+		setStatus("Código validado. Defina sua nova senha.", "success");
+	} catch (error) {
+		// Codigo incorreto mantem o usuario na mesma tela.
+		setStatus(error.message, "error");
+	}
+}
+
+async function onResendResetCode() {
+	if (!authFlow.resetPhone) {
+		setStatus("Informe o telefone novamente para receber um novo código.", "error");
+		return;
+	}
+
+	try {
+		const result = await api("/auth/password/forgot", {
+			method: "POST",
+			auth: false,
+			body: { phone: authFlow.resetPhone }
+		});
+
+		setStatus(result.message || "Novo código enviado.", "success");
+		announceDevCode(result.devCode);
+	} catch (error) {
+		setStatus(error.message, "error");
+	}
+}
+
+async function onNewPasswordSubmit(event) {
+	event.preventDefault();
+
+	const formData = new FormData(dom.newPasswordForm);
+	const password = String(formData.get("password") || "");
+	const confirmPassword = String(formData.get("confirmPassword") || "");
+
+	if (password.length < 8) {
+		setStatus("A senha precisa ter no mínimo 8 caracteres.", "error");
+		return;
+	}
+
+	if (password !== confirmPassword) {
+		setStatus("As senhas precisam ser iguais.", "error");
+		return;
+	}
+
+	try {
+		setStatus("Salvando nova senha...", "info");
+		const result = await api("/auth/password/reset", {
+			method: "POST",
+			auth: false,
+			body: {
+				phone: authFlow.resetPhone,
+				resetToken: authFlow.resetToken,
+				password,
+				confirmPassword
+			}
+		});
+
+		authFlow.resetPhone = "";
+		authFlow.resetToken = "";
+		dom.newPasswordForm.reset();
+		dom.forgotPasswordForm.reset();
+		activateSession(result.token, result.user);
+		setStatus("Senha atualizada com sucesso.", "success");
+	} catch (error) {
+		setStatus(error.message, "error");
+	}
+}
+
+// Em desenvolvimento a API devolve o codigo para facilitar os testes.
+function announceDevCode(devCode) {
+	if (!devCode) return;
+	console.info(`[dev] codigo de verificacao: ${devCode}`);
+	setStatus(`Modo desenvolvimento: código ${devCode}`, "warning");
+}
+
 function activateSession(token, user) {
 	state.token = token;
 	state.user = user;
 	localStorage.setItem("sorriso_token", token);
 
-	dom.landing.classList.add("hidden");
-	dom.appShell.classList.remove("hidden");
+	showAppShell();
 	setActiveSection("inicio");
 
 	loadAllData();
@@ -1052,17 +1468,16 @@ async function bootstrapSession() {
 	try {
 		const result = await api("/auth/me");
 		state.user = result.user;
-		dom.landing.classList.add("hidden");
-		dom.appShell.classList.remove("hidden");
+		showAppShell();
 		setActiveSection("inicio");
 		await loadAllData();
 	} catch (error) {
-		if (shouldStartInLocalDemoMode() || runtimeConfig.publicAccessMode) {
-			enterGuestSession(shouldStartInLocalDemoMode() ? "local" : "public");
+		if (runtimeConfig.publicAccessMode) {
+			enterGuestSession("public");
 			return;
 		}
 
-		logout(true);
+		showAuthLanding();
 	}
 }
 
@@ -1072,89 +1487,22 @@ function logout(silent) {
 	localStorage.removeItem("sorriso_token");
 	stopReminderEngine();
 
-	if (shouldStartInLocalDemoMode()) {
-		enterGuestSession("local");
+	if (runtimeConfig.publicAccessMode) {
+		enterGuestSession("public");
 		return;
 	}
 
-	autoAuthenticate();
+	showAuthLanding();
 
 	if (!silent) {
-		setStatus("Sessão reiniciada automaticamente.", "info");
+		setStatus("Sessão encerrada. Faça login novamente.", "info");
 	}
 }
 
 async function autoAuthenticate() {
-	const defaultEmail = "visitante@sorrisoamigo.org";
-	const defaultPassword = "DefaultVisitante123!";
-	const defaultName = "Visitante";
-
-	if (shouldStartInLocalDemoMode()) {
-		enterGuestSession("local");
-		return;
-	}
-
-	try {
-		setStatus("Autenticando automaticamente...", "info");
-		
-		let result;
-		try {
-			const response = await fetch(`${API_BASE}/auth/login`, {
-				method: "POST",
-				headers: { "Content-Type": "application/json" },
-				body: JSON.stringify({
-					email: defaultEmail,
-					password: defaultPassword
-				})
-			});
-			
-			if (response.ok) {
-				result = await response.json();
-			} else {
-				// Se o login falhar (ex: usuário não existe), tenta cadastrar
-				const regResponse = await fetch(`${API_BASE}/auth/register`, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify({
-						fullName: defaultName,
-						email: defaultEmail,
-						password: defaultPassword,
-						role: "caregiver",
-						acceptTerms: true
-					})
-				});
-				
-				if (regResponse.ok) {
-					result = await regResponse.json();
-				} else {
-					const data = await regResponse.json().catch(() => ({}));
-					throw new Error(data.message || "Erro no cadastro automático.");
-				}
-			}
-		} catch (err) {
-			console.error("Falha no login/cadastro automático, tentando fallback local.", err);
-			throw err;
-		}
-
-		if (result && result.token) {
-			activateSession(result.token, result.user);
-			setStatus("Autenticação automática concluída.", "success");
-		}
-	} catch (error) {
-		console.error("Erro na autenticação automática, usando fallback mockado local:", error);
-		if (QUICK_ACCESS_MODE) {
-			setStatus("Servidor indisponível. Iniciando sessão local offline.", "warning");
-			activateSession("quick-access-demo-token", {
-				id: 1,
-				full_name: "Visitante (Local)",
-				email: defaultEmail,
-				role: "caregiver"
-			});
-			return;
-		}
-
-		setStatus("Servidor indisponível. Não foi possível carregar o Dashboard real.", "error");
-	}
+	showAuthLanding();
+	setStatus("Use a tela de login para entrar no sistema.", "info");
+	return null;
 }
 
 async function loadRuntimeConfig() {
@@ -1187,34 +1535,36 @@ async function loadAllData() {
 }
 
 async function loadInstitutionLogos() {
-	if (!dom.institutionLogosGrid) return;
+	const containers = [dom.landingInstitutionLogosGrid, dom.institutionLogosGrid].filter(Boolean);
 
-	dom.institutionLogosGrid.innerHTML = institutionCards
-		.map((item) => {
-			const previewMarkup = item.previewType === "pdf"
-				? `<object data="${item.logoUrl}" type="application/pdf" class="institution-logo-preview" aria-label="${escapeHtml(item.title)}"></object>`
-				: `<img src="${item.logoUrl}" alt="${escapeHtml(item.title)}" class="institution-logo-preview" loading="lazy" />`;
+	containers.forEach((container) => {
+		container.innerHTML = institutionCards
+			.map((item) => {
+				const previewMarkup = item.previewType === "pdf"
+					? `<object data="${item.logoUrl}" type="application/pdf" class="institution-logo-preview" aria-label="${escapeHtml(item.title)}"></object>`
+					: `<img src="${item.logoUrl}" alt="${escapeHtml(item.title)}" class="institution-logo-preview" loading="lazy" />`;
 
-			return `
-				<button type="button" class="institution-card" data-institution-id="${item.id}">
-					<span class="institution-card-accent" style="--institution-accent:${item.accent};"></span>
-					<div class="institution-card-logo">${previewMarkup}</div>
-					<div class="institution-card-body">
-						<p class="institution-card-kicker">${escapeHtml(item.kicker)}</p>
-						<h4>${escapeHtml(item.title)}</h4>
-						<span class="institution-card-cta">Abrir informações</span>
-					</div>
-				</button>
-			`;
-		})
-		.join("");
+				return `
+					<button type="button" class="institution-card" data-institution-id="${item.id}">
+						<span class="institution-card-accent" style="--institution-accent:${item.accent};"></span>
+						<div class="institution-card-logo">${previewMarkup}</div>
+						<div class="institution-card-body">
+							<p class="institution-card-kicker">${escapeHtml(item.kicker)}</p>
+							<h4>${escapeHtml(item.title)}</h4>
+							<span class="institution-card-cta">Abrir informações</span>
+						</div>
+					</button>
+				`;
+			})
+			.join("");
 
-	dom.institutionLogosGrid.querySelectorAll(".institution-card").forEach((button) => {
-		button.addEventListener("click", () => {
-			const institution = institutionCards.find((item) => item.id === button.dataset.institutionId);
-			if (institution) {
-				openInstitutionModal(institution);
-			}
+		container.querySelectorAll(".institution-card").forEach((button) => {
+			button.addEventListener("click", () => {
+				const institution = institutionCards.find((item) => item.id === button.dataset.institutionId);
+				if (institution) {
+					openInstitutionModal(institution);
+				}
+			});
 		});
 	});
 }
@@ -1906,7 +2256,7 @@ async function loadGuideSteps() {
 }
 
 function getGuideCompletionStorageKey() {
-	const userId = state.user?.id || state.user?.email || "guest";
+	const userId = state.user?.username || state.user?.email || state.user?.id || "guest";
 	return `sorriso_guide_completed_steps_${userId}`;
 }
 
@@ -2241,6 +2591,9 @@ function bindDayDetailModalEvents() {
 }
 
 function handleDashboardHeatmapClick(event) {
+	// No mobile o heatmap e apenas visual: nao abre a modal de detalhe.
+	if (isAppMobile()) return;
+
 	const target = event.target.closest(".heatmap-day[data-date]");
 	if (!target || !dom.dashboardMonthHeatmap?.contains(target)) return;
 
@@ -2827,7 +3180,8 @@ function createDemoStore() {
 		user: {
 			id: 1,
 			full_name: "Visitante",
-			email: "visitante@sorriso.local",
+			username: "visitante",
+			email: null,
 			role: "caregiver"
 		},
 		preferences: {
@@ -3066,43 +3420,51 @@ function upsertDemoChecklist(date, payload) {
 	return nextItem;
 }
 
-function demoNameFromEmail(email) {
-	const safeEmail = String(email || "visitante@sorriso.local").trim() || "visitante@sorriso.local";
-	const base = safeEmail.split("@")[0].replace(/[._-]+/g, " ").trim() || "Visitante";
-	return base.charAt(0).toUpperCase() + base.slice(1);
-}
-
 async function mockApi(path, options = {}) {
 	const { method = "GET", body, auth = true } = options;
 	const url = new URL(path, "http://demo.local");
 	const pathname = url.pathname;
 	const normalizedMethod = method.toUpperCase();
 
-	if (auth && !state.token && pathname !== "/auth/login" && pathname !== "/auth/register") {
+	if (auth && !state.token && !pathname.startsWith("/auth/")) {
 		throw new Error("Token de acesso ausente.");
 	}
 
 	if (pathname === "/auth/login" && normalizedMethod === "POST") {
-		const email = String(body?.email || "visitante@sorriso.local").trim() || "visitante@sorriso.local";
 		demoStore.user = {
 			...demoStore.user,
-			email,
-			full_name: demoNameFromEmail(email)
+			phone: String(body?.phone || "").replace(/\D/g, ""),
+			email: null
 		};
 
 		return { token: QUICK_ACCESS_TOKEN, user: demoStore.user };
 	}
 
-	if (pathname === "/auth/register" && normalizedMethod === "POST") {
-		const fullName = String(body?.fullName || "Visitante").trim() || "Visitante";
-		const email = String(body?.email || "visitante@sorriso.local").trim() || "visitante@sorriso.local";
-		const role = String(body?.role || "caregiver");
+	if (pathname === "/auth/register/start" && normalizedMethod === "POST") {
+		demoStore.pendingRegister = {
+			username: String(body?.username || "visitante").trim() || "visitante",
+			phone: String(body?.phone || "").replace(/\D/g, "")
+		};
+
+		return { message: "Modo demo: use o codigo 000000.", phone: demoStore.pendingRegister.phone, devCode: "000000" };
+	}
+
+	if (pathname === "/auth/register/resend" && normalizedMethod === "POST") {
+		return { message: "Modo demo: use o codigo 000000.", devCode: "000000" };
+	}
+
+	if (pathname === "/auth/register/verify" && normalizedMethod === "POST") {
+		if (String(body?.code || "") !== "000000") {
+			throw new Error("Codigo incorreto.");
+		}
 
 		demoStore.user = {
 			...demoStore.user,
-			full_name: fullName,
-			email,
-			role
+			full_name: demoStore.pendingRegister?.username || "Visitante",
+			username: demoStore.pendingRegister?.username || "visitante",
+			phone: demoStore.pendingRegister?.phone || "",
+			email: null,
+			role: "caregiver"
 		};
 
 		return { token: QUICK_ACCESS_TOKEN, user: demoStore.user };
@@ -3231,43 +3593,102 @@ async function offlineApi(path, options = {}) {
 	const normalizedMethod = method.toUpperCase();
 	const store = loadOfflineStore();
 
-	if (auth && pathname !== "/auth/login" && pathname !== "/auth/register") {
+	if (auth && !pathname.startsWith("/auth/")) {
 		if (!store.token || !store.user) {
 			throw new Error("Token de acesso ausente.");
 		}
 	}
 
-	if (pathname === "/auth/register" && normalizedMethod === "POST") {
-		const fullName = String(body?.fullName || "Visitante").trim() || "Visitante";
-		const email = String(body?.email || "visitante@sorriso.local").trim() || "visitante@sorriso.local";
-		const role = String(body?.role || "caregiver");
+	// Codigo fixo no modo offline, ja que nao ha como enviar SMS de verdade.
+	const OFFLINE_CODE = "000000";
+
+	if (pathname === "/auth/register/start" && normalizedMethod === "POST") {
+		const phone = String(body?.phone || "").replace(/\D/g, "");
+		store.pendingRegister = {
+			username: String(body?.username || "visitante").trim() || "visitante",
+			password: String(body?.password || ""),
+			phone
+		};
+		saveOfflineStore(store);
+
+		return { message: "Modo offline: use o codigo 000000.", phone, devCode: OFFLINE_CODE };
+	}
+
+	if (pathname === "/auth/register/resend" && normalizedMethod === "POST") {
+		return { message: "Modo offline: use o codigo 000000.", devCode: OFFLINE_CODE };
+	}
+
+	if (pathname === "/auth/register/verify" && normalizedMethod === "POST") {
+		if (String(body?.code || "") !== OFFLINE_CODE) {
+			throw new Error("Codigo incorreto.");
+		}
+
+		const pending = store.pendingRegister || {};
 		const token = `offline-token-${Date.now()}`;
 
 		store.user = {
 			id: store.user?.id || 1,
-			full_name: fullName,
-			email,
-			role
+			full_name: pending.username || "Visitante",
+			username: pending.username || "visitante",
+			email: null,
+			phone: pending.phone || "",
+			role: "caregiver"
 		};
-		store.password = String(body?.password || "");
+		store.password = pending.password || "";
 		store.token = token;
+		store.pendingRegister = null;
 		saveOfflineStore(store);
 
 		return { token, user: store.user };
 	}
 
 	if (pathname === "/auth/login" && normalizedMethod === "POST") {
-		const email = String(body?.email || "").trim();
+		const phone = String(body?.phone || "").replace(/\D/g, "");
 		const password = String(body?.password || "");
+		const storedPhone = String(store.user?.phone || "").replace(/\D/g, "");
 
-		if (!store.user || store.user.email !== email || store.password !== password) {
-			throw new Error("E-mail ou senha incorretos.");
+		if (!store.user || storedPhone !== phone) {
+			throw new Error("Telefone nao cadastrado.");
+		}
+
+		if (store.password !== password) {
+			throw new Error("Senha incorreta.");
 		}
 
 		if (!store.token) {
 			store.token = `offline-token-${Date.now()}`;
 			saveOfflineStore(store);
 		}
+
+		return { token: store.token, user: store.user };
+	}
+
+	if (pathname === "/auth/password/forgot" && normalizedMethod === "POST") {
+		const phone = String(body?.phone || "").replace(/\D/g, "");
+
+		if (String(store.user?.phone || "").replace(/\D/g, "") !== phone) {
+			throw new Error("Telefone nao cadastrado.");
+		}
+
+		return { message: "Modo offline: use o codigo 000000.", phone, devCode: OFFLINE_CODE };
+	}
+
+	if (pathname === "/auth/password/verify" && normalizedMethod === "POST") {
+		if (String(body?.code || "") !== OFFLINE_CODE) {
+			throw new Error("Codigo incorreto.");
+		}
+
+		return { resetToken: "offline-reset-token", phone: body?.phone };
+	}
+
+	if (pathname === "/auth/password/reset" && normalizedMethod === "POST") {
+		if (body?.resetToken !== "offline-reset-token") {
+			throw new Error("Sessao de recuperacao expirada.");
+		}
+
+		store.password = String(body?.password || "");
+		store.token = store.token || `offline-token-${Date.now()}`;
+		saveOfflineStore(store);
 
 		return { token: store.token, user: store.user };
 	}

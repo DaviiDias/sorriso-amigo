@@ -35,8 +35,9 @@ body {
 body {
 	font-family: "Lexend", sans-serif;
 	color: var(--ink-900);
-	background: radial-gradient(circle at 15% 15%, rgba(72, 183, 255, 0.1) 0%, transparent 40%),
-		radial-gradient(circle at 85% 10%, rgba(109, 198, 254, 0.08) 0%, transparent 35%),
+	background:
+		radial-gradient(circle at 18% 16%, rgba(72, 183, 255, 0.1) 0%, transparent 38%),
+		radial-gradient(circle at 82% 12%, rgba(109, 198, 254, 0.08) 0%, transparent 34%),
 		linear-gradient(140deg, var(--bg-a) 0%, var(--bg-b) 100%);
 	overflow-x: hidden;
 }
@@ -66,39 +67,66 @@ body {
 .layout {
 	position: relative;
 	z-index: 2;
-	width: min(1200px, 96vw);
-	margin: 2.2rem auto;
+	width: min(1360px, calc(100vw - 2rem));
+	margin: 1rem auto 2rem;
 }
 
+/* =========================================
+   AUTH LANDING PANEL (STATIC LIGHT MODE ALWAYS)
+   ========================================= */
 .panel {
-	background: rgba(255, 255, 255, 0.9);
-	border: 1px solid rgba(255, 255, 255, 0.75);
-	box-shadow: var(--shadow-1);
-	border-radius: var(--radius-lg);
-	backdrop-filter: blur(8px);
+	background: #FFFFFF;
+	border: 1px solid #E5E7EB;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+	border-radius: 20px;
 }
 
-.auth-panel {
+#landing.auth-panel {
+	position: fixed;
+	inset: 0;
+	width: 100vw;
+	height: 100vh;
+	max-height: 100dvh;
+	margin: 0;
+	border-radius: 0 !important;
+	border: none !important;
+	box-shadow: none !important;
+	background: #F4F6F8;
 	display: grid;
-	grid-template-columns: 1.05fr 1fr;
-	gap: 1.6rem;
-	padding: 1.6rem;
-	animation: fadeSlide 0.55s ease both;
+	grid-template-columns: minmax(0, 1.15fr) minmax(340px, 440px);
+	gap: 1.25rem;
+	padding: 1.25rem;
+	overflow: hidden;
+	box-sizing: border-box;
+	z-index: 100;
 }
 
-.brand-column {
-	padding: 1.2rem;
-	border-radius: var(--radius-md);
-	background: linear-gradient(140deg, rgba(15, 139, 117, 0.12), rgba(239, 138, 41, 0.12));
+#landing.hidden {
+	display: none !important;
+}
+
+.auth-hero {
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+	gap: 1rem;
+	height: 100%;
+	max-height: calc(100vh - 2.5rem);
+	padding: 1.75rem;
+	border: 1px solid #E5E7EB;
+	border-radius: 20px;
+	background: #FFFFFF;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+	overflow-y: auto;
 }
 
 .eyebrow {
 	margin: 0;
 	text-transform: uppercase;
-	letter-spacing: 0.09em;
-	color: var(--mint-600);
+	letter-spacing: 0.1em;
+	color: #0284C7;
 	font-weight: 800;
-	font-size: 0.76rem;
+	font-size: 0.78rem;
 }
 
 h1,
@@ -107,77 +135,207 @@ h3,
 h4 {
 	margin: 0 0 0.4rem;
 	font-family: "Baloo 2", system-ui, sans-serif;
-	color: var(--ink-900);
+	color: #1E293B;
 }
 
 h1 {
-	margin-top: 0.4rem;
-	font-size: clamp(2rem, 4vw, 2.7rem);
-	line-height: 1;
+	margin-top: 0.3rem;
+	font-size: clamp(2rem, 3.5vw, 3rem);
+	line-height: 1.1;
 }
 
 .subtitle {
-	margin-top: 0.6rem;
+	margin-top: 0.4rem;
 	max-width: 55ch;
-	color: var(--ink-700);
-	font-size: 1rem;
+	color: #475569;
+	font-size: 0.95rem;
+	line-height: 1.5;
 }
 
 .feature-list {
-	margin: 1.2rem 0 0;
-	padding-left: 1.1rem;
+	margin: 1rem 0 0;
+	padding-left: 1.2rem;
 	display: grid;
-	gap: 0.55rem;
+	gap: 0.45rem;
+	color: #334155;
+	font-size: 0.92rem;
+	font-weight: 500;
+}
+
+/* Cartao de boas-vindas com a ilustracao da dentista */
+.welcome-card {
+	display: flex;
+	align-items: center;
+	gap: 1.5rem;
+	margin-top: 1rem;
+	padding: 1.25rem 1.5rem;
+	border: 1px solid #E0F2FE;
+	border-radius: 20px;
+	background: linear-gradient(135deg, #F0F9FF 0%, #FFFFFF 65%);
+}
+
+.welcome-illustration {
+	flex-shrink: 0;
+	width: clamp(130px, 15vw, 190px);
+	height: auto;
+	animation: welcomeFloat 5s ease-in-out infinite;
+}
+
+@keyframes welcomeFloat {
+	0%, 100% { transform: translateY(0); }
+	50% { transform: translateY(-8px); }
+}
+
+.welcome-text {
+	min-width: 0;
+}
+
+.welcome-greeting {
+	margin: 0;
+	font-family: "Baloo 2", system-ui, sans-serif;
+	font-size: clamp(1.3rem, 2.2vw, 1.7rem);
+	font-weight: 700;
+	color: #0284C7;
+}
+
+.welcome-lead {
+	margin: 0.3rem 0 0;
+	max-width: 46ch;
+	color: #475569;
+	font-size: 0.94rem;
+	line-height: 1.55;
+}
+
+.welcome-lead strong {
+	color: #1E293B;
+	font-weight: 700;
+}
+
+.welcome-text .feature-list {
+	margin-top: 0.85rem;
+	padding-left: 0;
+	list-style: none;
+}
+
+.welcome-text .feature-list li {
+	display: flex;
+	align-items: flex-start;
+	gap: 0.5rem;
+	line-height: 1.4;
+}
+
+.welcome-text .feature-list i {
+	flex-shrink: 0;
+	margin-top: 0.1rem;
+	color: #38BDF8;
+	font-size: 1.05rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.welcome-illustration,
+	.quiz-mascot-img,
+	.quiz-play-btn {
+		animation: none;
+	}
 }
 
 .auth-column {
-	background: var(--paper);
-	border-radius: var(--radius-md);
-	border: 1px solid var(--line);
-	padding: 1.2rem;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: center;
+	height: 100%;
+	max-height: calc(100vh - 2.5rem);
+	background: #FFFFFF;
+	border-radius: 20px;
+	border: 1px solid #E5E7EB;
+	padding: 2.25rem 1.75rem 1.75rem;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+	overflow-y: auto;
 }
 
+/* Compact Friendly Auth Switch - Anchored Static at Top */
 .auth-switch {
 	display: inline-flex;
-	width: 100%;
-	margin-bottom: 1rem;
+	align-items: center;
+	justify-content: center;
+	width: auto;
+	max-width: 220px;
+	margin: 0 auto 1.75rem;
+	flex-shrink: 0;
 	border-radius: 999px;
-	border: 1px solid var(--line);
-	padding: 0.25rem;
-	background: var(--paper-soft);
+	border: 1px solid #E2E8F0;
+	padding: 3px;
+	background: #F1F5F9;
+}
+
+.switch-btn--about {
+	display: none;
 }
 
 .switch-btn {
-	width: 50%;
+	width: auto;
+	min-width: 95px;
 	border: 0;
 	background: transparent;
 	border-radius: 999px;
-	padding: 0.6rem 0.9rem;
+	padding: 0.35rem 0.85rem;
 	font-weight: 700;
-	color: var(--ink-700);
+	font-size: 0.82rem;
+	color: #64748B;
 	cursor: pointer;
+	transition: all 0.2s ease;
+	text-align: center;
+}
+
+.switch-btn:hover {
+	color: #1E293B;
 }
 
 .switch-btn.active {
-	background: linear-gradient(120deg, var(--mint-500), var(--mint-600));
-	color: #fff;
+	background: #FFFFFF;
+	color: #0284C7;
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+	font-weight: 800;
 }
 
 .auth-form {
+	display: flex;
+	flex-direction: column;
+	gap: 1rem;
+	width: 100%;
+	max-width: 340px;
+	margin: 0 auto;
+}
+
+.form-head {
 	display: grid;
-	gap: 0.8rem;
+	gap: 0.2rem;
+	text-align: center;
+	margin-bottom: 0.5rem;
+}
+
+.form-head h2 {
+	margin: 0;
+	font-size: 1.4rem;
+	color: #1E293B;
+}
+
+.form-head p {
+	margin: 0;
+	color: #64748B;
+	font-size: 0.88rem;
 }
 
 .auth-form label,
 .stack-form label {
-	display: grid;
-	gap: 0.34rem;
+	display: flex;
+	flex-direction: column;
+	gap: 0.4rem;
 	text-align: left;
-	cursor: pointer;
-	appearance: none;
-	-webkit-appearance: none;
-	font-weight: 700;
-	color: var(--ink-700);
+	font-weight: 600;
+	font-size: 0.88rem;
+	color: #334155;
 }
 
 input,
@@ -191,45 +349,135 @@ input,
 select,
 textarea {
 	width: 100%;
-	border: 1px solid var(--line);
-	border-radius: var(--radius-sm);
-	background: #fff;
-	padding: 0.68rem 0.8rem;
-	color: var(--ink-900);
+	border: 1.5px solid #CBD5E1;
+	border-radius: 12px;
+	background: #FFFFFF;
+	padding: 0.65rem 0.85rem;
+	color: #1E293B;
 }
 
 input:focus,
 select:focus,
 textarea:focus {
 	outline: none;
-	border-color: var(--mint-500);
-	box-shadow: 0 0 0 3px rgba(29, 168, 141, 0.18);
+	border-color: #38BDF8;
+	box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
 }
 
-.consent-label {
+.auth-form input::placeholder {
+	color: #94A3B8;
+}
+
+/* Password Eye Toggle Icon */
+.password-field-group {
+	position: relative;
 	display: flex;
-	align-items: flex-start;
-	gap: 0.6rem;
-	font-weight: 600;
+	align-items: center;
+	width: 100%;
 }
 
-.consent-label input {
-	width: 1rem;
-	height: 1rem;
-	margin-top: 0.18rem;
+.password-field-group input {
+	padding-right: 2.6rem;
 }
 
-.terms-box {
-	border: 1px dashed var(--line);
-	border-radius: var(--radius-sm);
-	padding: 0.65rem 0.85rem;
-	background: var(--paper-soft);
-}
-
-.terms-box summary {
+.btn-toggle-password {
+	position: absolute;
+	right: 0.4rem;
+	background: transparent;
+	border: none;
+	color: #64748B;
+	padding: 0.35rem;
 	cursor: pointer;
-	font-weight: 700;
-	color: var(--ink-700);
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 1.25rem;
+	border-radius: 8px;
+	transition: color 0.15s, background 0.15s;
+}
+
+.btn-toggle-password:hover {
+	color: #0284C7;
+	background: #F1F5F9;
+}
+
+/* Link discreto "Esqueci minha senha" e ações secundárias dos formulários */
+.link-subtle {
+	align-self: flex-end;
+	margin-top: -0.6rem;
+	padding: 0;
+	border: 0;
+	background: transparent;
+	color: #38BDF8;
+	font-size: 0.8rem;
+	font-weight: 600;
+	cursor: pointer;
+	transition: color 0.15s ease;
+}
+
+.link-subtle:hover {
+	color: #0284C7;
+	text-decoration: underline;
+}
+
+.auth-form-actions {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 0.75rem;
+	margin-top: -0.35rem;
+}
+
+.auth-form-actions .link-subtle {
+	align-self: auto;
+	margin-top: 0;
+}
+
+.code-input {
+	text-align: center;
+	font-size: 1.5rem;
+	font-weight: 800;
+	letter-spacing: 0.5em;
+	text-indent: 0.5em;
+	padding: 0.7rem 0.5rem;
+}
+
+.auth-form .hint {
+	margin: -0.35rem 0 0;
+	color: #64748B;
+	font-size: 0.84rem;
+	line-height: 1.45;
+}
+
+.auth-institutions {
+	display: grid;
+	gap: 0.75rem;
+	padding: 1rem 1.25rem;
+	border: 1px solid #E2E8F0;
+	border-radius: 16px;
+	background: #F8FAFC;
+}
+
+.auth-institutions .institution-section-head {
+	gap: 0.25rem;
+}
+
+.auth-institutions .institution-section-head h2 {
+	margin: 0;
+	font-family: "Baloo 2", system-ui, sans-serif;
+	font-size: 1.2rem;
+	color: #1E293B;
+}
+
+.auth-institutions .institution-section-head p {
+	margin: 0;
+	font-size: 0.84rem;
+	color: #64748B;
+}
+
+.institution-grid--landing {
+	grid-template-columns: 1fr;
+	gap: 0.75rem;
 }
 
 .btn {
@@ -238,7 +486,7 @@ textarea:focus {
 	padding: 0.72rem 1.05rem;
 	font-weight: 800;
 	cursor: pointer;
-	transition: transform 0.2s ease, box-shadow 0.2s ease;
+	transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .btn:hover {
@@ -247,14 +495,158 @@ textarea:focus {
 
 .btn-primary {
 	color: #fff;
-	background: linear-gradient(120deg, var(--mint-500), var(--mint-600));
-	box-shadow: 0 8px 18px rgba(15, 139, 117, 0.28);
+	background: linear-gradient(120deg, var(--mint-500), #76d7ff);
+	box-shadow: 0 10px 24px rgba(72, 183, 255, 0.2);
 }
 
 .btn-ghost {
 	color: var(--ink-900);
-	background: rgba(255, 255, 255, 0.4);
-	border: 1px solid var(--line);
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(233, 254, 255, 0.12);
+}
+
+.institution-grid {
+	display: grid;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	gap: 0.9rem;
+}
+
+.institution-card {
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(233, 254, 255, 0.11);
+}
+
+.institution-card:hover {
+	border-color: rgba(72, 183, 255, 0.45);
+	box-shadow: 0 12px 24px rgba(0, 0, 0, 0.18);
+}
+
+.institution-card-logo {
+	background: rgba(255, 255, 255, 0.06);
+}
+
+.institution-card-body h4 {
+	color: var(--ink-900);
+}
+
+.institution-card-cta {
+	color: rgba(233, 254, 255, 0.76);
+}
+
+@media (max-width: 980px) {
+	#landing.auth-panel {
+		grid-template-columns: 1fr;
+		grid-template-rows: minmax(0, 1fr);
+	}
+
+	.auth-hero,
+	.auth-column,
+	.auth-institutions {
+		border-radius: 20px;
+	}
+
+	/* Mobile: o hero passa a ser uma aba dentro da coluna de autenticação */
+	.switch-btn--about {
+		display: inline-block;
+	}
+
+	.auth-switch {
+		max-width: 100%;
+		width: 100%;
+		margin-bottom: 1.25rem;
+	}
+
+	.switch-btn {
+		flex: 1 1 0;
+		min-width: 0;
+		padding: 0.4rem 0.5rem;
+		font-size: 0.78rem;
+		white-space: nowrap;
+	}
+
+	.auth-column {
+		max-height: none;
+		height: 100%;
+		align-items: stretch;
+		padding: 1.25rem 1rem;
+	}
+
+	.auth-column .auth-hero {
+		height: auto;
+		max-height: none;
+		padding: 0;
+		border: 0;
+		border-radius: 0;
+		background: transparent;
+		box-shadow: none;
+		overflow: visible;
+		gap: 1.25rem;
+	}
+
+	.auth-column .auth-hero h1 {
+		font-size: 1.9rem;
+	}
+
+	/* No mobile a ilustracao vai para cima do texto */
+	.welcome-card {
+		flex-direction: column;
+		text-align: center;
+		gap: 0.85rem;
+		padding: 1.1rem;
+	}
+
+	.welcome-illustration {
+		width: clamp(140px, 42vw, 200px);
+	}
+
+	.welcome-lead {
+		max-width: none;
+	}
+
+	.welcome-text .feature-list {
+		text-align: left;
+	}
+
+	.auth-column .auth-hero.hidden {
+		display: none;
+	}
+}
+
+@media (max-width: 720px) {
+	.layout {
+		width: min(100vw - 1rem, 100vw - 1rem);
+		margin: 0.5rem auto 1rem;
+	}
+
+	#landing.auth-panel {
+		padding: 0.6rem;
+		gap: 0.75rem;
+	}
+
+	.auth-hero,
+	.auth-column,
+	.auth-institutions {
+		padding: 0.9rem;
+	}
+
+	.auth-column .auth-hero {
+		padding: 0;
+	}
+
+	.institution-grid {
+		grid-template-columns: 1fr;
+	}
+
+	.auth-institutions .institution-section-head h2 {
+		font-size: 1.2rem;
+	}
+}
+
+@media (max-width: 400px) {
+	.switch-btn {
+		font-size: 0.72rem;
+		padding: 0.4rem 0.3rem;
+	}
 }
 
 .app-shell {
@@ -699,8 +1091,10 @@ textarea:focus {
 }
 
 .heatmap-week-day {
-	min-height: 92px;
-	font-size: 0.95rem;
+	/* Sem min-height fixo: junto com aspect-ratio:1 ele forcava a celula a ficar
+	   maior que a coluna do grid e as celulas se sobrepunham no mobile. */
+	min-height: 0;
+	font-size: clamp(0.8rem, 3.2vw, 0.95rem);
 	font-family: "Baloo 2", system-ui, sans-serif;
 	color: var(--ink-900);
 	display: grid;
@@ -1156,6 +1550,9 @@ th {
 
 .stack-form {
 	display: grid;
+	/* minmax(0, 1fr) impede que a trilha estique ate o maior filho:
+	   sem isso o min-width:auto do grid faz os seletores vazarem o card. */
+	grid-template-columns: minmax(0, 1fr);
 	gap: 0.85rem;
 }
 
@@ -1788,6 +2185,22 @@ body.mode-dark .guide-attention-block p {
 	gap: 1rem;
 }
 
+/* A tela inicial pode rolar quando a altura da janela nao comporta o conteudo.
+   Sem isso o overflow:hidden da .quiz-state-view cortava o mascote e a dica. */
+#section-quiz.active #quizStateStart:not(.hidden) {
+	overflow-y: auto;
+	overflow-x: hidden;
+	-webkit-overflow-scrolling: touch;
+}
+
+#quizStateStart .quiz-start-card {
+	/* Centraliza quando sobra espaco, mas sem cortar quando falta. */
+	justify-content: center;
+	height: auto;
+	min-height: 100%;
+	overflow: visible;
+}
+
 #quizStateActive {
 	--quiz-head-h: 7.25rem;
 	--quiz-options-count: 3;
@@ -1861,9 +2274,152 @@ body.mode-dark .guide-attention-block p {
 	width: 100%;
 }
 
+/* ---- Boas-vindas ludicas do quiz (mascote + convite) ---- */
+
+.quiz-start-hero {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: clamp(1rem, 4vw, 2.75rem);
+	width: 100%;
+	min-width: 0;
+	flex-wrap: wrap;
+}
+
+.quiz-mascot {
+	position: relative;
+	flex: 0 1 auto;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.6rem;
+}
+
+.quiz-mascot-img {
+	width: clamp(140px, 20vw, 230px);
+	height: auto;
+	animation: quizMascotFloat 5s ease-in-out infinite;
+}
+
+@keyframes quizMascotFloat {
+	0%, 100% { transform: translateY(0) rotate(-1deg); }
+	50% { transform: translateY(-9px) rotate(1deg); }
+}
+
+/* Balao de fala do mascote */
+.quiz-mascot-bubble {
+	position: relative;
+	margin: 0;
+	max-width: 22ch;
+	padding: 0.6rem 0.95rem;
+	border-radius: 16px;
+	border: 2px solid #BAE6FD;
+	background: #F0F9FF;
+	color: #0369A1;
+	font-family: "Baloo 2", system-ui, sans-serif;
+	font-size: clamp(0.9rem, 1.6vw, 1.05rem);
+	font-weight: 700;
+	line-height: 1.35;
+	text-align: center;
+}
+
+/* Rabinho do balao apontando para o mascote */
+.quiz-mascot-bubble::after {
+	content: "";
+	position: absolute;
+	top: -9px;
+	left: 50%;
+	width: 14px;
+	height: 14px;
+	transform: translateX(-50%) rotate(45deg);
+	background: #F0F9FF;
+	border-left: 2px solid #BAE6FD;
+	border-top: 2px solid #BAE6FD;
+	border-radius: 3px 0 0 0;
+}
+
+.quiz-start-text {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 1rem;
+	min-width: 0;
+}
+
+.quiz-start-lead {
+	margin: 0;
+	max-width: 30ch;
+	color: #475569;
+	font-size: clamp(0.95rem, 1.7vw, 1.08rem);
+	line-height: 1.5;
+	text-align: center;
+}
+
+.quiz-start-lead strong {
+	color: #0284C7;
+	font-weight: 800;
+}
+
+.quiz-start-hint {
+	margin: 0;
+	color: #94A3B8;
+	font-size: 0.85rem;
+	font-weight: 600;
+}
+
+/* Telas baixas (celular deitado, janelas curtas): compacta tudo para caber. */
+@media (max-height: 560px) {
+	.quiz-start-hero {
+		flex-direction: row;
+		gap: clamp(0.75rem, 3vw, 1.5rem);
+	}
+
+	.quiz-mascot-img {
+		width: clamp(96px, 22vh, 150px);
+	}
+
+	.quiz-mascot-bubble {
+		font-size: 0.82rem;
+		padding: 0.4rem 0.7rem;
+	}
+
+	.quiz-start-card {
+		padding: 0.9rem 1rem;
+		gap: 0.75rem;
+	}
+
+	.quiz-start-text {
+		gap: 0.6rem;
+	}
+
+	.quiz-start-card h3 {
+		font-size: clamp(1.1rem, 4.5vh, 1.5rem);
+	}
+
+	.quiz-play-btn {
+		width: clamp(60px, 15vh, 78px);
+		height: clamp(60px, 15vh, 78px);
+		font-size: clamp(1.5rem, 7vh, 2.1rem);
+	}
+}
+
+/* Altura muito curta: esconde os textos de apoio, mantendo o essencial. */
+@media (max-height: 420px) {
+	.quiz-start-lead,
+	.quiz-start-hint,
+	.quiz-mascot-bubble {
+		display: none;
+	}
+
+	.quiz-mascot-img {
+		width: clamp(80px, 26vh, 120px);
+	}
+}
+
 .quiz-play-btn {
-	background: var(--paper);
-	border: 4px solid var(--line);
+	background: linear-gradient(140deg, #7DD3FC 0%, #38BDF8 60%, #0EA5E9 100%);
+	border: 4px solid #FFFFFF;
 	border-radius: 50%;
 	width: 92px;
 	height: 92px;
@@ -1871,17 +2427,28 @@ body.mode-dark .guide-attention-block p {
 	place-items: center;
 	cursor: pointer;
 	font-size: 2.5rem;
-	color: var(--mint-500);
-	transition: all 0.2s ease-in-out;
+	color: #FFFFFF;
+	box-shadow: 0 10px 24px rgba(14, 165, 233, 0.35);
+	transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 	padding: 0;
 	margin: 0 auto;
 	flex-shrink: 0;
+	animation: quizPlayPulse 2.4s ease-in-out infinite;
+}
+
+/* Pulso suave para chamar a atencao da crianca. */
+@keyframes quizPlayPulse {
+	0%, 100% { box-shadow: 0 10px 24px rgba(14, 165, 233, 0.35), 0 0 0 0 rgba(56, 189, 248, 0.45); }
+	50% { box-shadow: 0 10px 24px rgba(14, 165, 233, 0.35), 0 0 0 16px rgba(56, 189, 248, 0); }
 }
 
 .quiz-play-btn:hover {
 	transform: scale(1.08);
-	border-color: var(--mint-500);
-	color: var(--mint-600);
+	box-shadow: 0 14px 30px rgba(14, 165, 233, 0.45);
+}
+
+.quiz-play-btn:active {
+	transform: scale(0.96);
 }
 
 .quiz-play-btn i {
@@ -2958,6 +3525,7 @@ body.mode-large-text {
 }
 
 .form-group {
+	min-width: 0;
 	display: flex;
 	flex-direction: column;
 	gap: 0.5rem;
@@ -2986,16 +3554,22 @@ body.mode-large-text {
 .time-selector {
 	display: flex;
 	justify-content: center;
+	flex-wrap: wrap;
 	gap: 1rem;
 	margin-top: 0.5rem;
+	min-width: 0;
+	max-width: 100%;
 }
 
 .time-btn {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	flex: 0 0 auto;
 	width: 60px;
 	height: 60px;
+	max-width: 100%;
+	aspect-ratio: 1;
 	border-radius: 50%;
 	border: 2px solid var(--line);
 	background: var(--paper-soft);
@@ -3025,14 +3599,19 @@ body.mode-large-text {
 	justify-content: center;
 	gap: 0.75rem;
 	margin-top: 0.5rem;
+	min-width: 0;
+	max-width: 100%;
 }
 
 .res-btn {
 	display: flex;
 	justify-content: center;
 	align-items: center;
+	flex: 0 1 auto;
 	width: 55px;
 	height: 55px;
+	min-width: 0;
+	aspect-ratio: 1;
 	border-radius: 50%;
 	border: 2px solid transparent;
 	background: var(--paper-soft);
@@ -3333,25 +3912,38 @@ body.mode-large-text {
 		padding: 0.85rem;
 	}
 
+	/* As setas passam a flutuar sobre a imagem, centralizadas na vertical.
+	   Antes elas caiam em linhas diferentes do grid (uma acima e outra abaixo). */
 	.guide-carousel {
-		grid-template-columns: 1fr 1fr;
-		gap: 0.5rem;
+		display: block;
+		position: relative;
 	}
 
 	.guide-carousel-viewport {
-		grid-column: 1 / -1;
+		width: 100%;
 	}
 
 	.guide-carousel-nav {
-		justify-self: center;
+		position: absolute;
+		top: 50%;
+		transform: translateY(-50%);
+		z-index: 2;
+		background: rgba(255, 255, 255, 0.92);
+		border-color: rgba(15, 23, 42, 0.12);
+		color: #1E293B;
+		box-shadow: 0 2px 10px rgba(15, 23, 42, 0.25);
+	}
+
+	.guide-carousel-nav:hover {
+		transform: translateY(-50%);
 	}
 
 	#guideCarouselPrev {
-		grid-column: 1;
+		left: 0.5rem;
 	}
 
 	#guideCarouselNext {
-		grid-column: 2;
+		right: 0.5rem;
 	}
 
 	.guide-modal-actions {
@@ -3857,4 +4449,252 @@ body.mode-blue textarea {
 .pagination-btn:disabled {
 	opacity: 0.4;
 	cursor: not-allowed;
+}
+
+/* =========================================================================
+   Ajustes de responsividade das telas internas (mobile)
+   ========================================================================= */
+
+@media (max-width: 768px) {
+	/* ---------- Dashboard ---------- */
+
+	/* O heatmap passa a ser somente leitura no celular. */
+	.heatmap-day {
+		cursor: default;
+	}
+
+	.heatmap-day:not(.heatmap-day-empty):hover {
+		transform: none;
+	}
+
+	.heatmap-week-strip {
+		gap: 0.3rem;
+	}
+
+	/* Cartoes de "Ultimos 7 dias": largura livre pela coluna do grid e altura
+	   um pouco maior que a largura, para o numero respirar. */
+	.heatmap-week-day {
+		aspect-ratio: auto;
+		height: 52px;
+		font-size: clamp(0.72rem, 3vw, 0.9rem);
+	}
+
+	.dashboard-heatmap-legend {
+		gap: 0.4rem 0.75rem;
+		font-size: 0.68rem;
+	}
+
+	.dashboard-chart {
+		overflow-x: auto;
+		overflow-y: hidden;
+		-webkit-overflow-scrolling: touch;
+	}
+
+	.chart-bar-col {
+		min-width: 0;
+	}
+
+	/* ---------- Checklist (precisa continuar 100% funcional) ---------- */
+
+	/* Os seletores viram grid de colunas iguais: as colunas dividem exatamente
+	   a largura util do card, entao nunca sobra nada para fora. */
+	.time-selector {
+		display: grid;
+		grid-template-columns: repeat(3, minmax(0, 1fr));
+		justify-items: center;
+		gap: 0.6rem;
+	}
+
+	.time-btn {
+		width: min(72px, 100%);
+		height: auto;
+		font-size: clamp(1.6rem, 8vw, 2.25rem);
+	}
+
+	.resistance-selector {
+		display: grid;
+		grid-template-columns: repeat(5, minmax(0, 1fr));
+		justify-items: center;
+		gap: 0.3rem;
+	}
+
+	/* Alvos de toque grandes o suficiente, mas que caibam nos 5 botoes. */
+	.res-btn {
+		width: min(62px, 100%);
+		height: auto;
+		font-size: clamp(1.5rem, 7.5vw, 2.5rem);
+	}
+
+	#section-checklist .checklist-card {
+		padding: 1.1rem 0.9rem;
+	}
+
+	/* Alvo de toque confortavel no botao de salvar. */
+	#checklistForm button[type="submit"] {
+		min-height: 48px;
+		padding: 0.85rem 1.1rem;
+	}
+
+	.checklist-title {
+		font-size: 1.5rem;
+	}
+
+	/* ---------- Guia: modal da etapa ---------- */
+
+	.app-modal-card {
+		width: min(100%, 400px);
+		max-height: 88dvh;
+		padding: 1.1rem 1rem 1rem;
+		overflow-y: auto;
+	}
+
+	.guide-modal-card {
+		width: 100%;
+		max-height: 90dvh;
+		padding: 0.75rem;
+		overflow: hidden;
+	}
+
+	/* Imagem menor para sobrar espaco de leitura no texto abaixo. */
+	.guide-carousel-viewport {
+		min-height: 140px;
+		max-height: 26dvh;
+	}
+
+	.guide-carousel-slide {
+		height: 26dvh;
+	}
+
+	.guide-modal-media-shell {
+		gap: 0.35rem;
+	}
+
+	.guide-modal-content {
+		padding-right: 0.4rem;
+		overscroll-behavior: contain;
+	}
+
+	.guide-modal-actions {
+		position: sticky;
+		bottom: 0;
+		background: var(--paper);
+		padding-top: 0.6rem;
+		margin-top: 0.2rem;
+	}
+
+	/* ---------- Quiz ---------- */
+
+	#quizStateActive {
+		--quiz-head-h: auto;
+		--quiz-footer-h: auto;
+		padding: 0 0.25rem;
+	}
+
+	#quizStateActive .quiz-question-head {
+		min-height: 0;
+		max-height: none;
+	}
+
+	.quiz-question-title {
+		font-size: 1.15rem;
+		line-height: 1.3;
+	}
+
+	#quizStateActive .quiz-footer {
+		min-height: 0;
+		max-height: none;
+	}
+
+	/* O feedback sai de entre os botoes e vira uma faixa acima deles. */
+	#quizStateActive .quiz-footer-buttons {
+		min-height: 0;
+		max-height: none;
+		flex-wrap: wrap;
+		gap: 0.6rem;
+	}
+
+	.quiz-feedback-banner {
+		order: -1;
+		flex: 1 0 100%;
+		align-items: flex-start;
+		padding: 0.7rem 0.85rem;
+	}
+
+	.quiz-feedback-banner.hidden {
+		display: none;
+	}
+
+	.quiz-footer-buttons .feedback-text p {
+		-webkit-line-clamp: 4;
+	}
+
+	.quiz-footer-buttons .quiz-btn-exit,
+	.quiz-footer-buttons .quiz-btn-action {
+		flex: 1 1 0;
+	}
+
+	#quizStateActive .quiz-btn-exit,
+	#quizStateActive .quiz-btn-action {
+		min-width: 0;
+		padding: 0.8rem 1rem;
+		font-size: 1rem;
+	}
+
+	#quizStateActive .quiz-option-item {
+		min-height: 3rem;
+	}
+
+	.quiz-start-card {
+		padding: 1.25rem 1rem;
+	}
+}
+
+/* Tela inicial do quiz no celular em pe: mascote em cima, convite embaixo.
+   A condicao de altura evita brigar com o layout compacto de telas baixas. */
+@media (max-width: 768px) and (min-height: 561px) {
+	.quiz-start-card {
+		gap: 1rem;
+	}
+
+	.quiz-start-hero {
+		flex-direction: column;
+		gap: 0.85rem;
+	}
+
+	.quiz-mascot-img {
+		width: min(150px, 42vw);
+	}
+
+	.quiz-start-card h3 {
+		font-size: clamp(1.3rem, 5.2vw, 1.7rem);
+	}
+
+	.quiz-start-lead {
+		font-size: clamp(0.88rem, 3.6vw, 1rem);
+	}
+
+	.quiz-start-text {
+		gap: 0.85rem;
+	}
+
+	.quiz-play-btn {
+		width: 84px;
+		height: 84px;
+	}
+}
+
+@media (max-width: 420px) {
+	.time-btn {
+		width: min(64px, 100%);
+		font-size: clamp(1.5rem, 7.5vw, 2rem);
+	}
+
+	.res-btn {
+		width: min(56px, 100%);
+		font-size: clamp(1.35rem, 7vw, 2.2rem);
+	}
+
+	.resistance-selector {
+		gap: 0.2rem;
+	}
 }

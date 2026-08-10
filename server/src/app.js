@@ -28,11 +28,17 @@ const allowedOrigins = env.frontendOrigin
 app.use(
   cors({
     origin(origin, callback) {
-      if (env.publicAccessMode) {
+      // Sem Origin: chamadas do proprio servidor, curl ou app nativo.
+      if (!origin) {
         return callback(null, true);
       }
 
-      if (!origin || !allowedOrigins.length || allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Fora de producao, uma lista vazia libera tudo para facilitar o dev.
+      if (!env.isProduction && !allowedOrigins.length) {
         return callback(null, true);
       }
 

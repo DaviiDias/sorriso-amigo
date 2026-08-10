@@ -1,6 +1,6 @@
 {
   "name": "sorriso-amigo-api",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "API e backend web do projeto Sorriso Amigo",
   "type": "module",
   "main": "src/server.js",
@@ -8,6 +8,8 @@
     "dev": "node --watch src/server.js",
     "start": "node src/server.js",
     "db:init": "node scripts/init-db.js",
+    "db:up": "docker compose -f ../docker-compose.yml up -d db",
+    "db:down": "docker compose -f ../docker-compose.yml stop db",
     "smoke:db": "node scripts/smoke-test-db.js"
   },
   "dependencies": {
