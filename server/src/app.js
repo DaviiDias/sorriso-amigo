@@ -25,25 +25,34 @@ const allowedOrigins = env.frontendOrigin
   .map((value) => value.trim())
   .filter(Boolean);
 
+app.set("trust proxy", true);
+
 app.use(
-  cors({
-    origin(origin, callback) {
-      // Sem Origin: chamadas do proprio servidor, curl ou app nativo.
-      if (!origin) {
-        return callback(null, true);
-      }
+  cors((req, callback) => {
+    const origin = req.headers.origin;
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      // Fora de producao, uma lista vazia libera tudo para facilitar o dev.
-      if (!env.isProduction && !allowedOrigins.length) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("Origem nao autorizada"));
+    // Sem Origin: chamadas do proprio servidor, curl ou app nativo.
+    if (!origin) {
+      return callback(null, { origin: true });
     }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, { origin: true });
+    }
+
+    // O front e servido pelo proprio Express: a origem igual ao host da
+    // requisicao e sempre a mesma aplicacao, entao pode ser liberada.
+    const sameHostOrigin = `${req.protocol}://${req.headers.host}`;
+    if (origin === sameHostOrigin) {
+      return callback(null, { origin: true });
+    }
+
+    // Fora de producao, uma lista vazia libera tudo para facilitar o dev.
+    if (!env.isProduction && !allowedOrigins.length) {
+      return callback(null, { origin: true });
+    }
+
+    return callback(new Error("Origem nao autorizada"));
   })
 );
 
