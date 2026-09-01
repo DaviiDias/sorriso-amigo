@@ -127,7 +127,7 @@
                     </div>
                     <label>
                         Código de confirmação
-                        <input type="text" name="code" id="verifyPhoneCode" class="code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="6" required />
+                        <input type="text" name="code" id="verifyPhoneCode" class="code-input" inputmode="text" autocomplete="one-time-code" placeholder="Digite o código" maxlength="10" required />
                     </label>
                     <button type="submit" class="btn btn-primary">Confirmar código</button>
                     <div class="auth-form-actions">
@@ -156,11 +156,11 @@
                 <form id="resetCodeForm" class="auth-form hidden" novalidate>
                     <div class="form-head">
                         <h2>Digite o código</h2>
-                        <p>Enviamos um código de 6 dígitos por SMS para <strong id="resetCodeTarget">seu número</strong>.</p>
+                        <p>Enviamos um código por SMS para <strong id="resetCodeTarget">seu número</strong>.</p>
                     </div>
                     <label>
                         Código de recuperação
-                        <input type="text" name="code" id="resetCodeInput" class="code-input" inputmode="numeric" autocomplete="one-time-code" placeholder="000000" maxlength="6" required />
+                        <input type="text" name="code" id="resetCodeInput" class="code-input" inputmode="text" autocomplete="one-time-code" placeholder="Digite o código" maxlength="10" required />
                     </label>
                     <button type="submit" class="btn btn-primary">Validar código</button>
                     <div class="auth-form-actions">

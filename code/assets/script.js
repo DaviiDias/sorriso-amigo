@@ -1102,19 +1102,18 @@ async function api(path, options = {}) {
 		headers.Authorization = `Bearer ${state.token}`;
 	}
 
-	if (state.offlineMode) {
-		return offlineApi(path, options);
-	}
-
 	let response;
 
 	try {
+		console.log(`[api] Requisicao ${method} -> ${API_BASE}${path}`);
 		response = await fetch(`${API_BASE}${path}`, {
 			method,
 			headers,
 			body: body !== undefined ? JSON.stringify(body) : undefined
 		});
+		state.offlineMode = false;
 	} catch (error) {
+		console.warn(`[api] Falha na requisicao ${method} -> ${API_BASE}${path}:`, error);
 		if (path.startsWith("/auth/") || path.startsWith("/checklists")) {
 			if (!state.offlineMode) {
 				state.offlineMode = true;
@@ -1243,10 +1242,10 @@ async function onRegisterSubmit(event) {
 async function onVerifyPhoneSubmit(event) {
 	event.preventDefault();
 
-	const code = onlyDigits(new FormData(dom.verifyPhoneForm).get("code"));
+	const code = String(new FormData(dom.verifyPhoneForm).get("code") || "").trim();
 
-	if (code.length !== 6) {
-		setStatus("Digite os 6 dígitos do código recebido.", "error");
+	if (!code || code.length < 4) {
+		setStatus("Digite o código recebido por SMS.", "error");
 		return;
 	}
 
@@ -1360,10 +1359,10 @@ async function onForgotPasswordSubmit(event) {
 async function onResetCodeSubmit(event) {
 	event.preventDefault();
 
-	const code = onlyDigits(new FormData(dom.resetCodeForm).get("code"));
+	const code = String(new FormData(dom.resetCodeForm).get("code") || "").trim();
 
-	if (code.length !== 6) {
-		setStatus("Digite os 6 dígitos do código recebido.", "error");
+	if (!code || code.length < 4) {
+		setStatus("Digite o código recebido por SMS.", "error");
 		return;
 	}
 

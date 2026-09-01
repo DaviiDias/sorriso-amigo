@@ -78,7 +78,31 @@ SMS_EXPOSE_CODE=false
 O código monta o destino como `+55<DDD><numero>`, então basta digitar o telefone
 no formato brasileiro na tela.
 
-## 6. Testar pelo celular na mesma rede Wi-Fi
+## 6. Receber SMS via Comtele
+
+Se quiser usar a Comtele no lugar da Twilio, configure no `server/.env`:
+
+```env
+SMS_PROVIDER=comtele
+COMTELE_API_KEY=sua-chave-api-comtele
+COMTELE_SMS_ROUTE=17
+```
+
+Use a rota que o painel da sua conta informar. A API atual da Comtele exige
+`x-api-key`, `POST https://api.comtele.com.br/messages/sms/send`, `receivers`,
+`contactGroups` e `route`.
+
+Para testar fora do fluxo de cadastro, use:
+
+```bash
+cd server
+COMTELE_TEST_RECEIVER=5511999999999 node scripts/test-comtele.js
+```
+
+Se a chave estiver correta mas a rota não, o envio continua falhando com erro
+de autorização ou validação da API.
+
+## 7. Testar pelo celular na mesma rede Wi-Fi
 
 A API escuta em `0.0.0.0`, então basta abrir no celular o IP mostrado no boot:
 
@@ -92,7 +116,7 @@ Se não abrir, libere a porta 4000 no Firewall do Windows:
 New-NetFirewallRule -DisplayName "Sorriso Amigo 4000" -Direction Inbound -LocalPort 4000 -Protocol TCP -Action Allow
 ```
 
-## 7. Comandos úteis
+## 8. Comandos úteis
 
 ```bash
 # ver usuários cadastrados
