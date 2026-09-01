@@ -32,11 +32,7 @@ function publicUserFields(user) {
   };
 }
 
-/**
- * Etapa 1 do cadastro: valida os dados, garante que o telefone ainda nao esta
- * em uso e dispara o SMS de confirmacao. O usuario so e criado apos a validacao.
- */
-router.post("/register/start", async (req, res, next) => {
+const handleRegisterStart = async (req, res, next) => {
   try {
     const { username, password, confirmPassword, phone } = req.body;
 
@@ -83,7 +79,10 @@ router.post("/register/start", async (req, res, next) => {
   } catch (error) {
     return next(error);
   }
-});
+};
+
+router.post("/register/start", handleRegisterStart);
+router.post("/register", handleRegisterStart);
 
 /**
  * Etapa 2 do cadastro: confere o codigo do SMS e cria o usuario de fato.

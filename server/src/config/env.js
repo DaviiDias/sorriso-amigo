@@ -54,6 +54,8 @@ export const env = {
   publicAccessMode,
   sms: {
     provider: (process.env.SMS_PROVIDER || "console").toLowerCase(),
+    comteleApiKey: process.env.COMTELE_API_KEY || "",
+    comteleSmsRoute: Number(process.env.COMTELE_SMS_ROUTE || 17),
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || "",
     twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || "",
     twilioFromNumber: process.env.TWILIO_FROM_NUMBER || "",
