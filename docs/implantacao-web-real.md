@@ -39,6 +39,20 @@ Configure no painel:
 - `FRONTEND_ORIGIN=https://seu-dominio.com`
 - `NODE_ENV=production`
 
+Para envio de SMS em producao, configure tambem um provedor valido:
+
+- Comtele:
+  - `SMS_PROVIDER=comtele`
+  - `COMTELE_API_KEY=<sua-chave>`
+  - `COMTELE_SMS_ROUTE=<rota numerica valida>`
+- Twilio:
+  - `SMS_PROVIDER=twilio`
+  - `TWILIO_ACCOUNT_SID=<sid>`
+  - `TWILIO_AUTH_TOKEN=<token>`
+  - `TWILIO_FROM_NUMBER=<numero de origem>`
+
+O backend agora recusa subir se `SMS_PROVIDER` estiver ausente, se estiver em `console` ou se as credenciais do provedor escolhido estiverem incompletas.
+
 ### 4) Dominio real
 
 - No painel Render, adicione custom domain

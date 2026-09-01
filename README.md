@@ -52,7 +52,7 @@ Se o objetivo for apenas validar o codigo da Iteracao 2, esse comando coloca o r
 ### 3) Executar com Docker
 
 1. Crie o arquivo `server/.env` com base em `server/.env.example`.
-2. Ajuste a senha do banco e o `JWT_SECRET` se necessario.
+2. Ajuste a senha do banco, o `JWT_SECRET` e as variaveis de SMS se for publicar em producao.
 3. Suba a aplicacao:
 
 ```bash

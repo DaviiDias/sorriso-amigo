@@ -19,6 +19,7 @@ for (const key of requiredKeys) {
 }
 
 const isProduction = process.env.NODE_ENV === "production";
+const smsProvider = (process.env.SMS_PROVIDER || "").toLowerCase();
 
 // Defaults seguros: se a variavel faltar no deploy, o sistema fica protegido.
 const publicAccessMode = parseBoolean(process.env.PUBLIC_ACCESS_MODE, false);
@@ -41,6 +42,36 @@ if (isProduction) {
   if (!process.env.FRONTEND_ORIGIN) {
     throw new Error("FRONTEND_ORIGIN e obrigatorio em producao para restringir o CORS.");
   }
+
+  if (!smsProvider) {
+    throw new Error("SMS_PROVIDER e obrigatorio em producao. Configure 'comtele' ou 'twilio'.");
+  }
+
+  if (smsProvider === "console") {
+    throw new Error("SMS_PROVIDER=console nao e permitido em producao. Configure 'comtele' ou 'twilio'.");
+  }
+}
+
+if (smsProvider && !["comtele", "twilio", "console"].includes(smsProvider)) {
+  throw new Error(`SMS_PROVIDER invalido: ${smsProvider}. Use 'comtele', 'twilio' ou 'console'.`);
+}
+
+if (smsProvider === "comtele") {
+  if (!process.env.COMTELE_API_KEY) {
+    throw new Error("COMTELE_API_KEY e obrigatoria quando SMS_PROVIDER=comtele.");
+  }
+
+  const comteleRoute = Number(process.env.COMTELE_SMS_ROUTE);
+
+  if (!process.env.COMTELE_SMS_ROUTE || !Number.isInteger(comteleRoute) || comteleRoute <= 0) {
+    throw new Error("COMTELE_SMS_ROUTE deve ser um numero inteiro positivo quando SMS_PROVIDER=comtele.");
+  }
+}
+
+if (smsProvider === "twilio") {
+  if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_AUTH_TOKEN || !process.env.TWILIO_FROM_NUMBER) {
+    throw new Error("TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN e TWILIO_FROM_NUMBER sao obrigatorios quando SMS_PROVIDER=twilio.");
+  }
 }
 
 export const env = {
@@ -53,7 +84,7 @@ export const env = {
   frontendOrigin: process.env.FRONTEND_ORIGIN || "",
   publicAccessMode,
   sms: {
-    provider: (process.env.SMS_PROVIDER || "console").toLowerCase(),
+    provider: smsProvider || "console",
     comteleApiKey: process.env.COMTELE_API_KEY || "",
     comteleSmsRoute: Number(process.env.COMTELE_SMS_ROUTE || 17),
     twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || "",
