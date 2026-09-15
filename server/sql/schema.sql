@@ -98,8 +98,12 @@ CREATE TABLE IF NOT EXISTS quiz_questions (
   id SERIAL PRIMARY KEY,
   question_text TEXT NOT NULL UNIQUE,
   category VARCHAR(80) NOT NULL,
+  image_url TEXT,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+ALTER TABLE IF EXISTS quiz_questions
+  ADD COLUMN IF NOT EXISTS image_url TEXT;
 
 CREATE TABLE IF NOT EXISTS quiz_options (
   id SERIAL PRIMARY KEY,

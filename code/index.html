@@ -22,35 +22,53 @@
                     <h1>Sorriso Amigo</h1>
 
                     <div class="welcome-card">
-                        <img
+                        <video
                             class="welcome-illustration"
-                            src="./assets/illustrations/dentist-welcome.svg"
-                            alt="Dentista sorridente acenando ao lado de um dente feliz"
+                            aria-label="Animação de boas-vindas do Sorriso Amigo"
                             width="260"
                             height="260"
-                            loading="eager"
-                        />
+                            autoplay
+                            muted
+                            loop
+                            playsinline
+                            preload="auto"
+                        >
+                            <source src="./assets/illustrations/capa - animação - vídeo.mp4" type="video/mp4" />
+                        </video>
                         <div class="welcome-text">
                             <p class="welcome-greeting">Seja bem-vindo!</p>
                             <p class="welcome-lead">
-                                Este é o nosso aplicativo para <strong>cuidadores, famílias e profissionais</strong>
-                                tornarem a escovação uma rotina mais leve e previsível.
+                                Um espaço educativo para aprender, orientar e cuidar da saúde bucal de pessoas com TEA.
                             </p>
-                            <ul class="feature-list">
-                                <li><i class="ph-fill ph-check-square" aria-hidden="true"></i> Acompanhe a escovação do dia e o nível de resistência</li>
-                                <li><i class="ph-fill ph-list-checks" aria-hidden="true"></i> Siga um guia lúdico de escovação, etapa por etapa</li>
-                                <li><i class="ph-fill ph-game-controller" aria-hidden="true"></i> Aprenda com um quiz educativo e feedback na hora</li>
-                                <li><i class="ph-fill ph-play-circle" aria-hidden="true"></i> Assista a vídeos feitos para famílias e profissionais</li>
-                            </ul>
+                            <p class="welcome-lead">
+                                Recursos práticos e conteúdos desenvolvidos para apoiar pessoas com TEA, familiares, cuidadores e profissionais.
+                            </p>
+                            <div class="welcome-actions">
+                                <button id="knowAppBtn" class="btn btn-primary" type="button">Conheça o Aplicativo</button>
+                            </div>
                         </div>
+                    </div>
+
+                    <div id="appFeatures" class="app-features hidden" aria-hidden="true">
+                        <div class="app-features-head">
+                            <p class="intro-kicker">Sorriso Amigo</p>
+                            <h2>O que você encontra no aplicativo?</h2>
+                        </div>
+                        <ul class="feature-list">
+                            <li><i class="ph-fill ph-check-square" aria-hidden="true"></i> Acompanhe a escovação do dia e registre o nível de resistência observado;</li>
+                            <li><i class="ph-fill ph-list-checks" aria-hidden="true"></i> Siga um guia lúdico de escovação, etapa por etapa;</li>
+                            <li><i class="ph-fill ph-game-controller" aria-hidden="true"></i> Aprenda com um quiz educativo e feedback imediato;</li>
+                            <li><i class="ph-fill ph-play-circle" aria-hidden="true"></i> Assista a vídeos com orientação para famílias, cuidadores e profissionais.</li>
+                        </ul>
+                        <button id="backToWelcomeBtn" class="btn btn-secondary" type="button">Voltar</button>
                     </div>
                 </div>
 
                 <section class="auth-institutions">
                     <div class="institution-section-head">
-                        <p class="intro-kicker">Instituições parceiras</p>
-                        <h2>Logos das instituições</h2>
-                        <p>As instituições aparecem aqui como referência visual da rede do projeto.</p>
+                        <p class="intro-kicker">Instituições</p>
+                        <h2>Logos das instituições parceiras</h2>
+                        <p>Clique em cada logo para ler as informações completas em uma modal rolável.</p>
                     </div>
                     <div id="landingInstitutionLogosGrid" class="institution-grid institution-grid--landing"></div>
                 </section>
@@ -60,7 +78,7 @@
                 <div class="auth-switch" role="tablist" aria-label="Modo de autenticação">
                     <button id="showAboutBtn" class="switch-btn switch-btn--about" type="button">Sobre</button>
                     <button id="showLoginBtn" class="switch-btn active" type="button">Entrar</button>
-                    <button id="showRegisterBtn" class="switch-btn" type="button">Criar login</button>
+                    <button id="showRegisterBtn" class="switch-btn" type="button">Criar conta</button>
                 </div>
 
                 <form id="loginForm" class="auth-form" novalidate>
@@ -229,7 +247,7 @@
                     </button>
                     <button class="tab-btn" data-section="quiz" type="button">
                         <i class="ph ph-game-controller"></i>
-                        <span>Quizz</span>
+                        <span>Quiz!</span>
                     </button>
                     <button class="tab-btn" data-section="videos" type="button">
                         <i class="ph ph-video"></i>
@@ -258,11 +276,54 @@
                     <section id="section-inicio" class="app-section active">
                         <div class="intro-layout">
                             <article class="intro-hero card">
+                                <p class="intro-kicker">Vamos começar?</p>
+                                <h3>Explore os recursos do Sorriso Amigo</h3>
+                                <p>Escolha por onde começar.</p>
+                                <div class="intro-actions" aria-label="Recursos principais">
+                                    <button type="button" class="intro-action-card" data-intro-section="checklist">
+                                        <i class="ph-fill ph-check-square-offset" aria-hidden="true"></i>
+                                        <span>Acompanhar escovação</span>
+                                        <small>Registre a rotina do dia</small>
+                                    </button>
+                                    <button type="button" class="intro-action-card" data-intro-section="guide">
+                                        <i class="ph-fill ph-book-open-text" aria-hidden="true"></i>
+                                        <span>Guia de escovação</span>
+                                        <small>Aprenda etapa por etapa</small>
+                                    </button>
+                                    <button type="button" class="intro-action-card" data-intro-section="quiz">
+                                        <i class="ph-fill ph-game-controller" aria-hidden="true"></i>
+                                        <span>Quiz educativo</span>
+                                        <small>Teste seus conhecimentos</small>
+                                    </button>
+                                    <button type="button" class="intro-action-card" data-intro-section="videos">
+                                        <i class="ph-fill ph-video" aria-hidden="true"></i>
+                                        <span>Vídeos</span>
+                                        <small>Veja orientações importantes</small>
+                                    </button>
+                                </div>
+                            </article>
+
+                            <article class="intro-hero institutional-about">
                                 <p class="intro-kicker">Página institucional</p>
-                                <h3>Espaço inicial do Sorriso Amigo</h3>
-                                <p>
-                                    Aqui entrarão as informações da escola, da faculdade e outros conteúdos institucionais que serão adicionados na próxima etapa.
-                                </p>
+                                <h3>Sobre o projeto</h3>
+                                <div class="institutional-about-content">
+                                    <section>
+                                        <h4>Autor</h4>
+                                        <p>Este aplicativo é parte integrante do projeto de tese de doutorado da pós-graduanda Carolina Santos de Almeida Carneiro do Programa de Pós-graduação em Saúde Coletiva em Odontologia da Universidade Estadual Paulista Júlio de Mesquita Filho (UNESP) em Araçatuba – São Paulo, desenvolvido com o auxílio de um desenvolvedor de software e de ferramentas digitais para a programação. As imagens foram elaboradas e desenhadas pela própria aluna, sendo, portanto, livres de direitos autorais e de sua autoria exclusiva.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Conteúdo Científico</h4>
+                                        <p>O conteúdo científico elaborado pela própria aluna baseia-se em referências atualizadas e na construção de um fluxograma para as corretas afirmações expostas no aplicativo.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Orientação</h4>
+                                        <p>O trabalho foi orientado pela Professora Titular e Coordenadora do Programa de Pós-graduação em Saúde Coletiva em Odontologia da Universidade Estadual Paulista Júlio de Mesquita Filho (UNESP) em Araçatuba, São Paulo, Brasil.</p>
+                                    </section>
+                                    <section>
+                                        <h4>Financiamento</h4>
+                                        <p>O projeto contou com financiamento indireto da CAPES (Coordenação de Aperfeiçoamento de Pessoal de Nível Superior), por meio da concessão de bolsa de doutorado a discente.</p>
+                                    </section>
+                                </div>
                             </article>
 
                             <section class="institution-section">
@@ -365,7 +426,7 @@
                                         <div id="dashboardPeriodBars" class="dashboard-period-bars"></div>
                                     </div>
                                     <div class="dashboard-activity-block">
-                                        <h4><i class="ph ph-game-controller"></i> Quizz (últimas tentativas)</h4>
+                                        <h4><i class="ph ph-game-controller"></i> Quiz! (últimas tentativas)</h4>
                                         <p id="dashboardQuizSummary" class="dashboard-quiz-summary"></p>
                                         <ul id="dashboardRecentQuiz" class="dashboard-activity-list"></ul>
                                     </div>
@@ -463,26 +524,33 @@
                                 <div class="quiz-start-card">
                                     <div class="quiz-start-hero">
                                         <div class="quiz-mascot">
-                                            <img
-                                                class="quiz-mascot-img"
-                                                src="./assets/illustrations/dentist-quiz.svg"
-                                                alt="Dentista sorridente segurando uma placa com ponto de interrogação"
-                                                width="240"
-                                                height="240"
-                                                loading="eager"
-                                            />
+                                            <div class="quiz-mascot-media">
+                                                <video
+                                                    class="quiz-mascot-img"
+                                                    aria-label="Animação de capa do Quiz Sorriso Amigo"
+                                                    poster="./assets/illustrations/dentist-quiz.svg"
+                                                    width="240"
+                                                    height="240"
+                                                    autoplay
+                                                    muted
+                                                    loop
+                                                    playsinline
+                                                    preload="auto"
+                                                >
+                                                    <source src="./assets/illustrations/Quiz - animação da capa.mp4" type="video/mp4" />
+                                                    <img src="./assets/illustrations/dentist-quiz.svg" alt="Ilustração de capa do Quiz Sorriso Amigo" />
+                                                </video>
+                                            </div>
                                             <p class="quiz-mascot-bubble">Bora testar o que você já sabe?</p>
                                         </div>
                                         <div class="quiz-start-text">
-                                            <h3>Começar Quizz de Escovação?</h3>
-                                            <p class="quiz-start-lead">
-                                                Responda perguntas divertidas e vire um
-                                                <strong>super-herói do sorriso</strong>!
-                                            </p>
+                                            <h3>Quiz!</h3>
+                                            <p class="quiz-start-lead">Você está pronto para o desafio?</p>
+                                            <p class="quiz-start-lead">Responda às perguntas, aprenda novas dicas e torne um <strong>super-herói do sorriso</strong>!</p>
                                             <button id="quizStartBtn" class="quiz-play-btn" type="button" title="Começar Quiz">
                                                 <i class="ph-fill ph-play"></i>
                                             </button>
-                                            <p class="quiz-start-hint">Toque no play para começar</p>
+                                            <p class="quiz-start-hint">Toque no play para começar!</p>
                                         </div>
                                     </div>
                                 </div>
@@ -585,23 +653,13 @@
                                     </select>
                                 </label>
 
-                                <label>
-                                    Tema Visual
-                                    <select id="themeMode">
-                                        <option value="light">Claro (Padrão / TEA-Friendly)</option>
-                                        <option value="dark">Escuro</option>
-                                        <option value="blue">Claro (Azul Bebê)</option>
-                                    </select>
-                                </label>
-
                                 <button class="btn btn-primary" type="submit">Salvar preferências</button>
                             </form>
 
                             <hr />
 
                             <h4>Ajuda e contato</h4>
-                            <p>Email institucional sugerido: contato@sorrisoamigo.org</p>
-                            <p>Telefone sugerido: (00) 0000-0000</p>
+                            <p>Email institucional sugerido: <strong>csa.carneiro@unesp.br</strong></p>
 
                             <h4>Termos de uso</h4>
                             <p>Este sistema tem objetivo educativo e de apoio de rotina. Não substitui avaliação clínica odontológica individual.</p>
@@ -630,6 +688,9 @@
         <div id="guideStepModal" class="app-modal hidden" role="dialog" aria-modal="true" aria-labelledby="guideStepModalTitle" aria-hidden="true">
             <button type="button" class="app-modal-backdrop" id="guideStepModalBackdrop" aria-label="Fechar"></button>
             <div class="app-modal-card guide-modal-card">
+                <button type="button" id="guideStepModalClose" class="guide-modal-close" aria-label="Fechar etapa do guia">
+                    <i class="ph ph-x" aria-hidden="true"></i>
+                </button>
                 <div class="guide-modal-media-shell">
                     <div class="guide-carousel">
                         <button type="button" id="guideCarouselPrev" class="guide-carousel-nav" aria-label="Imagem anterior">

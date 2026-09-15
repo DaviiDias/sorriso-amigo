@@ -14,6 +14,7 @@ router.get("/questions", async (req, res, next) => {
         q.id AS question_id,
         q.question_text,
         q.category,
+        q.image_url,
         o.id AS option_id,
         o.option_text,
         o.is_correct,
@@ -32,6 +33,7 @@ router.get("/questions", async (req, res, next) => {
           id: row.question_id,
           question: row.question_text,
           category: row.category,
+          image_url: row.image_url,
           options: []
         });
       }

@@ -56,6 +56,9 @@ const dom = {
 	authHero: document.querySelector("#authHero"),
 	authColumn: document.querySelector(".auth-column"),
 	authSwitch: document.querySelector(".auth-switch"),
+	knowAppBtn: document.querySelector("#knowAppBtn"),
+	backToWelcomeBtn: document.querySelector("#backToWelcomeBtn"),
+	appFeatures: document.querySelector("#appFeatures"),
 	showAboutBtn: document.querySelector("#showAboutBtn"),
 	showLoginBtn: document.querySelector("#showLoginBtn"),
 	showRegisterBtn: document.querySelector("#showRegisterBtn"),
@@ -110,6 +113,7 @@ const dom = {
 	guideStepModalTitle: document.querySelector("#guideStepModalTitle"),
 	guideStepModalDescription: document.querySelector("#guideStepModalDescription"),
 	guideStepModalDetails: document.querySelector("#guideStepModalDetails"),
+	guideStepModalClose: document.querySelector("#guideStepModalClose"),
 	guideStepModalConclude: document.querySelector("#guideStepModalConclude"),
 	institutionLogosGrid: document.querySelector("#institutionLogosGrid"),
 	institutionModal: document.querySelector("#institutionModal"),
@@ -162,7 +166,6 @@ const dom = {
 	reminderEnabled: document.querySelector("#reminderEnabled"),
 	reminderTimes: document.querySelector("#reminderTimes"),
 	accessibilityMode: document.querySelector("#accessibilityMode"),
-	themeMode: document.querySelector("#themeMode"),
 	confirmModal: document.querySelector("#confirmModal"),
 	confirmModalBackdrop: document.querySelector("#confirmModalBackdrop"),
 	confirmModalIcon: document.querySelector("#confirmModalIcon"),
@@ -194,7 +197,7 @@ const institutionCards = [
 		content: [
 			{
 				headline: "Sobre a UNESP",
-				text: 'Universidade Estadual Paulista "Júlio de Mesquita Filho" (Unesp) é uma universidade pública brasileira, com atuação no ensino, na pesquisa e na extensão de serviços à comunidade. A instituição é uma das quatro universidades mantidas pelo governo do estado de São Paulo, ao lado da Universidade de São Paulo (USP), Universidade Estadual de Campinas (Unicamp) e da Universidade Virtual do Estado de São Paulo (Univesp). Em 2024, a Unesp foi eleita a quinta melhor universidade da América Latina pela revista Times Higher Education.'
+				text: 'Universidade Estadual Paulista "Júlio de Mesquita Filho" (Unesp) é uma universidade pública brasileira, com atuação no ensino, na pesquisa e na extensão de serviços à comunidade. A instituição é uma das quatro universidades mantidas pelo governo do estado de São Paulo, sendo eleita a quinta melhor universidade da América Latina pela revista Times Higher Education.'
 			},
 			{
 				headline: "História e Estrutura",
@@ -220,15 +223,15 @@ const institutionCards = [
 			},
 			{
 				headline: "Descrição do Programa",
-				text: 'A estrutura do Programa de Pós-Graduação em Saúde Coletiva em Odontologia da Faculdade de Odontologia de Araçatuba FOA/UNESP objetiva a formação de um profissional de saúde capaz de produzir mudanças positivas na problemática de saúde da comunidade, gerando e aplicando conhecimentos e tecnologia capazes de interferir positivamente no ambiente em que atua. Essa estrutura é embasada nos conhecimentos das matérias básicas e complementares e, instrumentada pelas experiências de aprendizagem capazes de produzir, ao fim do curso, um profissional apto a interferir eficazmente no binômio saúde-doença, na área da Odontologia e Saúde Coletiva.'
+				text: 'A estrutura do Programa de Pós-Graduação em Saúde Coletiva em Odontologia da Faculdade de Odontologia de Araçatuba FOA/UNESP objetiva a formação de um profissional de saúde capaz de produzir mudanças positivas na problemática de saúde da comunidade, gerando e aplicando conhecimentos e tecnologia capazes de interferir positivamente no ambiente em que atua.'
 			},
 			{
 				headline: "Missão do Programa",
-				text: 'A missão do Programa de Pós-graduação em Saúde Coletiva em Odontologia é formar mestres e doutores, com experiência em saúde pública, capazes de atuar nas universidades, nos serviços públicos e privados de saúde e em instituições relacionadas à área da saúde, desenvolvendo atividades de ensino, pesquisa, extensão e gestão na área da saúde coletiva, com vistas à melhoria das condições de saúde e ao desenvolvimento social da população.'
+				text: 'A missão do Programa é formar mestres e doutores, com experiência em saúde pública, capazes de atuar nas universidades, nos serviços públicos e privados de saúde e em instituições relacionadas à área da saúde, desenvolvendo atividades de ensino, pesquisa, extensão e gestão na área da saúde coletiva, com vistas à melhoria das condições de saúde e ao desenvolvimento social da população.'
 			},
 			{
 				headline: "Objetivos do Programa",
-				text: 'O Programa de Pós-Graduação em Saúde Coletiva em Odontologia tem por finalidade formar um profissional de saúde polivalente, apto a desempenhar funções de ensino, pesquisa, extensão e administração, com prática de atuação comunitária, capacitado para analisar, planejar, executar e avaliar, em nível administrativo e operacional, projetos para a promoção de saúde e resolução dos problemas de Odontologia e Saúde da comunidade.'
+				text: 'O Programa de Pós-Graduação em Saúde Coletiva em Odontologia tem por finalidade formar um profissional de saúde, apto a desempenhar funções de ensino, pesquisa, extensão e administração, com prática de atuação comunitária, capacitado para analisar, planejar, executar e avaliar, em nível administrativo e operacional, projetos para a promoção de saúde e resolução dos problemas de Odontologia e Saúde da comunidade.'
 			},
 			{
 				headline: "Mestrado",
@@ -289,11 +292,11 @@ const GUIDE_STEPS_CATALOG = [
 		step_order: 1,
 		title: "Preparação do Ambiente",
 		description: "Organize o espaço e deixe os materiais visíveis antes de iniciar.",
-		coverImage: "./assets/etapas_guia/Etapa 1/Capa - 1 foto.jpg",
+		coverImage: "./assets/etapas_guia/Etapa 1/Capa - foto 1.jpg",
 		bannerImages: [
-			"./assets/etapas_guia/Etapa 1/Capa - 1 foto.jpg",
-			"./assets/etapas_guia/Etapa 1/2 foto_.jpg",
-			"./assets/etapas_guia/Etapa 1/3 foto_.jpg"
+			"./assets/etapas_guia/Etapa 1/Capa - foto 1.jpg",
+			"./assets/etapas_guia/Etapa 1/1 etapa - foto 2.jpeg",
+			"./assets/etapas_guia/Etapa 1/1 etapa - foto 3.jpeg"
 		],
 		instructions: [
 			"Dirija-se ao local onde será realizada a escovação.",
@@ -313,12 +316,12 @@ const GUIDE_STEPS_CATALOG = [
 		id: 2,
 		step_order: 2,
 		title: "Aplicação",
-		description: "Aplique a quantidade de dentifrício correta para cada faixa etária.",
-		coverImage: "./assets/etapas_guia/Etapa 2/Capa - 1 foto.jpg",
+		description: "Aplique a quantidade de pasta de dente correta para cada faixa etária.",
+		coverImage: "./assets/etapas_guia/Etapa 2/2 etapa - 1 foto.jpeg",
 		bannerImages: [
-			"./assets/etapas_guia/Etapa 2/Capa - 1 foto.jpg",
-			"./assets/etapas_guia/Etapa 2/2 foto.jpg",
-			"./assets/etapas_guia/Etapa 2/3 foto.jpg"
+			"./assets/etapas_guia/Etapa 2/2 etapa - 1 foto.jpeg",
+			"./assets/etapas_guia/Etapa 2/2 etapa - 2 foto.jpeg",
+			"./assets/etapas_guia/Etapa 2/2 etapa - 3 foto.jpeg"
 		],
 		instructions: [
 			"Segure a escova com firmeza na mão dominante.",
@@ -332,17 +335,17 @@ const GUIDE_STEPS_CATALOG = [
 				{
 					label: "0 - 3 anos",
 					subtitle: "1/2 grão de arroz",
-					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Pasta - 0 - 3 anos - 01 foto.jpg"
+					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Etapa 2 - Pasta de dente/2 etapa - 0-3 anos.jpeg"
 				},
 				{
 					label: "3 - 6 anos",
 					subtitle: "1 grão de arroz",
-					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Pasta - 3- 6 anos - 02 foto.png"
+					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Etapa 2 - Pasta de dente/2 etapa - 3 - 6 anos.jpeg"
 				},
 				{
 					label: "Acima de 6 anos",
 					subtitle: "1 grão de feijão",
-					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Pasta - Acima de 6 anos - 03 foto.jpg"
+					image: "./assets/etapas_guia/Etapa 2 - Pasta de dente/Etapa 2 - Pasta de dente/3 etapa - Acima de 06 anos.jpeg"
 				}
 			]
 		},
@@ -352,18 +355,18 @@ const GUIDE_STEPS_CATALOG = [
 			n3: "O responsável realiza a aplicação, verbalizando cada ação."
 		},
 		clinicalAttention:
-			"Utilize dentifrício fluoretado com concentração mínima de 1.100 ppm de flúor para prevenção contra cárie dentária."
+			"Utilize pasta de dente fluoretada com concentração mínima de 1.100 ppm de flúor para prevenção contra cárie dentária."
 	},
 	{
 		id: 3,
 		step_order: 3,
-		title: "Escovação",
-		description: "Escove a parte externa e superfície de mastigação com ritmo e contagem.",
-		coverImage: "./assets/etapas_guia/Etapa 3/Capa.jpg",
+		title: "Escovação externa",
+		description: "Escove a parte externa dos dentes com movimentos corretos.",
+		coverImage: "./assets/etapas_guia/Etapa 3/Etapa 3/3 etapa - 1 foto.jpeg",
 		bannerImages: [
-			"./assets/etapas_guia/Etapa 3/Capa.jpg",
-			"./assets/etapas_guia/Etapa 3/02 foto.jpg",
-			"./assets/etapas_guia/Etapa 3/03 foto.jpg"
+			"./assets/etapas_guia/Etapa 3/Etapa 3/3 etapa - 1 foto.jpeg",
+			"./assets/etapas_guia/Etapa 3/Etapa 3/3 etapa - 2 foto.jpeg",
+			"./assets/etapas_guia/Etapa 3/Etapa 3/3 etapa - 3 foto.jpeg"
 		],
 		instructions: [
 			"Posicione as cerdas sobre os dentes da frente em ângulo de 45° em relação à gengiva.",
@@ -387,12 +390,12 @@ const GUIDE_STEPS_CATALOG = [
 		id: 4,
 		step_order: 4,
 		title: "Escovação Interna",
-		description: "Escove a parte interna da arcada, céu da boca e língua com movimentos suaves.",
-		coverImage: "./assets/etapas_guia/Etapa 4/Capa - 01 foto.jpg",
+		description: "Escove a parte interna dos dentes com movimentos corretos.",
+		coverImage: "./assets/etapas_guia/Etapa 4/4 etapa - 1 foto.jpeg",
 		bannerImages: [
-			"./assets/etapas_guia/Etapa 4/Capa - 01 foto.jpg",
-			"./assets/etapas_guia/Etapa 4/02 foto.jpg",
-			"./assets/etapas_guia/Etapa 4/03 foto.jpg"
+			"./assets/etapas_guia/Etapa 4/4 etapa - 1 foto.jpeg",
+			"./assets/etapas_guia/Etapa 4/4 etapa - 2 foto.jpeg",
+			"./assets/etapas_guia/Etapa 4/4 etapa - 3 foto.jpeg"
 		],
 		instructions: [
 			"Abra a boca.",
@@ -412,12 +415,12 @@ const GUIDE_STEPS_CATALOG = [
 		id: 5,
 		step_order: 5,
 		title: "Fio Dental",
-		description: "Use o fio dental em todos os espaços com movimento suave e controlado.",
-		coverImage: "./assets/etapas_guia/Etapa 5/Capa - 01 foto.jpg",
+		description: "Passe o fio dental entre cada dente, alcançando todos os espaços.",
+		coverImage: "./assets/etapas_guia/Etapa 5/5 etapa - 1 foto.jpeg",
 		bannerImages: [
-			"./assets/etapas_guia/Etapa 5/Capa - 01 foto.jpg",
-			"./assets/etapas_guia/Etapa 5/02 foto.jpg",
-			"./assets/etapas_guia/Etapa 5/03 foto.jpg"
+			"./assets/etapas_guia/Etapa 5/5 etapa - 1 foto.jpeg",
+			"./assets/etapas_guia/Etapa 5/5 etapa - 2 foto.jpeg",
+			"./assets/etapas_guia/Etapa 5/5 etapa - 3 foto.jpeg"
 		],
 		instructions: [
 			"Pegue o fio dental.",
@@ -437,12 +440,12 @@ const GUIDE_STEPS_CATALOG = [
 		id: 6,
 		step_order: 6,
 		title: "Enxágue",
-		description: "Faça bochecho guiado e descarte a água sem engolir.",
-		coverImage: "./assets/etapas_guia/Etapa 6/Capa - 01 foto.jpg",
+		description: "Faça o bochecho conforme a orientação e, ao terminar, cuspa a água sem engolir.",
+		coverImage: "./assets/etapas_guia/Etapa 6/6 etapa - 1 foto.jpeg",
 		bannerImages: [
-			"./assets/etapas_guia/Etapa 6/Capa - 01 foto.jpg",
-			"./assets/etapas_guia/Etapa 6/02 foto.jpg",
-			"./assets/etapas_guia/Etapa 6/03 foto.jpg"
+			"./assets/etapas_guia/Etapa 6/6 etapa - 1 foto.jpeg",
+			"./assets/etapas_guia/Etapa 6/6 etapa - 2 foto .jpeg",
+			"./assets/etapas_guia/Etapa 6/6 etapa - 3 foto.jpeg"
 		],
 		instructions: [
 			"Pegue um copo e coloque água.",
@@ -463,11 +466,11 @@ const GUIDE_STEPS_CATALOG = [
 		step_order: 7,
 		title: "Organização",
 		description: "Guarde todos os materiais no lugar para encerrar a rotina.",
-		coverImage: "./assets/etapas_guia/Etapa 7/Capa - 01 foto.jpg",
+		coverImage: "./assets/etapas_guia/Etapa 7/7 etapa - 1 foto.jpeg",
 		bannerImages: [
-			"./assets/etapas_guia/Etapa 7/Capa - 01 foto.jpg",
-			"./assets/etapas_guia/Etapa 7/02 foto.jpg",
-			"./assets/etapas_guia/Etapa 7/03 foto.jpg"
+			"./assets/etapas_guia/Etapa 7/7 etapa - 1 foto.jpeg",
+			"./assets/etapas_guia/Etapa 7/7 etapa - 2 foto.jpeg",
+			"./assets/etapas_guia/Etapa 7/7 etapa - 3 foto.jpeg"
 		],
 		instructions: [
 			"Lave a escova de dentes em água corrente.",
@@ -493,6 +496,11 @@ async function init() {
 	await loadInstitutionLogos();
 
 	await loadRuntimeConfig();
+
+	if (QUICK_ACCESS_MODE) {
+		enterGuestSession("local");
+		return;
+	}
 
 	if (runtimeConfig.publicAccessMode) {
 		enterGuestSession("public");
@@ -543,6 +551,11 @@ function bindEvents() {
 	dom.showAboutBtn.addEventListener("click", () => setAuthMode("about"));
 	dom.showLoginBtn.addEventListener("click", () => setAuthMode("login"));
 	dom.showRegisterBtn.addEventListener("click", () => setAuthMode("register"));
+	dom.knowAppBtn.addEventListener("click", showAppFeatures);
+	dom.backToWelcomeBtn.addEventListener("click", showWelcomePresentation);
+	document.querySelectorAll("[data-intro-section]").forEach((button) => {
+		button.addEventListener("click", () => setActiveSection(button.dataset.introSection));
+	});
 
 	syncAuthHeroPlacement();
 	window.addEventListener("resize", syncAuthHeroPlacement);
@@ -816,6 +829,18 @@ const AUTH_MOBILE_QUERY = window.matchMedia("(max-width: 980px)");
 // Breakpoint em que o app interno troca a sidebar pela barra inferior.
 const APP_MOBILE_QUERY = window.matchMedia("(max-width: 768px)");
 let currentAuthMode = "login";
+
+function showAppFeatures() {
+	dom.appFeatures.classList.remove("hidden");
+	dom.appFeatures.setAttribute("aria-hidden", "false");
+	dom.authHero.querySelector(".auth-hero-copy").classList.add("presentation-features-open");
+}
+
+function showWelcomePresentation() {
+	dom.appFeatures.classList.add("hidden");
+	dom.appFeatures.setAttribute("aria-hidden", "true");
+	dom.authHero.querySelector(".auth-hero-copy").classList.remove("presentation-features-open");
+}
 
 function isAuthMobile() {
 	return AUTH_MOBILE_QUERY.matches;
@@ -2425,6 +2450,10 @@ function markGuideStepAsCompleted(stepId) {
 function bindGuideModalEvents() {
 	if (!dom.guideStepModal) return;
 
+	if (dom.guideStepModalClose) {
+		dom.guideStepModalClose.addEventListener("click", () => closeGuideStepModal());
+	}
+
 	if (dom.guideStepModalBackdrop) {
 		dom.guideStepModalBackdrop.addEventListener("click", () => closeGuideStepModal());
 	}
@@ -2989,11 +3018,9 @@ async function loadPreferences() {
 
 	dom.reminderTimes.value = times.join(",");
 	dom.accessibilityMode.value = preferences.accessibility_mode || "default";
-	const savedTheme = localStorage.getItem("sorriso_theme") || preferences.theme_mode || "light";
-	dom.themeMode.value = savedTheme;
-
 	applyAccessibility(dom.accessibilityMode.value);
-	applyTheme(savedTheme);
+	applyTheme();
+	localStorage.setItem("sorriso_theme", "light");
 	setupReminderEngine(dom.reminderEnabled.checked, times);
 }
 
@@ -3007,7 +3034,7 @@ async function onPreferencesSubmit(event) {
 		.filter(Boolean);
 
 	const accessibilityMode = dom.accessibilityMode.value;
-	const themeMode = dom.themeMode.value;
+	const themeMode = "light";
 
 	try {
 		await api("/user/preferences", {
@@ -3021,7 +3048,7 @@ async function onPreferencesSubmit(event) {
 		});
 
 		applyAccessibility(accessibilityMode);
-		applyTheme(themeMode);
+		applyTheme();
 		localStorage.setItem("sorriso_theme", themeMode);
 		setupReminderEngine(reminderEnabled, reminderTimes);
 		setStatus("Preferencias salvas.", "success");
@@ -3042,14 +3069,9 @@ function applyAccessibility(mode) {
 	}
 }
 
-function applyTheme(theme) {
+function applyTheme() {
 	document.body.classList.remove("mode-light", "mode-blue");
-	
-	if (theme === "light") {
-		document.body.classList.add("mode-light");
-	} else if (theme === "blue") {
-		document.body.classList.add("mode-light", "mode-blue");
-	}
+	document.body.classList.add("mode-light");
 }
 
 function setupReminderEngine(enabled, times) {
@@ -3230,47 +3252,146 @@ function createDemoStore() {
 		quizQuestions: [
 			{
 				id: 1,
-				question: "Qual horario e mais importante para escovar os dentes?",
-				category: "Escovacao",
+				question: "O Transtorno do Espectro Autista (TEA) é definido como:",
+				category: "Compreensão do TEA",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
 				options: [
-					{ id: 101, text: "Apenas de manha", isCorrect: false },
-					{
-						id: 102,
-						text: "Apos as principais refeicoes e antes de dormir",
-						isCorrect: true,
-						explanation: "Excelente: a frequencia ao longo do dia melhora a prevencao."
-					},
-					{ id: 103, text: "Somente no dia da consulta", isCorrect: false }
+					{ id: 101, text: "Uma doença contagiosa", isCorrect: false },
+					{ id: 102, text: "Um transtorno do neurodesenvolvimento", isCorrect: true, explanation: "O TEA é um transtorno do neurodesenvolvimento, marcado por alterações na comunicação social, padrões comportamentais repetitivos e possíveis alterações sensoriais." },
+					{ id: 103, text: "Uma doença exclusivamente genética", isCorrect: false },
+					{ id: 104, text: "Uma deficiência sensorial isolada", isCorrect: false }
 				]
 			},
 			{
 				id: 2,
-				question: "Qual atitude ajuda quando ha resistencia durante a escovacao?",
-				category: "Comportamento",
+				question: "A frequência da escovação dentária é um fator determinante na prevenção de desordens na cavidade oral. Qual é a recomendação mais adequada?",
+				category: "Higiene Bucal",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
 				options: [
-					{ id: 201, text: "Forcar para terminar rapido", isCorrect: false },
-					{
-						id: 202,
-						text: "Criar rotina previsivel e reforco positivo",
-						isCorrect: true,
-						explanation: "Rotina e reforco positivo melhoram adesao e reduzem ansiedade."
-					},
-					{ id: 203, text: "Pular os dias de resistencia", isCorrect: false }
+					{ id: 201, text: "Uma vez ao dia, preferencialmente à noite", isCorrect: false },
+					{ id: 202, text: "Duas vezes ao dia: manhã e noite", isCorrect: false },
+					{ id: 203, text: "Três vezes ao dia, após as refeições principais", isCorrect: true, explanation: "A escovação deve ser realizada após as principais refeições, sendo a escovação noturna a mais importante, pois durante o sono há redução do fluxo salivar e aumento do risco de cárie." },
+					{ id: 204, text: "Apenas quando houver solicitação da criança", isCorrect: false }
 				]
 			},
 			{
 				id: 3,
-				question: "Qual recurso visual ajuda pessoas com TEA na higiene oral?",
-				category: "Manejo comportamental",
+				question: "Considerando a hipersensibilidade sensorial frequentemente observada em indivíduos com TEA, qual é o tipo de escova dental mais indicado?",
+				category: "Higiene Bucal",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
 				options: [
-					{
-						id: 301,
-						text: "Checklist visual com passo a passo",
-						isCorrect: true,
-						explanation: "Imagens e passos claros ajudam previsibilidade e autonomia."
-					},
-					{ id: 302, text: "Somente explicacao verbal longa", isCorrect: false },
-					{ id: 303, text: "Sem rotina definida", isCorrect: false }
+					{ id: 301, text: "Cerdas duras e cabeça grande", isCorrect: false },
+					{ id: 302, text: "Cerdas médias e cabeça grande", isCorrect: false },
+					{ id: 303, text: "Cerdas macias e cabeça pequena", isCorrect: true, explanation: "Escovas com cerdas macias e cabeça pequena proporcionam menor estímulo tátil e maior controle durante a escovação, sendo mais bem toleradas por indivíduos com hipersensibilidade oral." },
+					{ id: 304, text: "Qualquer escova apresenta a mesma eficácia", isCorrect: false }
+				]
+			},
+			{
+				id: 4,
+				question: "A pasta de dente deve conter flúor?",
+				category: "Higiene Bucal",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 401, text: "Sim", isCorrect: true, explanation: "O flúor promove a remineralização do esmalte e reduz a atividade bacteriana. Seu uso é recomendado para todas as faixas etárias, respeitando a quantidade adequada." },
+					{ id: 402, text: "Não", isCorrect: false },
+					{ id: 403, text: "Apenas para adultos", isCorrect: false },
+					{ id: 404, text: "Somente quando o dentista manda", isCorrect: false }
+				]
+			},
+			{
+				id: 5,
+				question: "A dieta influencia diretamente a saúde bucal. Qual dos seguintes grupos alimentares apresenta maior risco cariogênico quando consumido com frequência?",
+				category: "Alimentação e Saúde Bucal",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 501, text: "Alimentos naturais e minimamente processados", isCorrect: false },
+					{ id: 502, text: "Frutas fibrosas", isCorrect: false },
+					{ id: 503, text: "Alimentos açucarados e ultraprocessados", isCorrect: true, explanation: "Alimentos ricos em açúcares são metabolizados por bactérias do biofilme, produzindo ácidos que reduzem o pH bucal e causam desmineralização do esmalte." },
+					{ id: 504, text: "Laticínios", isCorrect: false }
+				]
+			},
+			{
+				id: 6,
+				question: "O que pode causar com o consumo frequente de açúcar na cavidade oral?",
+				category: "Alimentação e Saúde Bucal",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 601, text: "Fortalecimento dentário", isCorrect: false },
+					{ id: 602, text: "Desenvolvimento de cárie dentária", isCorrect: true, explanation: "O açúcar é metabolizado por bactérias do biofilme dental, resultando na produção de ácidos que desmineralizam o esmalte e levam à formação de lesões de cárie." },
+					{ id: 603, text: "Crescimento dentário acelerado", isCorrect: false },
+					{ id: 604, text: "Clareamento dental natural", isCorrect: false }
+				]
+			},
+			{
+				id: 7,
+				question: "Diante da resistência à escovação em indivíduos com TEA, qual conduta é mais indicada?",
+				category: "Manejo Comportamental no TEA",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 701, text: "Suspender a escovação", isCorrect: false },
+					{ id: 702, text: "Realizar a escovação de forma forçada", isCorrect: false },
+					{ id: 703, text: "Introduzir gradualmente com reforço positivo", isCorrect: true, explanation: "A abordagem gradual, associada ao reforço positivo, promove adaptação progressiva e associações positivas com a higiene bucal." },
+					{ id: 704, text: "Reduzir a frequência da escovação", isCorrect: false }
+				]
+			},
+			{
+				id: 8,
+				question: "Qual é a forma mais adequada de reforço após a escovação?",
+				category: "Manejo Comportamental no TEA",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 801, text: "Ausência de reforço", isCorrect: false },
+					{ id: 802, text: "Oferta de alimentos açucarados", isCorrect: false },
+					{ id: 803, text: "Reforço positivo imediato (elogios ou atividades prazerosas)", isCorrect: true, explanation: "O reforço positivo imediato fortalece a repetição do comportamento desejado. Recompensas não alimentares são preferíveis para proteger a saúde bucal." },
+					{ id: 804, text: "Redução da frequência de escovação", isCorrect: false }
+				]
+			},
+			{
+				id: 9,
+				question: "Em indivíduos com TEA não verbais, qual sinal pode indicar dor odontológica?",
+				category: "Manejo Comportamental no TEA",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 901, text: "Esfoliação dentária fisiológica", isCorrect: false },
+					{ id: 902, text: "Irritabilidade associada a comportamentos repetitivos na face", isCorrect: true, explanation: "Mudanças comportamentais, como irritabilidade, recusa alimentar e toques excessivos na face, podem indicar dor odontológica." },
+					{ id: 903, text: "Preferência alimentar habitual", isCorrect: false },
+					{ id: 904, text: "Manchas iniciais no esmalte", isCorrect: false }
+				]
+			},
+			{
+				id: 10,
+				question: "Qual é a periodicidade recomendada de consultas odontológicas preventivas para indivíduos com TEA?",
+				category: "Atenção Odontológica Preventiva",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 1001, text: "Apenas em situações de dor", isCorrect: false },
+					{ id: 1002, text: "Anualmente", isCorrect: false },
+					{ id: 1003, text: "A cada seis meses", isCorrect: true, explanation: "Consultas semestrais permitem monitoramento contínuo, prevenção de doenças e adaptação progressiva ao ambiente odontológico." },
+					{ id: 1004, text: "Desnecessária com boa higiene", isCorrect: false }
+				]
+			},
+			{
+				id: 11,
+				question: "Qual estratégia favorece a cooperação durante a higiene bucal em indivíduos com TEA?",
+				category: "Atenção Odontológica Preventiva",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 1101, text: "Imposição da escovação", isCorrect: false },
+					{ id: 1102, text: "Uso de recursos visuais e educativos", isCorrect: true, explanation: "Recursos visuais auxiliam na previsibilidade e compreensão da atividade, reduzindo ansiedade e aumentando a cooperação." },
+					{ id: 1103, text: "Realização apenas quando a criança pedir", isCorrect: false },
+					{ id: 1104, text: "Suspensão em dias de resistência", isCorrect: false }
+				]
+			},
+			{
+				id: 12,
+				question: "Qual hábito pode causar desgaste no dente (erosão) em crianças com TEA?",
+				category: "Erosão dentária",
+				image_url: "./assets/illustrations/dentist-quiz.svg",
+				options: [
+					{ id: 1201, text: "Escovar os dentes três vezes ao dia", isCorrect: false },
+					{ id: 1202, text: "Consumo frequente de bebidas ácidas, como sucos industrializados", isCorrect: true, explanation: "Bebidas ácidas diminuem o pH bucal e desgastam o esmalte, podendo causar erosão." },
+					{ id: 1203, text: "Mastigar alimentos fibrosos, como frutas", isCorrect: false },
+					{ id: 1204, text: "Uso regular de flúor", isCorrect: false }
 				]
 			}
 		],
@@ -3500,6 +3621,7 @@ async function mockApi(path, options = {}) {
 				id: question.id,
 				question: question.question,
 				category: question.category,
+				image_url: question.image_url || "./assets/illustrations/dentist-quiz.svg",
 				options: question.options.map((option) => ({
 					id: option.id,
 					text: option.text,
@@ -3732,6 +3854,7 @@ async function offlineApi(path, options = {}) {
 				id: question.id,
 				question: question.question,
 				category: question.category,
+				image_url: question.image_url || "./assets/illustrations/dentist-quiz.svg",
 				options: question.options.map((option) => ({
 					id: option.id,
 					text: option.text,
