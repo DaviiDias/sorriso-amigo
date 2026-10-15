@@ -1,18 +1,28 @@
--- Limpar dados antigos para garantir inserção limpa e sem conflitos
-TRUNCATE TABLE guide_steps, quiz_options, quiz_questions, educational_videos CASCADE;
+-- Conteudo fixo (guia, quiz e videos) sincronizado a cada inicializacao.
+-- Upsert em vez de TRUNCATE: TRUNCATE ... CASCADE apagava quiz_attempt_answers
+-- (historico das respostas dos usuarios) a cada deploy ou reinicio do pod.
 
--- Inserir Etapas do Guia Lúdico (exatamente conforme o mock)
-INSERT INTO guide_steps (step_order, title, description, image_url)
-VALUES
+WITH seed(step_order, title, description, image_url) AS (
+  VALUES
   (1, 'Preparar a escova', 'Separe escova macia e copo com agua para iniciar de forma previsivel.', './assets/illustrations/guide-1.svg'),
   (2, 'Molhar a escova', 'Molhe levemente a escova para reduzir incomodo sensorial.', './assets/illustrations/guide-2.svg'),
   (3, 'Aplicar pasta dental', 'Use quantidade pequena (grao de ervilha).', './assets/illustrations/guide-3.svg'),
   (4, 'Escovar com ritmo', 'Movimentos suaves por cerca de 2 minutos.', './assets/illustrations/guide-4.svg'),
-  (5, 'Finalizar e elogiar', 'Finalize com reforco positivo para manter a rotina.', './assets/illustrations/guide-5.svg');
+  (5, 'Finalizar e elogiar', 'Finalize com reforco positivo para manter a rotina.', './assets/illustrations/guide-5.svg')
+),
+upserted AS (
+  INSERT INTO guide_steps (step_order, title, description, image_url)
+  SELECT step_order, title, description, image_url FROM seed
+  ON CONFLICT (step_order) DO UPDATE
+    SET title = EXCLUDED.title,
+        description = EXCLUDED.description,
+        image_url = EXCLUDED.image_url
+)
+DELETE FROM guide_steps g
+WHERE NOT EXISTS (SELECT 1 FROM seed s WHERE s.step_order = g.step_order);
 
--- Inserir Perguntas do Quiz
-INSERT INTO quiz_questions (id, question_text, category, image_url)
-VALUES
+WITH seed(id, question_text, category, image_url) AS (
+  VALUES
   (1, 'O Transtorno do Espectro Autista (TEA) é definido como:', 'Compreensão do TEA', './assets/illustrations/dentist-quiz.svg'),
   (2, 'A frequência da escovação dentária é um fator determinante na prevenção de desordens na cavidade oral. Qual é a recomendação mais adequada?', 'Higiene Bucal', './assets/illustrations/dentist-quiz.svg'),
   (3, 'Considerando a hipersensibilidade sensorial frequentemente observada em indivíduos com TEA, qual é o tipo de escova dental mais indicado?', 'Higiene Bucal', './assets/illustrations/dentist-quiz.svg'),
@@ -24,14 +34,19 @@ VALUES
   (9, 'Em indivíduos com TEA não verbais, qual sinal pode indicar dor odontológica?', 'Manejo Comportamental no TEA', './assets/illustrations/dentist-quiz.svg'),
   (10, 'Qual é a periodicidade recomendada de consultas odontológicas preventivas para indivíduos com TEA?', 'Atenção Odontológica Preventiva', './assets/illustrations/dentist-quiz.svg'),
   (11, 'Qual estratégia favorece a cooperação durante a higiene bucal em indivíduos com TEA?', 'Atenção Odontológica Preventiva', './assets/illustrations/dentist-quiz.svg'),
-  (12, 'Qual hábito pode causar desgaste no dente (erosão) em crianças com TEA?', 'Erosão dentária', './assets/illustrations/dentist-quiz.svg');
+  (12, 'Qual hábito pode causar desgaste no dente (erosão) em crianças com TEA?', 'Erosão dentária', './assets/illustrations/dentist-quiz.svg')
+)
+INSERT INTO quiz_questions (id, question_text, category, image_url)
+SELECT id, question_text, category, image_url FROM seed
+ON CONFLICT (id) DO UPDATE
+  SET question_text = EXCLUDED.question_text,
+      category = EXCLUDED.category,
+      image_url = EXCLUDED.image_url;
 
--- Sincronizar a sequência do ID da tabela de perguntas para não causar problemas em inserções futuras
 SELECT setval('quiz_questions_id_seq', (SELECT MAX(id) FROM quiz_questions));
 
--- Inserir Opções do Quiz
-INSERT INTO quiz_options (question_id, option_text, is_correct, explanation)
-VALUES
+WITH seed(question_id, option_text, is_correct, explanation) AS (
+  VALUES
   (1, 'Uma doença contagiosa', false, 'O TEA é um transtorno do neurodesenvolvimento, marcado por alterações na comunicação social, padrões comportamentais repetitivos e possíveis alterações sensoriais.'),
   (1, 'Um transtorno do neurodesenvolvimento', true, 'O TEA é um transtorno do neurodesenvolvimento, marcado por alterações na comunicação social, padrões comportamentais repetitivos e possíveis alterações sensoriais.'),
   (1, 'Uma doença exclusivamente genética', false, 'O TEA não é definido como uma doença exclusivamente genética.'),
@@ -79,11 +94,26 @@ VALUES
   (12, 'Escovar os dentes três vezes ao dia', false, 'A escovação adequada não é o hábito descrito como causa de erosão.'),
   (12, 'Consumo frequente de bebidas ácidas, como sucos industrializados', true, 'Bebidas ácidas diminuem o pH bucal e desgastam o esmalte, podendo causar erosão.'),
   (12, 'Mastigar alimentos fibrosos, como frutas', false, 'O hábito descrito como risco de erosão é o consumo frequente de bebidas ácidas.'),
-  (12, 'Uso regular de flúor', false, 'O flúor contribui para a prevenção da cárie dentária.');
+  (12, 'Uso regular de flúor', false, 'O flúor contribui para a prevenção da cárie dentária.')
+),
+upserted AS (
+  INSERT INTO quiz_options (question_id, option_text, is_correct, explanation)
+  SELECT question_id, option_text, is_correct, explanation FROM seed
+  ON CONFLICT (question_id, option_text) DO UPDATE
+    SET is_correct = EXCLUDED.is_correct,
+        explanation = EXCLUDED.explanation
+)
+DELETE FROM quiz_options o
+WHERE NOT EXISTS (
+  SELECT 1 FROM seed s WHERE s.question_id = o.question_id AND s.option_text = o.option_text
+);
 
--- Inserir Vídeos Educativos (exatamente conforme o mock, com URLs únicas para satisfazer a constraint)
-INSERT INTO educational_videos (title, description, url, audience)
-VALUES
+-- Perguntas removidas do seed saem do banco (e, por cascata, as respostas a elas).
+DELETE FROM quiz_questions
+WHERE id NOT IN (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12);
+
+WITH seed(title, description, url, audience) AS (
+  VALUES
   ('Escovacao adaptada para TEA', 'Tecnicas de abordagem gradual para rotina de higiene oral.', 'https://www.youtube.com/watch?v=JYgM9sGQqDY&v=1', 'all'),
   ('Manejo de resistencia', 'Estrategias de comunicacao e reforco positivo no dia a dia.', 'https://www.youtube.com/watch?v=2f8A3f6wE8Q&v=2', 'all'),
   ('Prevencao em saude bucal', 'Conteudo para familias e profissionais de apoio.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM&v=3', 'all'),
@@ -92,4 +122,15 @@ VALUES
   ('Alimentacao e dentes saudaveis', 'Habitos alimentares que ajudam na prevencao de caries.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM&v=6', 'all'),
   ('Primeira ida ao dentista', 'O que esperar e como preparar a crianca para a consulta.', 'https://www.youtube.com/watch?v=JYgM9sGQqDY&v=7', 'all'),
   ('Reforco positivo na higiene oral', 'Elogios e recompensas que fortalecem a adesao a rotina.', 'https://www.youtube.com/watch?v=2f8A3f6wE8Q&v=8', 'all'),
-  ('Historia social: hora de escovar', 'Narrativa lúdica para antecipar o momento da escovacao.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM&v=9', 'all');
+  ('Historia social: hora de escovar', 'Narrativa lúdica para antecipar o momento da escovacao.', 'https://www.youtube.com/watch?v=4N8R4h3rBlM&v=9', 'all')
+),
+upserted AS (
+  INSERT INTO educational_videos (title, description, url, audience)
+  SELECT title, description, url, audience FROM seed
+  ON CONFLICT (url) DO UPDATE
+    SET title = EXCLUDED.title,
+        description = EXCLUDED.description,
+        audience = EXCLUDED.audience
+)
+DELETE FROM educational_videos v
+WHERE NOT EXISTS (SELECT 1 FROM seed s WHERE s.url = v.url);
