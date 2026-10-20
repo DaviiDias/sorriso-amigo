@@ -9,8 +9,20 @@ com banco PostgreSQL real e, opcionalmente, SMS real no seu celular.
 cd server
 npm install          # só na primeira vez
 npm run db:up        # sobe o PostgreSQL no Docker (porta 5432)
-npm run db:init      # cria as tabelas e popula os dados iniciais
+npm run db:init      # SOMENTE instalacao limpa: aplica schema e seed.sql (TRUNCATE CASCADE em guia/quiz/videos)
 ```
+
+Em base ja existente **nao** rode `npm run db:init`. Esse comando executa `seed.sql`,
+que faz `TRUNCATE ... CASCADE` em conteudos de guia, quiz e videos. Para bases com
+historico, use a migracao incremental (idempotente, transacional, sem seed):
+
+```bash
+cd server
+npm run db:migrate   # aplica server/sql/migrations sem apagar daily_checklists
+```
+
+A migracao F04 acrescenta `caregiver_resistance_level` anulavel (os 4 niveis ou NULL).
+Registros antigos ficam com NULL = nao informado; nao infere "Nenhuma".
 
 `npm run db:down` para parar o banco. Os dados ficam no volume `pgdata` e
 sobrevivem a reinicializações.

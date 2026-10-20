@@ -80,11 +80,31 @@ CREATE TABLE IF NOT EXISTS daily_checklists (
   brushing_afternoon BOOLEAN NOT NULL DEFAULT false,
   brushing_night BOOLEAN NOT NULL DEFAULT false,
   resistance_level VARCHAR(16) NOT NULL CHECK (resistance_level IN ('none', 'light', 'moderate', 'severe')),
+  caregiver_resistance_level VARCHAR(16),
   notes TEXT NOT NULL DEFAULT '',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   UNIQUE (user_id, checklist_date)
 );
+
+ALTER TABLE IF EXISTS daily_checklists
+  ADD COLUMN IF NOT EXISTS caregiver_resistance_level VARCHAR(16);
+
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'daily_checklists_caregiver_resistance_level_check'
+  ) THEN
+    ALTER TABLE daily_checklists
+      ADD CONSTRAINT daily_checklists_caregiver_resistance_level_check
+      CHECK (
+        caregiver_resistance_level IS NULL
+        OR caregiver_resistance_level IN ('none', 'light', 'moderate', 'severe')
+      );
+  END IF;
+END $$;
 
 CREATE TABLE IF NOT EXISTS guide_steps (
   id SERIAL PRIMARY KEY,

@@ -1,6 +1,11 @@
 import express from "express";
-import { query } from "../config/db.js";
 import { requireAuth } from "../middleware/auth.js";
+
+const localVideos = [
+  { id: 1, title: "Abridor de Boca", description: "Vídeo educativo sobre o abridor de boca.", url: "/assets/videos/Abridor%20de%20Boca.mp4", audience: "famílias, cuidadores e profissionais" },
+  { id: 2, title: "Adaptador de escova", description: "Vídeo educativo sobre o adaptador de escova.", url: "/assets/videos/Adaptador%20de%20escova.mp4", audience: "famílias, cuidadores e profissionais" },
+  { id: 3, title: "Principal - Animação Inicial", description: "Animação inicial educativa do Sorriso Amigo.", url: "/assets/videos/Principal%20-%20Animação%20Inicial.mp4", audience: "famílias, cuidadores e profissionais" }
+];
 
 const router = express.Router();
 
@@ -8,15 +13,7 @@ router.use(requireAuth);
 
 router.get("/", async (req, res, next) => {
   try {
-    const result = await query(
-      `
-      SELECT id, title, description, url, audience, created_at
-      FROM educational_videos
-      ORDER BY created_at DESC
-      `
-    );
-
-    return res.json({ videos: result.rows });
+    return res.json({ videos: localVideos });
   } catch (error) {
     return next(error);
   }

@@ -48,6 +48,7 @@ async function run() {
       afternoon: true,
       night: true,
       resistanceLevel: "light",
+      caregiverResistanceLevel: "none",
       notes: "Registro de smoke test"
     })
   });
@@ -65,6 +66,8 @@ async function run() {
 
   const todayEntry = list.items.find((item) => item.checklist_date === date);
   assert.ok(todayEntry, "Registro gravado nao encontrado na leitura");
+  assert.equal(todayEntry.resistance_level, "light");
+  assert.equal(todayEntry.caregiver_resistance_level, "none");
 
   console.log("[4/4] Validando dashboard/stats...");
   const month = date.slice(0, 7);

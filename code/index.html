@@ -3,15 +3,17 @@
 	<head>
 		<meta charset="UTF-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Sorriso Amigo | Saúde Bucal e Acompanhamento TEA</title>
+		<title>Sorriso Amigo TEA | Saúde Bucal e Acompanhamento</title>
 		<link rel="preconnect" href="https://fonts.googleapis.com" />
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 		<link
 			href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700&family=Lexend:wght@400;500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap"
 			rel="stylesheet"
 		/>
+
         <link rel="stylesheet" href="./assets/vendor/phosphor/regular/style.css" />
         <link rel="stylesheet" href="./assets/vendor/phosphor/fill/style.css" />
+        <link rel="stylesheet" href="./assets/vendor/plyr/plyr.css" />
 		<link rel="stylesheet" href="./assets/style.css" />
 	</head>
 	<body class="mode-light">
@@ -19,7 +21,7 @@
             <div class="auth-hero" id="authHero">
                 <div class="auth-hero-copy">
                     <p class="eyebrow">Projeto Educativo Digital</p>
-                    <h1>Sorriso Amigo</h1>
+                    <h1>Sorriso Amigo TEA</h1>
 
                     <div class="welcome-card">
                         <video
@@ -45,6 +47,8 @@
                             </p>
                             <div class="welcome-actions">
                                 <button id="knowAppBtn" class="btn btn-primary" type="button">Conheça o Aplicativo</button>
+                                <button id="welcomeLoginBtn" class="btn btn-secondary" type="button">Entrar</button>
+                                <button id="welcomeRegisterBtn" class="btn btn-secondary" type="button">Criar conta</button>
                             </div>
                         </div>
                     </div>
@@ -55,12 +59,16 @@
                             <h2>O que você encontra no aplicativo?</h2>
                         </div>
                         <ul class="feature-list">
-                            <li><i class="ph-fill ph-check-square" aria-hidden="true"></i> Acompanhe a escovação do dia e registre o nível de resistência observado;</li>
+                            <li><i class="ph-fill ph-check-square" aria-hidden="true"></i> Acompanhe a escovação do dia e registre o nível de resistência da pessoa com TEA e do responsável;</li>
                             <li><i class="ph-fill ph-list-checks" aria-hidden="true"></i> Siga um guia lúdico de escovação, etapa por etapa;</li>
                             <li><i class="ph-fill ph-game-controller" aria-hidden="true"></i> Aprenda com um quiz educativo e feedback imediato;</li>
                             <li><i class="ph-fill ph-play-circle" aria-hidden="true"></i> Assista a vídeos com orientação para famílias, cuidadores e profissionais.</li>
                         </ul>
-                        <button id="backToWelcomeBtn" class="btn btn-secondary" type="button">Voltar</button>
+                        <div class="welcome-actions app-features-actions">
+                            <button id="backToWelcomeBtn" class="btn btn-secondary" type="button">Voltar</button>
+                            <button id="featuresLoginBtn" class="btn btn-secondary" type="button">Entrar</button>
+                            <button id="featuresRegisterBtn" class="btn btn-primary" type="button">Criar conta</button>
+                        </div>
                     </div>
                 </div>
 
@@ -224,10 +232,10 @@
             <!-- Sidebar / Navbar (Duolingo Style) -->
             <aside class="sidebar">
                 <div class="sidebar-brand">
-                    <h2 class="brand-title">Sorriso Amigo</h2>
+                    <h2 class="brand-title">Sorriso Amigo TEA</h2>
                 </div>
                 
-                <nav class="sidebar-nav">
+                <nav class="sidebar-nav" aria-label="Seções do aplicativo">
                     <button class="tab-btn active" data-section="inicio" type="button">
                         <i class="ph ph-house"></i>
                         <span>Início</span>
@@ -247,7 +255,7 @@
                     </button>
                     <button class="tab-btn" data-section="quiz" type="button">
                         <i class="ph ph-game-controller"></i>
-                        <span>Quiz!</span>
+                        <span>Quiz</span>
                     </button>
                     <button class="tab-btn" data-section="videos" type="button">
                         <i class="ph ph-video"></i>
@@ -259,7 +267,11 @@
                     </button>
                 </nav>
 
-                <div class="sidebar-footer">
+                <div class="sidebar-footer" role="group" aria-label="Sobre e sessão">
+                    <button class="tab-btn" data-section="sobre" type="button">
+                        <i class="ph ph-info"></i>
+                        <span>Sobre o projeto</span>
+                    </button>
                     <button id="logoutBtn" class="btn-logout" type="button">
                         <i class="ph ph-sign-out"></i>
                         <span>Sair</span>
@@ -303,37 +315,22 @@
                                 </div>
                             </article>
 
+                        </div>
+                    </section>
+
+                    <section id="section-sobre" class="app-section">
+                        <div class="intro-layout">
                             <article class="intro-hero institutional-about">
                                 <p class="intro-kicker">Página institucional</p>
                                 <h3>Sobre o projeto</h3>
                                 <div class="institutional-about-content">
-                                    <section>
-                                        <h4>Autor</h4>
-                                        <p>Este aplicativo é parte integrante do projeto de tese de doutorado da pós-graduanda Carolina Santos de Almeida Carneiro do Programa de Pós-graduação em Saúde Coletiva em Odontologia da Universidade Estadual Paulista Júlio de Mesquita Filho (UNESP) em Araçatuba – São Paulo, desenvolvido com o auxílio de um desenvolvedor de software e de ferramentas digitais para a programação. As imagens foram elaboradas e desenhadas pela própria aluna, sendo, portanto, livres de direitos autorais e de sua autoria exclusiva.</p>
-                                    </section>
-                                    <section>
-                                        <h4>Conteúdo Científico</h4>
-                                        <p>O conteúdo científico elaborado pela própria aluna baseia-se em referências atualizadas e na construção de um fluxograma para as corretas afirmações expostas no aplicativo.</p>
-                                    </section>
-                                    <section>
-                                        <h4>Orientação</h4>
-                                        <p>O trabalho foi orientado pela Professora Titular e Coordenadora do Programa de Pós-graduação em Saúde Coletiva em Odontologia da Universidade Estadual Paulista Júlio de Mesquita Filho (UNESP) em Araçatuba, São Paulo, Brasil.</p>
-                                    </section>
-                                    <section>
-                                        <h4>Financiamento</h4>
-                                        <p>O projeto contou com financiamento indireto da CAPES (Coordenação de Aperfeiçoamento de Pessoal de Nível Superior), por meio da concessão de bolsa de doutorado a discente.</p>
-                                    </section>
+                                    <section><h4>Autor</h4><p>Este aplicativo é parte integrante do projeto de tese de doutorado da pós-graduanda Carolina Santos de Almeida Carneiro do Programa de Pós-graduação em Saúde Coletiva em Odontologia da Universidade Estadual Paulista Júlio de Mesquita Filho (UNESP) em Araçatuba – São Paulo, desenvolvido com o auxílio de um desenvolvedor de software e de ferramentas digitais para a programação. As imagens foram elaboradas e desenhadas pela própria aluna, sendo, portanto, livres de direitos autorais e de sua autoria exclusiva.</p></section>
+                                    <section><h4>Conteúdo Científico</h4><p>O conteúdo científico elaborado pela própria aluna baseia-se em referências atualizadas e na construção de um fluxograma para as corretas afirmações expostas no aplicativo.</p></section>
+                                    <section><h4>Orientação</h4><p>O aplicativo foi desenvolvido sob orientação da Professora Tânia Adas Saliba, Professora Titular e Coordenadora do Programa de Pós-graduação em Saúde Coletiva em Odontologia da Universidade Estadual Paulista ‘Júlio de Mesquita Filho’ (UNESP) em Araçatuba, São Paulo, Brasil.</p></section>
+                                    <section><h4>Financiamento</h4><p>O projeto contou com financiamento indireto da CAPES (Coordenação de Aperfeiçoamento de Pessoal de Nível Superior), por meio da concessão de bolsa de doutorado a discente.</p></section>
                                 </div>
                             </article>
-
-                            <section class="institution-section">
-                                <div class="institution-section-head">
-                                    <p class="intro-kicker">Instituições</p>
-                                    <h3>Logos das instituições parceiras</h3>
-                                    <p>Clique em cada logo para ler as informações completas em uma modal rolável.</p>
-                                </div>
-                                <div id="institutionLogosGrid" class="institution-grid"></div>
-                            </section>
+                            <section class="institution-section"><div class="institution-section-head"><p class="intro-kicker">Instituições</p><h3>Logos das instituições parceiras</h3><p>Clique em cada logo para ler as informações completas em uma modal rolável.</p></div><div id="institutionLogosGridAbout" class="institution-grid"></div></section>
                         </div>
                     </section>
 
@@ -382,7 +379,7 @@
                                     <div class="dashboard-stat-body">
                                         <h3>Dias com registro</h3>
                                         <p id="trackedDaysValue" class="dashboard-stat-value">0</p>
-                                        <span id="resistanceHint" class="dashboard-stat-hint">Resistência moderada/grave: 0</span>
+                                        <span id="resistanceHint" class="dashboard-stat-hint">Resistência da pessoa com TEA (moderada/severa): 0</span>
                                     </div>
                                 </article>
                             </div>
@@ -426,7 +423,7 @@
                                         <div id="dashboardPeriodBars" class="dashboard-period-bars"></div>
                                     </div>
                                     <div class="dashboard-activity-block">
-                                        <h4><i class="ph ph-game-controller"></i> Quiz! (últimas tentativas)</h4>
+                                        <h4><i class="ph ph-game-controller"></i> Quiz (últimas tentativas)</h4>
                                         <p id="dashboardQuizSummary" class="dashboard-quiz-summary"></p>
                                         <ul id="dashboardRecentQuiz" class="dashboard-activity-list"></ul>
                                     </div>
@@ -475,27 +472,52 @@
                                     <input type="checkbox" name="night" id="input-night" class="hidden" />
                                 </div>
 
-                                <div class="form-group resistance-group">
-                                    <label class="text-center">Nível de Resistência</label>
-                                    <div class="resistance-selector">
-                                        <button type="button" class="res-btn extreme-negative" data-level="severe" title="Extremamente Negativa">
-                                            <i class="ph-fill ph-smiley-angry"></i>
-                                        </button>
-                                        <button type="button" class="res-btn negative" data-level="moderate" title="Negativa">
-                                            <i class="ph-fill ph-smiley-sad"></i>
-                                        </button>
-                                        <button type="button" class="res-btn neutral" data-level="light" title="Neutra">
-                                            <i class="ph-fill ph-smiley-meh"></i>
-                                        </button>
-                                        <button type="button" class="res-btn positive" data-level="none" title="Positiva">
-                                            <i class="ph-fill ph-smiley"></i>
-                                        </button>
-                                        <button type="button" class="res-btn extreme-positive" data-level="super-none" title="Extremamente Positiva">
-                                            <i class="ph-fill ph-smiley-wink"></i>
-                                        </button>
-                                    </div>
-                                    <!-- Hidden input to keep script.js compatibility -->
-                                    <input type="hidden" name="resistanceLevel" id="input-resistance" value="none" />
+                                <div class="resistance-groups">
+                                    <fieldset class="form-group resistance-group" data-resistance-group="tea">
+                                        <legend class="text-center">Nível de resistência da pessoa com TEA</legend>
+                                        <div class="resistance-selector" role="radiogroup" aria-label="Nível de resistência da pessoa com TEA">
+                                            <button type="button" class="res-btn positive" data-group="tea" data-level="none" role="radio" aria-checked="false" aria-label="Nenhuma" title="Nenhuma">
+                                                <i class="ph-fill ph-smiley" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Nenhuma</span>
+                                            </button>
+                                            <button type="button" class="res-btn neutral" data-group="tea" data-level="light" role="radio" aria-checked="false" aria-label="Leve" title="Leve">
+                                                <i class="ph-fill ph-smiley-meh" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Leve</span>
+                                            </button>
+                                            <button type="button" class="res-btn negative" data-group="tea" data-level="moderate" role="radio" aria-checked="false" aria-label="Moderada" title="Moderada">
+                                                <i class="ph-fill ph-smiley-sad" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Moderada</span>
+                                            </button>
+                                            <button type="button" class="res-btn extreme-negative" data-group="tea" data-level="severe" role="radio" aria-checked="false" aria-label="Severa" title="Severa">
+                                                <i class="ph-fill ph-smiley-angry" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Severa</span>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="resistanceLevel" id="input-resistance" value="" />
+                                    </fieldset>
+
+                                    <fieldset class="form-group resistance-group" data-resistance-group="caregiver">
+                                        <legend class="text-center">Nível de resistência do responsável</legend>
+                                        <div class="resistance-selector" role="radiogroup" aria-label="Nível de resistência do responsável">
+                                            <button type="button" class="res-btn positive" data-group="caregiver" data-level="none" role="radio" aria-checked="false" aria-label="Nenhuma" title="Nenhuma">
+                                                <i class="ph-fill ph-smiley" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Nenhuma</span>
+                                            </button>
+                                            <button type="button" class="res-btn neutral" data-group="caregiver" data-level="light" role="radio" aria-checked="false" aria-label="Leve" title="Leve">
+                                                <i class="ph-fill ph-smiley-meh" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Leve</span>
+                                            </button>
+                                            <button type="button" class="res-btn negative" data-group="caregiver" data-level="moderate" role="radio" aria-checked="false" aria-label="Moderada" title="Moderada">
+                                                <i class="ph-fill ph-smiley-sad" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Moderada</span>
+                                            </button>
+                                            <button type="button" class="res-btn extreme-negative" data-group="caregiver" data-level="severe" role="radio" aria-checked="false" aria-label="Severa" title="Severa">
+                                                <i class="ph-fill ph-smiley-angry" aria-hidden="true"></i>
+                                                <span class="res-btn-label">Severa</span>
+                                            </button>
+                                        </div>
+                                        <input type="hidden" name="caregiverResistanceLevel" id="input-caregiver-resistance" value="" />
+                                    </fieldset>
                                 </div>
 
                                 <div class="form-group">
@@ -529,26 +551,22 @@
                                                     class="quiz-mascot-img"
                                                     aria-label="Animação de capa do Quiz Sorriso Amigo"
                                                     poster="./assets/illustrations/dentist-quiz.svg"
-                                                    width="240"
-                                                    height="240"
                                                     autoplay
                                                     muted
                                                     loop
                                                     playsinline
                                                     preload="auto"
                                                 >
-                                                    <source src="./assets/illustrations/Quiz - animação da capa.mp4" type="video/mp4" />
+                                                    <source src="./assets/illustrations/quiz-animacao-capa.mp4" type="video/mp4" />
                                                     <img src="./assets/illustrations/dentist-quiz.svg" alt="Ilustração de capa do Quiz Sorriso Amigo" />
                                                 </video>
                                             </div>
-                                            <p class="quiz-mascot-bubble">Bora testar o que você já sabe?</p>
                                         </div>
                                         <div class="quiz-start-text">
-                                            <h3>Quiz!</h3>
-                                            <p class="quiz-start-lead">Você está pronto para o desafio?</p>
+                                            <h3>Quiz</h3>
                                             <p class="quiz-start-lead">Responda às perguntas, aprenda novas dicas e torne um <strong>super-herói do sorriso</strong>!</p>
-                                            <button id="quizStartBtn" class="quiz-play-btn" type="button" title="Começar Quiz">
-                                                <i class="ph-fill ph-play"></i>
+                                            <button id="quizStartBtn" class="quiz-play-btn" type="button" aria-label="Começar Quiz" title="Começar Quiz">
+                                                <i class="ph-fill ph-play" aria-hidden="true"></i>
                                             </button>
                                             <p class="quiz-start-hint">Toque no play para começar!</p>
                                         </div>
@@ -574,6 +592,9 @@
                                         <span id="quizQuestionCategory" class="quiz-category-badge">Categoria</span>
                                         <h2 id="quizQuestionText" class="quiz-question-title">Pergunta do Quiz</h2>
                                     </div>
+                                    <figure class="quiz-question-media">
+                                        <img id="quizQuestionImage" class="quiz-question-image" alt="" />
+                                    </figure>
                                     <div id="quizOptionsGrid" class="quiz-options-stack">
                                         <!-- Renderizado dinamicamente -->
                                     </div>
@@ -750,7 +771,8 @@
                     <article id="dashboardDayDetailRowMorning" class="dashboard-day-detail-row">
                         <div class="dashboard-day-detail-columns-head">
                             <span>Periodo</span>
-                            <span>Resistencia</span>
+                            <span>Pessoa com TEA</span>
+                            <span>Responsável</span>
                             <span>Observação</span>
                         </div>
                         <div class="dashboard-day-detail-row-body">
@@ -759,6 +781,9 @@
                             </div>
                             <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
                                 <span id="dashboardDayDetailMorningResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailMorningCaregiverResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
                             </div>
                             <div class="dashboard-day-detail-cell dashboard-day-detail-cell-note">
                                 <div id="dashboardDayDetailMorningNote" class="dashboard-detail-note-box"></div>
@@ -769,7 +794,8 @@
                     <article id="dashboardDayDetailRowAfternoon" class="dashboard-day-detail-row">
                         <div class="dashboard-day-detail-columns-head">
                             <span>Periodo</span>
-                            <span>Resistencia</span>
+                            <span>Pessoa com TEA</span>
+                            <span>Responsável</span>
                             <span>Observação</span>
                         </div>
                         <div class="dashboard-day-detail-row-body">
@@ -778,6 +804,9 @@
                             </div>
                             <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
                                 <span id="dashboardDayDetailAfternoonResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailAfternoonCaregiverResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
                             </div>
                             <div class="dashboard-day-detail-cell dashboard-day-detail-cell-note">
                                 <div id="dashboardDayDetailAfternoonNote" class="dashboard-detail-note-box"></div>
@@ -788,7 +817,8 @@
                     <article id="dashboardDayDetailRowNight" class="dashboard-day-detail-row">
                         <div class="dashboard-day-detail-columns-head">
                             <span>Periodo</span>
-                            <span>Resistencia</span>
+                            <span>Pessoa com TEA</span>
+                            <span>Responsável</span>
                             <span>Observação</span>
                         </div>
                         <div class="dashboard-day-detail-row-body">
@@ -797,6 +827,9 @@
                             </div>
                             <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
                                 <span id="dashboardDayDetailNightResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
+                            </div>
+                            <div class="dashboard-day-detail-cell dashboard-day-detail-cell-icon">
+                                <span id="dashboardDayDetailNightCaregiverResistanceIcon" class="dashboard-detail-icon-circle" aria-hidden="true"></span>
                             </div>
                             <div class="dashboard-day-detail-cell dashboard-day-detail-cell-note">
                                 <div id="dashboardDayDetailNightNote" class="dashboard-detail-note-box"></div>
@@ -809,6 +842,7 @@
 
 		<!-- Global Toast Notifications -->
 		<div id="toast-container" class="toast-container"></div>
+		<script src="./assets/vendor/plyr/plyr.polyfilled.js" defer></script>
 		<script src="./assets/script.js" defer></script>
 	</body>
 </html>
