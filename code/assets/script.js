@@ -37,7 +37,8 @@ const state = {
 	quizAnswers: [],
 	quizState: "start",
 	offlineMode: false,
-	completedGuideStepIds: new Set()
+	completedGuideStepIds: new Set(),
+	videoPlayers: []
 };
 
 const runtimeConfig = {
@@ -49,6 +50,21 @@ const QUICK_ACCESS_MODE = false;
 const QUICK_ACCESS_TOKEN = "quick-access-demo-token";
 const demoStore = createDemoStore();
 const OFFLINE_STORE_KEY = "sorriso_offline_store";
+
+const QUIZ_IMAGE_ALTS = {
+	1: "Ilustração da questão 1 do Quiz sobre o que é o Transtorno do Espectro Autista",
+	2: "Ilustração da questão 2 do Quiz sobre a frequência da escovação dentária",
+	3: "Ilustração da questão 3 do Quiz sobre o tipo de escova dental mais indicado no TEA",
+	4: "Ilustração da questão 4 do Quiz sobre o uso de flúor na pasta de dente",
+	5: "Ilustração da questão 5 do Quiz sobre alimentos com maior risco cariogênico",
+	6: "Ilustração da questão 6 do Quiz sobre o consumo frequente de açúcar na cavidade oral",
+	7: "Ilustração da questão 7 do Quiz sobre como agir diante da resistência à escovação",
+	8: "Ilustração da questão 8 do Quiz sobre o reforço após a escovação",
+	9: "Ilustração da questão 9 do Quiz sobre sinais de dor odontológica em pessoas não verbais",
+	10: "Ilustração da questão 10 do Quiz sobre a periodicidade das consultas odontológicas preventivas",
+	11: "Ilustração da questão 11 do Quiz sobre estratégias visuais para cooperação na higiene bucal",
+	12: "Ilustração da questão 12 do Quiz sobre hábitos que podem causar erosão dentária"
+};
 
 const dom = {
 	landing: document.querySelector("#landing"),
@@ -79,6 +95,11 @@ const dom = {
 	logoutBtn: document.querySelector("#logoutBtn"),
 	statusBar: document.querySelector("#statusBar"),
 	landingInstitutionLogosGrid: document.querySelector("#landingInstitutionLogosGrid"),
+	institutionLogosGridAbout: document.querySelector("#institutionLogosGridAbout"),
+	welcomeLoginBtn: document.querySelector("#welcomeLoginBtn"),
+	welcomeRegisterBtn: document.querySelector("#welcomeRegisterBtn"),
+	featuresLoginBtn: document.querySelector("#featuresLoginBtn"),
+	featuresRegisterBtn: document.querySelector("#featuresRegisterBtn"),
 	tabButtons: Array.from(document.querySelectorAll(".tab-btn")),
 	sections: Array.from(document.querySelectorAll(".app-section")),
 	monthInput: document.querySelector("#monthInput"),
@@ -134,6 +155,7 @@ const dom = {
 	quizQuestionCategory: document.querySelector("#quizQuestionCategory"),
 	quizQuestionContainer: document.querySelector(".quiz-question-container"),
 	quizQuestionText: document.querySelector("#quizQuestionText"),
+	quizQuestionImage: document.querySelector("#quizQuestionImage"),
 	quizOptionsGrid: document.querySelector("#quizOptionsGrid"),
 	quizFeedbackContainer: document.querySelector("#quizFeedbackContainer"),
 	quizFeedbackIcon: document.querySelector("#quizFeedbackIcon"),
@@ -156,12 +178,15 @@ const dom = {
 	dashboardDayDetailRowNight: document.querySelector("#dashboardDayDetailRowNight"),
 	dashboardDayDetailMorningPeriodIcon: document.querySelector("#dashboardDayDetailMorningPeriodIcon"),
 	dashboardDayDetailMorningResistanceIcon: document.querySelector("#dashboardDayDetailMorningResistanceIcon"),
+	dashboardDayDetailMorningCaregiverResistanceIcon: document.querySelector("#dashboardDayDetailMorningCaregiverResistanceIcon"),
 	dashboardDayDetailMorningNote: document.querySelector("#dashboardDayDetailMorningNote"),
 	dashboardDayDetailAfternoonPeriodIcon: document.querySelector("#dashboardDayDetailAfternoonPeriodIcon"),
 	dashboardDayDetailAfternoonResistanceIcon: document.querySelector("#dashboardDayDetailAfternoonResistanceIcon"),
+	dashboardDayDetailAfternoonCaregiverResistanceIcon: document.querySelector("#dashboardDayDetailAfternoonCaregiverResistanceIcon"),
 	dashboardDayDetailAfternoonNote: document.querySelector("#dashboardDayDetailAfternoonNote"),
 	dashboardDayDetailNightPeriodIcon: document.querySelector("#dashboardDayDetailNightPeriodIcon"),
 	dashboardDayDetailNightResistanceIcon: document.querySelector("#dashboardDayDetailNightResistanceIcon"),
+	dashboardDayDetailNightCaregiverResistanceIcon: document.querySelector("#dashboardDayDetailNightCaregiverResistanceIcon"),
 	dashboardDayDetailNightNote: document.querySelector("#dashboardDayDetailNightNote"),
 	reminderEnabled: document.querySelector("#reminderEnabled"),
 	reminderTimes: document.querySelector("#reminderTimes"),
@@ -552,6 +577,10 @@ function bindEvents() {
 	dom.showLoginBtn.addEventListener("click", () => setAuthMode("login"));
 	dom.showRegisterBtn.addEventListener("click", () => setAuthMode("register"));
 	dom.knowAppBtn.addEventListener("click", showAppFeatures);
+	dom.welcomeLoginBtn?.addEventListener("click", () => setAuthMode("login"));
+	dom.welcomeRegisterBtn?.addEventListener("click", () => setAuthMode("register"));
+	dom.featuresLoginBtn?.addEventListener("click", () => setAuthMode("login"));
+	dom.featuresRegisterBtn?.addEventListener("click", () => setAuthMode("register"));
 	dom.backToWelcomeBtn.addEventListener("click", showWelcomePresentation);
 	document.querySelectorAll("[data-intro-section]").forEach((button) => {
 		button.addEventListener("click", () => setActiveSection(button.dataset.introSection));
@@ -629,12 +658,26 @@ function bindEvents() {
 	});
 
 	const resBtns = document.querySelectorAll(".res-btn");
-	const resInput = document.getElementById("input-resistance");
-	resBtns.forEach(btn => {
+	resBtns.forEach((btn) => {
 		btn.addEventListener("click", () => {
-			resBtns.forEach(b => b.classList.remove("active"));
-			btn.classList.add("active");
-			if (resInput) resInput.value = btn.dataset.level;
+			setResistanceSelection(btn.dataset.group, btn.dataset.level);
+		});
+		btn.addEventListener("keydown", (event) => {
+			const groupButtons = Array.from(
+				document.querySelectorAll(`.res-btn[data-group="${btn.dataset.group}"]`)
+			);
+			const currentIndex = groupButtons.indexOf(btn);
+			const keyMap = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 };
+			const offset = keyMap[event.key];
+
+			if (!offset || currentIndex < 0) {
+				return;
+			}
+
+			event.preventDefault();
+			const next = groupButtons[(currentIndex + offset + groupButtons.length) % groupButtons.length];
+			setResistanceSelection(next.dataset.group, next.dataset.level);
+			next.focus();
 		});
 	});
 
@@ -984,7 +1027,14 @@ function resetCompletedGuideSteps() {
 	} catch (e) {}
 }
 
+function pauseVideoPlayers() {
+	state.videoPlayers.forEach((player) => {
+		if (player && typeof player.pause === "function") player.pause();
+	});
+}
+
 function setActiveSection(sectionName) {
+	if (sectionName !== "videos") pauseVideoPlayers();
 	if (sectionName !== "guide") {
 		resetCompletedGuideSteps();
 	} else {
@@ -998,6 +1048,15 @@ function setActiveSection(sectionName) {
 	dom.sections.forEach((section) => {
 		section.classList.toggle("active", section.id === `section-${sectionName}`);
 	});
+
+	const activeTab = dom.tabButtons.find((button) => button.dataset.section === sectionName);
+	if (activeTab && typeof activeTab.scrollIntoView === "function") {
+		activeTab.scrollIntoView({
+			block: "nearest",
+			inline: "nearest",
+			behavior: "smooth"
+		});
+	}
 
 	if (sectionName === "dashboard") {
 		loadDashboard(dom.monthInput.value);
@@ -1090,17 +1149,18 @@ function computeChecklistStats(checklists, month) {
 }
 
 function upsertChecklist(checklists, date, payload) {
+	const existingIndex = checklists.findIndex((item) => item.checklist_date === date);
+	const existing = existingIndex >= 0 ? checklists[existingIndex] : null;
 	const nextItem = {
 		checklist_date: date,
 		brushing_morning: Boolean(payload.morning),
 		brushing_afternoon: Boolean(payload.afternoon),
 		brushing_night: Boolean(payload.night),
-		resistance_level: payload.resistanceLevel || "none",
+		resistance_level: resolveTeaResistanceForStore(payload, existing),
+		caregiver_resistance_level: resolveCaregiverResistanceForStore(payload, existing),
 		notes: String(payload.notes || "").trim(),
 		updated_at: new Date().toISOString()
 	};
-
-	const existingIndex = checklists.findIndex((item) => item.checklist_date === date);
 
 	if (existingIndex >= 0) {
 		checklists[existingIndex] = nextItem;
@@ -1506,6 +1566,7 @@ async function bootstrapSession() {
 }
 
 function logout(silent) {
+	pauseVideoPlayers();
 	state.token = "";
 	state.user = null;
 	localStorage.removeItem("sorriso_token");
@@ -1559,7 +1620,7 @@ async function loadAllData() {
 }
 
 async function loadInstitutionLogos() {
-	const containers = [dom.landingInstitutionLogosGrid, dom.institutionLogosGrid].filter(Boolean);
+	const containers = [dom.landingInstitutionLogosGrid, dom.institutionLogosGrid, dom.institutionLogosGridAbout].filter(Boolean);
 
 	containers.forEach((container) => {
 		container.innerHTML = institutionCards
@@ -1713,7 +1774,7 @@ function buildLast7DaysSeries(items) {
 			percent: computeDayAdherencePercent(item),
 			brushings,
 			tooltip: item
-				? `${brushings}/3 escovações · ${translateResistance(item.resistance_level)}`
+				? `${brushings}/3 escovações · Pessoa com TEA: ${translateResistance(item.resistance_level)}`
 				: "Sem registro"
 		});
 	}
@@ -1873,7 +1934,7 @@ function renderMonthHeatmap(items, month) {
 		const hasRecord = Boolean(item);
 		const level = getHeatmapLevel(brushings, hasRecord);
 		const title = hasRecord
-			? `${day}/${monthIndex}: ${brushings}/3 escovações`
+			? `${day}/${monthIndex}: ${brushings}/3 escovações · Pessoa com TEA: ${translateResistance(item.resistance_level)}`
 			: `${day}/${monthIndex}: sem registro`;
 
 		html += `
@@ -1986,7 +2047,7 @@ function renderAttentionList(items) {
 		li.className = "dashboard-activity-item";
 		li.innerHTML = `
 			<strong>${escapeHtml(formatDate(item.checklist_date))}</strong>
-			<span>${brushings}/3 escovações · ${escapeHtml(translateResistance(item.resistance_level))}</span>
+			<span>${brushings}/3 escovações · Pessoa com TEA: ${escapeHtml(translateResistance(item.resistance_level))}</span>
 		`;
 		dom.dashboardAttentionList.appendChild(li);
 	});
@@ -2151,7 +2212,7 @@ async function loadDashboard(month) {
 	}
 
 	if (dom.resistanceHint) {
-		dom.resistanceHint.textContent = `Resistência moderada/grave: ${highResistance} dia(s)`;
+		dom.resistanceHint.textContent = `Resistência da pessoa com TEA (moderada/severa): ${highResistance} dia(s)`;
 	}
 
 	dashboardCache.month = monthValue;
@@ -2189,6 +2250,9 @@ async function loadChecklistForDate(dateValue) {
 		form.afternoon.checked = Boolean(item.brushing_afternoon);
 		form.night.checked = Boolean(item.brushing_night);
 		form.resistanceLevel.value = item.resistance_level || "none";
+		form.caregiverResistanceLevel.value = normalizeCaregiverResistanceValue(
+			item.caregiver_resistance_level
+		);
 		form.notes.value = item.notes || "";
 	} else {
 		// Sem registro: Limpa os campos e auto-seleciona o turno atual
@@ -2196,6 +2260,7 @@ async function loadChecklistForDate(dateValue) {
 		form.afternoon.checked = false;
 		form.night.checked = false;
 		form.resistanceLevel.value = "light";
+		form.caregiverResistanceLevel.value = "";
 		form.notes.value = "";
 
 		const hour = new Date().getHours();
@@ -2220,11 +2285,22 @@ async function onChecklistSubmit(event) {
 		return;
 	}
 
+	const teaLevel = normalizeTeaResistanceValue(dom.checklistForm.resistanceLevel.value);
+	const caregiverLevel = normalizeCaregiverResistanceValue(
+		dom.checklistForm.caregiverResistanceLevel.value
+	);
+
+	if (!teaLevel) {
+		setStatus("Selecione o nível de resistência da pessoa com TEA.", "error");
+		return;
+	}
+
 	const payload = {
 		morning: dom.checklistForm.morning.checked,
 		afternoon: dom.checklistForm.afternoon.checked,
 		night: dom.checklistForm.night.checked,
-		resistanceLevel: dom.checklistForm.resistanceLevel.value === 'super-none' ? 'none' : dom.checklistForm.resistanceLevel.value,
+		resistanceLevel: teaLevel,
+		caregiverResistanceLevel: caregiverLevel === "" ? null : caregiverLevel,
 		notes: dom.checklistForm.notes.value
 	};
 
@@ -2654,7 +2730,7 @@ function getResistanceIconClass(value) {
 		severe: "ph-smiley-angry"
 	};
 
-	return map[value] || "ph-circle";
+	return map[value] || "ph-question";
 }
 
 function getResistanceToneClass(value) {
@@ -2665,7 +2741,7 @@ function getResistanceToneClass(value) {
 		severe: "tone-extreme-negative"
 	};
 
-	return map[value] || "tone-neutral";
+	return map[value] || "tone-uninformed";
 }
 
 function getPeriodToneClass(period) {
@@ -2683,7 +2759,26 @@ function setRowVisibility(rowElement, visible) {
 	rowElement.classList.toggle("hidden", !visible);
 }
 
-function setDayDetailRow(periodIconElement, resistanceIconElement, noteElement, shouldShowData, item, period) {
+function setResistanceDetailIcon(iconElement, value) {
+	if (!iconElement) return;
+
+	const level = normalizeCaregiverResistanceValue(value);
+	const displayValue = level === "" ? null : level;
+	iconElement.className = `dashboard-detail-icon-circle ${getResistanceToneClass(displayValue)}`;
+	iconElement.innerHTML = `<i class="ph-fill ${getResistanceIconClass(displayValue)}"></i>`;
+	iconElement.setAttribute("aria-label", translateResistance(displayValue));
+	iconElement.title = translateResistance(displayValue);
+}
+
+function setDayDetailRow(
+	periodIconElement,
+	resistanceIconElement,
+	caregiverResistanceIconElement,
+	noteElement,
+	shouldShowData,
+	item,
+	period
+) {
 	if (!periodIconElement || !resistanceIconElement || !noteElement) return;
 
 	const rowElement = periodIconElement.closest(".dashboard-day-detail-row");
@@ -2694,14 +2789,18 @@ function setDayDetailRow(periodIconElement, resistanceIconElement, noteElement, 
 		periodIconElement.className = "dashboard-detail-icon-circle";
 		resistanceIconElement.innerHTML = "";
 		resistanceIconElement.className = "dashboard-detail-icon-circle";
+		if (caregiverResistanceIconElement) {
+			caregiverResistanceIconElement.innerHTML = "";
+			caregiverResistanceIconElement.className = "dashboard-detail-icon-circle";
+		}
 		noteElement.textContent = "";
 		return;
 	}
 
 	periodIconElement.className = `dashboard-detail-icon-circle ${getPeriodToneClass(period)}`;
-	resistanceIconElement.className = `dashboard-detail-icon-circle ${getResistanceToneClass(item.resistance_level)}`;
 	periodIconElement.innerHTML = `<i class="ph-fill ${getPeriodIconClass(period)}"></i>`;
-	resistanceIconElement.innerHTML = `<i class="ph-fill ${getResistanceIconClass(item.resistance_level)}"></i>`;
+	setResistanceDetailIcon(resistanceIconElement, item.resistance_level);
+	setResistanceDetailIcon(caregiverResistanceIconElement, item.caregiver_resistance_level);
 	noteElement.textContent = String(item.notes || "").trim();
 }
 
@@ -2720,13 +2819,14 @@ function openDayDetailModal(date) {
 
 	if (dom.dashboardDayDetailModalSubtitle) {
 		dom.dashboardDayDetailModalSubtitle.textContent = item
-			? "Resistência e observação registradas por turno."
+			? "Resistência da pessoa com TEA, do responsável e observação por turno."
 			: "Nenhum registro encontrado para este dia.";
 	}
 
 	setDayDetailRow(
 		dom.dashboardDayDetailMorningPeriodIcon,
 		dom.dashboardDayDetailMorningResistanceIcon,
+		dom.dashboardDayDetailMorningCaregiverResistanceIcon,
 		dom.dashboardDayDetailMorningNote,
 		Boolean(item?.brushing_morning),
 		item,
@@ -2735,6 +2835,7 @@ function openDayDetailModal(date) {
 	setDayDetailRow(
 		dom.dashboardDayDetailAfternoonPeriodIcon,
 		dom.dashboardDayDetailAfternoonResistanceIcon,
+		dom.dashboardDayDetailAfternoonCaregiverResistanceIcon,
 		dom.dashboardDayDetailAfternoonNote,
 		Boolean(item?.brushing_afternoon),
 		item,
@@ -2743,6 +2844,7 @@ function openDayDetailModal(date) {
 	setDayDetailRow(
 		dom.dashboardDayDetailNightPeriodIcon,
 		dom.dashboardDayDetailNightResistanceIcon,
+		dom.dashboardDayDetailNightCaregiverResistanceIcon,
 		dom.dashboardDayDetailNightNote,
 		Boolean(item?.brushing_night),
 		item,
@@ -2781,6 +2883,21 @@ async function exitQuiz() {
 	showQuizStartScreen();
 }
 
+function getQuizQuestionImageUrl(question) {
+	const imagePath = String(question?.image_url || question?.imageUrl || "").trim();
+	return imagePath ? resolveAssetUrl(imagePath) : "";
+}
+
+function getQuizQuestionImageAlt(question) {
+	const explicitAlt = String(question?.image_alt || question?.imageAlt || "").trim();
+	if (explicitAlt) {
+		return explicitAlt;
+	}
+
+	const questionNumber = Number(question?.id) || state.currentQuestionIndex + 1;
+	return QUIZ_IMAGE_ALTS[questionNumber] || `Ilustração da questão ${questionNumber} do Quiz`;
+}
+
 function renderCurrentQuizQuestion() {
 	const question = state.quizQuestions[state.currentQuestionIndex];
 
@@ -2792,17 +2909,38 @@ function renderCurrentQuizQuestion() {
 	dom.quizQuestionCategory.textContent = question.category || "Saúde Bucal";
 	dom.quizQuestionText.textContent = question.question;
 
+	const imageUrl = getQuizQuestionImageUrl(question);
+	if (dom.quizQuestionImage) {
+		const media = dom.quizQuestionImage.closest(".quiz-question-media");
+		if (imageUrl) {
+			dom.quizQuestionImage.hidden = false;
+			dom.quizQuestionImage.src = imageUrl;
+			dom.quizQuestionImage.alt = getQuizQuestionImageAlt(question);
+			if (media) {
+				media.hidden = false;
+			}
+		} else {
+			dom.quizQuestionImage.removeAttribute("src");
+			dom.quizQuestionImage.alt = "";
+			dom.quizQuestionImage.hidden = true;
+			if (media) {
+				media.hidden = true;
+			}
+		}
+	}
+
 	// Renderizar Opções (altura adapta conforme quantidade)
 	const optionCount = question.options.length;
 	dom.quizOptionsGrid.style.setProperty("--quiz-options-count", String(optionCount));
 	dom.quizOptionsGrid.innerHTML = "";
 	question.options.forEach((option, index) => {
-		const item = document.createElement("div");
+		const item = document.createElement("button");
+		item.type = "button";
 		item.className = "quiz-option-item";
 		item.dataset.id = option.id;
 
 		item.innerHTML = `
-			<span class="quiz-option-index">${index + 1}</span>
+			<span class="quiz-option-index" aria-hidden="true">${index + 1}</span>
 			<span class="quiz-option-text">${escapeHtml(option.text)}</span>
 		`;
 
@@ -2846,8 +2984,9 @@ async function handleQuizAction() {
 		// Verificar Resposta
 		const question = state.quizQuestions[state.currentQuestionIndex];
 		const selectedOption = question.options.find((opt) => opt.id === state.selectedOptionId);
+		const correctOption = question.options.find((opt) => opt.isCorrect);
 		const isCorrect = selectedOption ? Boolean(selectedOption.isCorrect) : false;
-		const explanation = selectedOption ? (selectedOption.explanation || "") : "";
+		const explanation = correctOption?.explanation || selectedOption?.explanation || "";
 
 		// Salvar resposta na lista local
 		state.quizAnswers.push({
@@ -2861,18 +3000,31 @@ async function handleQuizAction() {
 		const items = dom.quizOptionsGrid.querySelectorAll(".quiz-option-item");
 		items.forEach((item) => {
 			item.classList.add("disabled");
+			item.disabled = true;
 			const optId = Number(item.dataset.id);
 			const opt = question.options.find((o) => o.id === optId);
+			let status = "";
 
 			if (optId === state.selectedOptionId) {
 				if (isCorrect) {
 					item.classList.add("correct");
+					status = "correct";
 				} else {
 					item.classList.add("incorrect");
+					status = "incorrect";
 				}
 			} else if (opt && opt.isCorrect) {
-				// Mostrar a resposta correta se o usuário errou
 				item.classList.add("correct");
+				status = "correct";
+			}
+
+			if (status) {
+				const mark = document.createElement("span");
+				mark.className = `quiz-option-mark ${status}`;
+				mark.innerHTML = status === "correct"
+					? `<i class="ph-fill ph-check-circle" aria-hidden="true"></i><span>Correta</span>`
+					: `<i class="ph-fill ph-x-circle" aria-hidden="true"></i><span>Incorreta</span>`;
+				item.appendChild(mark);
 			}
 		});
 
@@ -2885,21 +3037,15 @@ async function handleQuizAction() {
 		if (isCorrect) {
 			dom.quizFeedbackContainer.className = "quiz-feedback-banner correct";
 			feedbackIcon.className = "ph-fill ph-check-circle";
-			feedbackTitle.textContent = "Excelente! Resposta Correta";
+			feedbackTitle.textContent = "Excelente! Resposta correta";
 			feedbackExplanation.textContent = explanation || "Você acertou esta etapa importante!";
 			dom.quizActionBtn.textContent = "Continuar";
 			dom.quizActionBtn.className = "quiz-btn-action continue-correct";
 		} else {
 			dom.quizFeedbackContainer.className = "quiz-feedback-banner incorrect";
 			feedbackIcon.className = "ph-fill ph-x-circle";
-			feedbackTitle.textContent = "Rever Etapa";
-
-			let feedbackMsg = explanation;
-			if (!feedbackMsg) {
-				const correctOpt = question.options.find((o) => o.isCorrect);
-				feedbackMsg = correctOpt ? correctOpt.explanation : "";
-			}
-			feedbackExplanation.textContent = feedbackMsg || "Estude esta dica para a próxima vez.";
+			feedbackTitle.textContent = "Rever etapa";
+			feedbackExplanation.textContent = explanation || "Estude esta dica para a próxima vez.";
 			dom.quizActionBtn.textContent = "Continuar";
 			dom.quizActionBtn.className = "quiz-btn-action continue-incorrect";
 		}
@@ -2962,6 +3108,8 @@ async function submitQuizResults() {
 }
 
 async function loadVideos() {
+	state.videoPlayers.forEach((player) => player.destroy());
+	state.videoPlayers = [];
 	let videos = [];
 	try {
 		const result = await api("/videos");
@@ -2981,19 +3129,29 @@ async function loadVideos() {
 		const card = document.createElement("article");
 		card.className = "video-card";
 		card.innerHTML = `
-			<iframe
-				src="${toEmbedUrl(video.url)}"
-				title="${escapeHtml(video.title)}"
-				loading="lazy"
-				allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-				allowfullscreen
-			></iframe>
+			<video class="js-plyr-video" playsinline preload="metadata" crossorigin="anonymous">
+				<source src="${escapeHtml(new URL(video.url, document.baseURI).href)}" type="video/mp4" />
+			</video>
 			<div class="video-content">
 				<h4>${escapeHtml(video.title)}</h4>
 				<p>${escapeHtml(video.description)}</p>
 			</div>
 		`;
 		dom.videoContainer.appendChild(card);
+		const player = new Plyr(card.querySelector("video"), {
+			iconUrl: "./assets/vendor/plyr/plyr.svg",
+			controls: ["rewind", "play", "fast-forward"],
+			seekTime: 15,
+			keyboard: { focused: true, global: false },
+			i18n: {
+				play: "Reproduzir", pause: "Pausar", rewind: "Voltar 15 segundos",
+				fastForward: "Avançar 15 segundos", restart: "Reiniciar"
+			}
+		});
+		player.on("play", () => state.videoPlayers.forEach((other) => {
+			if (other !== player) other.pause();
+		}));
+		state.videoPlayers.push(player);
 	});
 }
 
@@ -3116,31 +3274,6 @@ function stopReminderEngine() {
 	}
 }
 
-function toEmbedUrl(url) {
-	try {
-		const parsed = new URL(url);
-
-		if (parsed.hostname.includes("youtube.com")) {
-			if (parsed.pathname.startsWith("/embed/")) {
-				return parsed.toString();
-			}
-
-			const id = parsed.searchParams.get("v");
-			if (id) {
-				return `https://www.youtube.com/embed/${id}`;
-			}
-		}
-
-		if (parsed.hostname === "youtu.be") {
-			const id = parsed.pathname.replace("/", "");
-			return `https://www.youtube.com/embed/${id}`;
-		}
-
-		return parsed.toString();
-	} catch (error) {
-		return url;
-	}
-}
 
 function createDemoStore() {
 	const now = new Date();
@@ -3158,6 +3291,7 @@ function createDemoStore() {
 			brushing_afternoon: true,
 			brushing_night: true,
 			resistance_level: "none",
+			caregiver_resistance_level: "none",
 			notes: "Rotina completa.",
 			updated_at: new Date().toISOString()
 		},
@@ -3167,18 +3301,19 @@ function createDemoStore() {
 			brushing_afternoon: true,
 			brushing_night: true,
 			resistance_level: "moderate",
+			caregiver_resistance_level: "light",
 			notes: "Resistencia no periodo da manha.",
 			updated_at: new Date().toISOString()
 		}
 	];
 
 	const demoPatterns = [
-		[true, false, true, "light"],
-		[true, true, false, "none"],
-		[false, false, true, "severe"],
-		[true, true, true, "none"],
-		[true, false, false, "moderate"],
-		[false, true, true, "light"]
+		[true, false, true, "light", "none"],
+		[true, true, false, "none", "light"],
+		[false, false, true, "severe", "moderate"],
+		[true, true, true, "none", "none"],
+		[true, false, false, "moderate", null],
+		[false, true, true, "light", "severe"]
 	];
 
 	for (let offset = 3; offset <= 22; offset += 1) {
@@ -3192,6 +3327,7 @@ function createDemoStore() {
 			brushing_afternoon: pattern[1],
 			brushing_night: pattern[2],
 			resistance_level: pattern[3],
+			caregiver_resistance_level: pattern[4] === undefined ? null : pattern[4],
 			notes: "",
 			updated_at: new Date().toISOString()
 		});
@@ -3253,145 +3389,157 @@ function createDemoStore() {
 			{
 				id: 1,
 				question: "O Transtorno do Espectro Autista (TEA) é definido como:",
-				category: "Compreensão do TEA",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				category: "Compreensão do Transtorno do Espectro Autista (TEA)",
+				image_url: "./assets/quiz/questao-01.jpeg",
+				image_alt: "Ilustração da questão 1 do Quiz sobre o que é o Transtorno do Espectro Autista",
 				options: [
-					{ id: 101, text: "Uma doença contagiosa", isCorrect: false },
-					{ id: 102, text: "Um transtorno do neurodesenvolvimento", isCorrect: true, explanation: "O TEA é um transtorno do neurodesenvolvimento, marcado por alterações na comunicação social, padrões comportamentais repetitivos e possíveis alterações sensoriais." },
-					{ id: 103, text: "Uma doença exclusivamente genética", isCorrect: false },
-					{ id: 104, text: "Uma deficiência sensorial isolada", isCorrect: false }
+					{ id: 101, text: "Uma doença contagiosa", isCorrect: false, explanation: "O TEA caracteriza-se como um transtorno do neurodesenvolvimento, marcado por alterações na comunicação, interação social e comportamentos repetitivos." },
+					{ id: 102, text: "Um transtorno do neurodesenvolvimento", isCorrect: true, explanation: "O TEA caracteriza-se como um transtorno do neurodesenvolvimento, marcado por alterações na comunicação, interação social e comportamentos repetitivos." },
+					{ id: 103, text: "Uma doença exclusivamente genética", isCorrect: false, explanation: "O TEA caracteriza-se como um transtorno do neurodesenvolvimento, marcado por alterações na comunicação, interação social e comportamentos repetitivos." },
+					{ id: 104, text: "Uma deficiência sensorial isolada", isCorrect: false, explanation: "O TEA caracteriza-se como um transtorno do neurodesenvolvimento, marcado por alterações na comunicação, interação social e comportamentos repetitivos." }
 				]
 			},
 			{
 				id: 2,
 				question: "A frequência da escovação dentária é um fator determinante na prevenção de desordens na cavidade oral. Qual é a recomendação mais adequada?",
 				category: "Higiene Bucal",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-02.jpeg",
+				image_alt: "Ilustração da questão 2 do Quiz sobre a frequência da escovação dentária",
 				options: [
-					{ id: 201, text: "Uma vez ao dia, preferencialmente à noite", isCorrect: false },
-					{ id: 202, text: "Duas vezes ao dia: manhã e noite", isCorrect: false },
-					{ id: 203, text: "Três vezes ao dia, após as refeições principais", isCorrect: true, explanation: "A escovação deve ser realizada após as principais refeições, sendo a escovação noturna a mais importante, pois durante o sono há redução do fluxo salivar e aumento do risco de cárie." },
-					{ id: 204, text: "Apenas quando houver solicitação da criança", isCorrect: false }
+					{ id: 201, text: "Uma vez ao dia, preferencialmente à noite", isCorrect: false, explanation: "Escovar os dentes após as principais refeições (café da manhã, almoço e jantar) ajuda a remover restos de alimentos e o biofilme dental, contribuindo para prevenir a cárie." },
+					{ id: 202, text: "Duas vezes ao dia, de manhã e à noite", isCorrect: false, explanation: "Escovar os dentes após as principais refeições (café da manhã, almoço e jantar) ajuda a remover restos de alimentos e o biofilme dental, contribuindo para prevenir a cárie." },
+					{ id: 203, text: "Três vezes ao dia, após as principais refeições", isCorrect: true, explanation: "Escovar os dentes após as principais refeições (café da manhã, almoço e jantar) ajuda a remover restos de alimentos e o biofilme dental, contribuindo para prevenir a cárie." },
+					{ id: 204, text: "Apenas quando houver solicitação da criança", isCorrect: false, explanation: "Escovar os dentes após as principais refeições (café da manhã, almoço e jantar) ajuda a remover restos de alimentos e o biofilme dental, contribuindo para prevenir a cárie." }
 				]
 			},
 			{
 				id: 3,
 				question: "Considerando a hipersensibilidade sensorial frequentemente observada em indivíduos com TEA, qual é o tipo de escova dental mais indicado?",
 				category: "Higiene Bucal",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-03.jpeg",
+				image_alt: "Ilustração da questão 3 do Quiz sobre o tipo de escova dental mais indicado no TEA",
 				options: [
-					{ id: 301, text: "Cerdas duras e cabeça grande", isCorrect: false },
-					{ id: 302, text: "Cerdas médias e cabeça grande", isCorrect: false },
-					{ id: 303, text: "Cerdas macias e cabeça pequena", isCorrect: true, explanation: "Escovas com cerdas macias e cabeça pequena proporcionam menor estímulo tátil e maior controle durante a escovação, sendo mais bem toleradas por indivíduos com hipersensibilidade oral." },
-					{ id: 304, text: "Qualquer escova apresenta a mesma eficácia", isCorrect: false }
+					{ id: 301, text: "Cerdas duras e cabeça grande", isCorrect: false, explanation: "Escovas com cerdas macias e cabeça pequena proporcionam menor estímulo tátil e maior controle durante a escovação." },
+					{ id: 302, text: "Cerdas médias e cabeça grande", isCorrect: false, explanation: "Escovas com cerdas macias e cabeça pequena proporcionam menor estímulo tátil e maior controle durante a escovação." },
+					{ id: 303, text: "Cerdas macias e cabeça pequena", isCorrect: true, explanation: "Escovas com cerdas macias e cabeça pequena proporcionam menor estímulo tátil e maior controle durante a escovação." },
+					{ id: 304, text: "Qualquer escova apresenta a mesma eficácia", isCorrect: false, explanation: "Escovas com cerdas macias e cabeça pequena proporcionam menor estímulo tátil e maior controle durante a escovação." }
 				]
 			},
 			{
 				id: 4,
 				question: "A pasta de dente deve conter flúor?",
 				category: "Higiene Bucal",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-04.jpeg",
+				image_alt: "Ilustração da questão 4 do Quiz sobre o uso de flúor na pasta de dente",
 				options: [
-					{ id: 401, text: "Sim", isCorrect: true, explanation: "O flúor promove a remineralização do esmalte e reduz a atividade bacteriana. Seu uso é recomendado para todas as faixas etárias, respeitando a quantidade adequada." },
-					{ id: 402, text: "Não", isCorrect: false },
-					{ id: 403, text: "Apenas para adultos", isCorrect: false },
-					{ id: 404, text: "Somente quando o dentista manda", isCorrect: false }
+					{ id: 401, text: "Sim", isCorrect: true, explanation: "O flúor desempenha papel na prevenção da cárie dentária, promovendo remineralização do esmalte dentário. Seu uso é recomendado para todas as faixas etárias, respeitando a quantidade adequada." },
+					{ id: 402, text: "Não", isCorrect: false, explanation: "O flúor desempenha papel na prevenção da cárie dentária, promovendo remineralização do esmalte dentário. Seu uso é recomendado para todas as faixas etárias, respeitando a quantidade adequada." },
+					{ id: 403, text: "Apenas para adultos", isCorrect: false, explanation: "O flúor desempenha papel na prevenção da cárie dentária, promovendo remineralização do esmalte dentário. Seu uso é recomendado para todas as faixas etárias, respeitando a quantidade adequada." },
+					{ id: 404, text: "Apenas para crianças", isCorrect: false, explanation: "O flúor desempenha papel na prevenção da cárie dentária, promovendo remineralização do esmalte dentário. Seu uso é recomendado para todas as faixas etárias, respeitando a quantidade adequada." }
 				]
 			},
 			{
 				id: 5,
 				question: "A dieta influencia diretamente a saúde bucal. Qual dos seguintes grupos alimentares apresenta maior risco cariogênico quando consumido com frequência?",
 				category: "Alimentação e Saúde Bucal",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-05.jpeg",
+				image_alt: "Ilustração da questão 5 do Quiz sobre alimentos com maior risco cariogênico",
 				options: [
-					{ id: 501, text: "Alimentos naturais e minimamente processados", isCorrect: false },
-					{ id: 502, text: "Frutas fibrosas", isCorrect: false },
-					{ id: 503, text: "Alimentos açucarados e ultraprocessados", isCorrect: true, explanation: "Alimentos ricos em açúcares são metabolizados por bactérias do biofilme, produzindo ácidos que reduzem o pH bucal e causam desmineralização do esmalte." },
-					{ id: 504, text: "Laticínios", isCorrect: false }
+					{ id: 501, text: "Alimentos naturais e minimamente processados", isCorrect: false, explanation: "Alimentos ricos em açúcares são metabolizados por bactérias do biofilmes, produzindo ácidos que reduzem o pH bucal e causam desmineralização do esmalte dentário. Quando consumidos com frequência, aumentam o risco de cárie dentária." },
+					{ id: 502, text: "Frutas fibrosas", isCorrect: false, explanation: "Alimentos ricos em açúcares são metabolizados por bactérias do biofilmes, produzindo ácidos que reduzem o pH bucal e causam desmineralização do esmalte dentário. Quando consumidos com frequência, aumentam o risco de cárie dentária." },
+					{ id: 503, text: "Alimentos açucarados e ultraprocessados", isCorrect: true, explanation: "Alimentos ricos em açúcares são metabolizados por bactérias do biofilmes, produzindo ácidos que reduzem o pH bucal e causam desmineralização do esmalte dentário. Quando consumidos com frequência, aumentam o risco de cárie dentária." },
+					{ id: 504, text: "Laticínios", isCorrect: false, explanation: "Alimentos ricos em açúcares são metabolizados por bactérias do biofilmes, produzindo ácidos que reduzem o pH bucal e causam desmineralização do esmalte dentário. Quando consumidos com frequência, aumentam o risco de cárie dentária." }
 				]
 			},
 			{
 				id: 6,
 				question: "O que pode causar com o consumo frequente de açúcar na cavidade oral?",
 				category: "Alimentação e Saúde Bucal",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-06.jpeg",
+				image_alt: "Ilustração da questão 6 do Quiz sobre o consumo frequente de açúcar na cavidade oral",
 				options: [
-					{ id: 601, text: "Fortalecimento dentário", isCorrect: false },
-					{ id: 602, text: "Desenvolvimento de cárie dentária", isCorrect: true, explanation: "O açúcar é metabolizado por bactérias do biofilme dental, resultando na produção de ácidos que desmineralizam o esmalte e levam à formação de lesões de cárie." },
-					{ id: 603, text: "Crescimento dentário acelerado", isCorrect: false },
-					{ id: 604, text: "Clareamento dental natural", isCorrect: false }
+					{ id: 601, text: "Fortalecimento dentário", isCorrect: false, explanation: "O açúcar é metabolizado por bactérias do biofilme dental, resultando na produção de ácidos que desmineralizam o esmalte, levando à formação de lesões de cárie." },
+					{ id: 602, text: "Desenvolvimento de cárie dentária", isCorrect: true, explanation: "O açúcar é metabolizado por bactérias do biofilme dental, resultando na produção de ácidos que desmineralizam o esmalte, levando à formação de lesões de cárie." },
+					{ id: 603, text: "Crescimento dentário", isCorrect: false, explanation: "O açúcar é metabolizado por bactérias do biofilme dental, resultando na produção de ácidos que desmineralizam o esmalte, levando à formação de lesões de cárie." },
+					{ id: 604, text: "Clareamento natural dos dentes", isCorrect: false, explanation: "O açúcar é metabolizado por bactérias do biofilme dental, resultando na produção de ácidos que desmineralizam o esmalte, levando à formação de lesões de cárie." }
 				]
 			},
 			{
 				id: 7,
-				question: "Diante da resistência à escovação em indivíduos com TEA, qual conduta é mais indicada?",
+				question: "Como agir diante da resistência à escovação?",
 				category: "Manejo Comportamental no TEA",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-07.jpeg",
+				image_alt: "Ilustração da questão 7 do Quiz sobre como agir diante da resistência à escovação",
 				options: [
-					{ id: 701, text: "Suspender a escovação", isCorrect: false },
-					{ id: 702, text: "Realizar a escovação de forma forçada", isCorrect: false },
-					{ id: 703, text: "Introduzir gradualmente com reforço positivo", isCorrect: true, explanation: "A abordagem gradual, associada ao reforço positivo, promove adaptação progressiva e associações positivas com a higiene bucal." },
-					{ id: 704, text: "Reduzir a frequência da escovação", isCorrect: false }
+					{ id: 701, text: "Suspender a escovação", isCorrect: false, explanation: "A abordagem gradual, associada ao reforço positivo, promove adaptação progressiva e construção de associações positivas com a higiene bucal." },
+					{ id: 702, text: "Realizar a escovação de forma forçada", isCorrect: false, explanation: "A abordagem gradual, associada ao reforço positivo, promove adaptação progressiva e construção de associações positivas com a higiene bucal." },
+					{ id: 703, text: "Introduzir a escovação gradualmente com reforço positivo", isCorrect: true, explanation: "A abordagem gradual, associada ao reforço positivo, promove adaptação progressiva e construção de associações positivas com a higiene bucal." },
+					{ id: 704, text: "Reduzir a frequência da escovação", isCorrect: false, explanation: "A abordagem gradual, associada ao reforço positivo, promove adaptação progressiva e construção de associações positivas com a higiene bucal." }
 				]
 			},
 			{
 				id: 8,
 				question: "Qual é a forma mais adequada de reforço após a escovação?",
 				category: "Manejo Comportamental no TEA",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-08.jpeg",
+				image_alt: "Ilustração da questão 8 do Quiz sobre o reforço após a escovação",
 				options: [
-					{ id: 801, text: "Ausência de reforço", isCorrect: false },
-					{ id: 802, text: "Oferta de alimentos açucarados", isCorrect: false },
-					{ id: 803, text: "Reforço positivo imediato (elogios ou atividades prazerosas)", isCorrect: true, explanation: "O reforço positivo imediato fortalece a repetição do comportamento desejado. Recompensas não alimentares são preferíveis para proteger a saúde bucal." },
-					{ id: 804, text: "Redução da frequência de escovação", isCorrect: false }
+					{ id: 801, text: "Ausência de reforço", isCorrect: false, explanation: "O reforço positivo imediato pode incentivar a repetição da escovação. Evite alimentos açucarados como recompensa, impacta negativamente na saúde bucal." },
+					{ id: 802, text: "Oferta de alimentos açucarados", isCorrect: false, explanation: "O reforço positivo imediato pode incentivar a repetição da escovação. Evite alimentos açucarados como recompensa, impacta negativamente na saúde bucal." },
+					{ id: 803, text: "Reforço positivo imediato, com elogios ou atividades prazerosas", isCorrect: true, explanation: "O reforço positivo imediato pode incentivar a repetição da escovação. Evite alimentos açucarados como recompensa, impacta negativamente na saúde bucal." },
+					{ id: 804, text: "Redução da frequência de escovação", isCorrect: false, explanation: "O reforço positivo imediato pode incentivar a repetição da escovação. Evite alimentos açucarados como recompensa, impacta negativamente na saúde bucal." }
 				]
 			},
 			{
 				id: 9,
 				question: "Em indivíduos com TEA não verbais, qual sinal pode indicar dor odontológica?",
 				category: "Manejo Comportamental no TEA",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-09.jpeg",
+				image_alt: "Ilustração da questão 9 do Quiz sobre sinais de dor odontológica em pessoas não verbais",
 				options: [
-					{ id: 901, text: "Esfoliação dentária fisiológica", isCorrect: false },
-					{ id: 902, text: "Irritabilidade associada a comportamentos repetitivos na face", isCorrect: true, explanation: "Mudanças comportamentais, como irritabilidade, recusa alimentar e toques excessivos na face, podem indicar dor odontológica." },
-					{ id: 903, text: "Preferência alimentar habitual", isCorrect: false },
-					{ id: 904, text: "Manchas iniciais no esmalte", isCorrect: false }
+					{ id: 901, text: "Esfoliação dentária fisiológica", isCorrect: false, explanation: "Mudanças comportamentais, como irritabilidade, recusa alimentar e toques excessivos na face, podem indicar dor. O reconhecimento precoce desses sinais é fundamental para intervenção e procura do cirurgião-dentista." },
+					{ id: 902, text: "Irritabilidade associada a comportamentos repetitivos na face", isCorrect: true, explanation: "Mudanças comportamentais, como irritabilidade, recusa alimentar e toques excessivos na face, podem indicar dor. O reconhecimento precoce desses sinais é fundamental para intervenção e procura do cirurgião-dentista." },
+					{ id: 903, text: "Preferência alimentar habitual", isCorrect: false, explanation: "Mudanças comportamentais, como irritabilidade, recusa alimentar e toques excessivos na face, podem indicar dor. O reconhecimento precoce desses sinais é fundamental para intervenção e procura do cirurgião-dentista." },
+					{ id: 904, text: "Manchas iniciais no esmalte", isCorrect: false, explanation: "Mudanças comportamentais, como irritabilidade, recusa alimentar e toques excessivos na face, podem indicar dor. O reconhecimento precoce desses sinais é fundamental para intervenção e procura do cirurgião-dentista." }
 				]
 			},
 			{
 				id: 10,
 				question: "Qual é a periodicidade recomendada de consultas odontológicas preventivas para indivíduos com TEA?",
 				category: "Atenção Odontológica Preventiva",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-10.jpeg",
+				image_alt: "Ilustração da questão 10 do Quiz sobre a periodicidade das consultas odontológicas preventivas",
 				options: [
-					{ id: 1001, text: "Apenas em situações de dor", isCorrect: false },
-					{ id: 1002, text: "Anualmente", isCorrect: false },
-					{ id: 1003, text: "A cada seis meses", isCorrect: true, explanation: "Consultas semestrais permitem monitoramento contínuo, prevenção de doenças e adaptação progressiva ao ambiente odontológico." },
-					{ id: 1004, text: "Desnecessária com boa higiene", isCorrect: false }
+					{ id: 1001, text: "Apenas em situações de dor", isCorrect: false, explanation: "Consultas semestrais permitem monitoramento contínuo, prevenção de possíveis desordens orais e adaptação progressiva do paciente ao ambiente odontológico, reduzindo ansiedade e intervenções invasivas." },
+					{ id: 1002, text: "Anualmente", isCorrect: false, explanation: "Consultas semestrais permitem monitoramento contínuo, prevenção de possíveis desordens orais e adaptação progressiva do paciente ao ambiente odontológico, reduzindo ansiedade e intervenções invasivas." },
+					{ id: 1003, text: "A cada seis meses", isCorrect: true, explanation: "Consultas semestrais permitem monitoramento contínuo, prevenção de possíveis desordens orais e adaptação progressiva do paciente ao ambiente odontológico, reduzindo ansiedade e intervenções invasivas." },
+					{ id: 1004, text: "Desnecessária com boa higiene", isCorrect: false, explanation: "Consultas semestrais permitem monitoramento contínuo, prevenção de possíveis desordens orais e adaptação progressiva do paciente ao ambiente odontológico, reduzindo ansiedade e intervenções invasivas." }
 				]
 			},
 			{
 				id: 11,
 				question: "Qual estratégia favorece a cooperação durante a higiene bucal em indivíduos com TEA?",
 				category: "Atenção Odontológica Preventiva",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				image_url: "./assets/quiz/questao-11.jpeg",
+				image_alt: "Ilustração da questão 11 do Quiz sobre estratégias visuais para cooperação na higiene bucal",
 				options: [
-					{ id: 1101, text: "Imposição da escovação", isCorrect: false },
-					{ id: 1102, text: "Uso de recursos visuais e educativos", isCorrect: true, explanation: "Recursos visuais auxiliam na previsibilidade e compreensão da atividade, reduzindo ansiedade e aumentando a cooperação." },
-					{ id: 1103, text: "Realização apenas quando a criança pedir", isCorrect: false },
-					{ id: 1104, text: "Suspensão em dias de resistência", isCorrect: false }
+					{ id: 1101, text: "Impor a escovação", isCorrect: false, explanation: "Recursos visuais e ilustrativos auxiliam na compreensão da atividade, reduzindo a ansiedade e aumentando a cooperação." },
+					{ id: 1102, text: "Uso de recursos visuais e educativos", isCorrect: true, explanation: "Recursos visuais e ilustrativos auxiliam na compreensão da atividade, reduzindo a ansiedade e aumentando a cooperação." },
+					{ id: 1103, text: "Realização da escovação quando a criança pedir", isCorrect: false, explanation: "Recursos visuais e ilustrativos auxiliam na compreensão da atividade, reduzindo a ansiedade e aumentando a cooperação." },
+					{ id: 1104, text: "Suspensão em dias de resistência", isCorrect: false, explanation: "Recursos visuais e ilustrativos auxiliam na compreensão da atividade, reduzindo a ansiedade e aumentando a cooperação." }
 				]
 			},
 			{
 				id: 12,
-				question: "Qual hábito pode causar desgaste no dente (erosão) em crianças com TEA?",
-				category: "Erosão dentária",
-				image_url: "./assets/illustrations/dentist-quiz.svg",
+				question: "Qual hábito pode causar desgaste no dente em indivíduos com TEA?",
+				category: "Atenção Odontológica Preventiva",
+				image_url: "./assets/quiz/questao-12.jpeg",
+				image_alt: "Ilustração da questão 12 do Quiz sobre hábitos que podem causar erosão dentária",
 				options: [
-					{ id: 1201, text: "Escovar os dentes três vezes ao dia", isCorrect: false },
-					{ id: 1202, text: "Consumo frequente de bebidas ácidas, como sucos industrializados", isCorrect: true, explanation: "Bebidas ácidas diminuem o pH bucal e desgastam o esmalte, podendo causar erosão." },
-					{ id: 1203, text: "Mastigar alimentos fibrosos, como frutas", isCorrect: false },
-					{ id: 1204, text: "Uso regular de flúor", isCorrect: false }
+					{ id: 1201, text: "Escovar os dentes três vezes ao dia", isCorrect: false, explanation: "Bebidas ácidas diminuem o pH bucal e desgastam o esmalte dentário, podendo causar erosão. Reconhecer esse risco ajuda a prevenir problemas dentários." },
+					{ id: 1202, text: "Consumo frequente de bebidas ácidas, como sucos industrializados", isCorrect: true, explanation: "Bebidas ácidas diminuem o pH bucal e desgastam o esmalte dentário, podendo causar erosão. Reconhecer esse risco ajuda a prevenir problemas dentários." },
+					{ id: 1203, text: "Mastigar alimentos fibrosos, como frutas", isCorrect: false, explanation: "Bebidas ácidas diminuem o pH bucal e desgastam o esmalte dentário, podendo causar erosão. Reconhecer esse risco ajuda a prevenir problemas dentários." },
+					{ id: 1204, text: "Uso regular de flúor", isCorrect: false, explanation: "Bebidas ácidas diminuem o pH bucal e desgastam o esmalte dentário, podendo causar erosão. Reconhecer esse risco ajuda a prevenir problemas dentários." }
 				]
 			}
 		],
@@ -3410,60 +3558,9 @@ function createDemoStore() {
 			}
 		],
 		videos: [
-			{
-				id: 1,
-				title: "Escovacao adaptada para TEA",
-				description: "Tecnicas de abordagem gradual para rotina de higiene oral.",
-				url: "https://www.youtube.com/watch?v=JYgM9sGQqDY"
-			},
-			{
-				id: 2,
-				title: "Manejo de resistencia",
-				description: "Estrategias de comunicacao e reforco positivo no dia a dia.",
-				url: "https://www.youtube.com/watch?v=2f8A3f6wE8Q"
-			},
-			{
-				id: 3,
-				title: "Prevencao em saude bucal",
-				description: "Conteudo para familias e profissionais de apoio.",
-				url: "https://www.youtube.com/watch?v=4N8R4h3rBlM"
-			},
-			{
-				id: 4,
-				title: "Rotina visual passo a passo",
-				description: "Como usar imagens e sequencias para preparar a escovacao.",
-				url: "https://www.youtube.com/watch?v=JYgM9sGQqDY"
-			},
-			{
-				id: 5,
-				title: "Fio dental com paciencia",
-				description: "Dicas para introduzir o fio dental sem aumentar a ansiedade.",
-				url: "https://www.youtube.com/watch?v=2f8A3f6wE8Q"
-			},
-			{
-				id: 6,
-				title: "Alimentacao e dentes saudaveis",
-				description: "Habitos alimentares que ajudam na prevencao de caries.",
-				url: "https://www.youtube.com/watch?v=4N8R4h3rBlM"
-			},
-			{
-				id: 7,
-				title: "Primeira ida ao dentista",
-				description: "O que esperar e como preparar a crianca para a consulta.",
-				url: "https://www.youtube.com/watch?v=JYgM9sGQqDY"
-			},
-			{
-				id: 8,
-				title: "Reforco positivo na higiene oral",
-				description: "Elogios e recompensas que fortalecem a adesao a rotina.",
-				url: "https://www.youtube.com/watch?v=2f8A3f6wE8Q"
-			},
-			{
-				id: 9,
-				title: "Historia social: hora de escovar",
-				description: "Narrativa lúdica para antecipar o momento da escovacao.",
-				url: "https://www.youtube.com/watch?v=4N8R4h3rBlM"
-			}
+			{ id: 1, title: "Abridor de Boca", description: "Vídeo educativo sobre o abridor de boca.", url: "./assets/videos/Abridor de Boca.mp4" },
+			{ id: 2, title: "Adaptador de escova", description: "Vídeo educativo sobre o adaptador de escova.", url: "./assets/videos/Adaptador de escova.mp4" },
+			{ id: 3, title: "Principal - Animação Inicial", description: "Animação inicial educativa do Sorriso Amigo.", url: "./assets/videos/Principal - Animação Inicial.mp4" }
 		],
 		nextAttemptId: 3
 	};
@@ -3519,17 +3616,18 @@ function computeDemoChecklistStats(month) {
 }
 
 function upsertDemoChecklist(date, payload) {
+	const existingIndex = demoStore.checklists.findIndex((item) => item.checklist_date === date);
+	const existing = existingIndex >= 0 ? demoStore.checklists[existingIndex] : null;
 	const nextItem = {
 		checklist_date: date,
 		brushing_morning: Boolean(payload.morning),
 		brushing_afternoon: Boolean(payload.afternoon),
 		brushing_night: Boolean(payload.night),
-		resistance_level: payload.resistanceLevel || "none",
+		resistance_level: resolveTeaResistanceForStore(payload, existing),
+		caregiver_resistance_level: resolveCaregiverResistanceForStore(payload, existing),
 		notes: String(payload.notes || "").trim(),
 		updated_at: new Date().toISOString()
 	};
-
-	const existingIndex = demoStore.checklists.findIndex((item) => item.checklist_date === date);
 
 	if (existingIndex >= 0) {
 		demoStore.checklists[existingIndex] = nextItem;
@@ -3621,7 +3719,8 @@ async function mockApi(path, options = {}) {
 				id: question.id,
 				question: question.question,
 				category: question.category,
-				image_url: question.image_url || "./assets/illustrations/dentist-quiz.svg",
+				image_url: question.image_url || "./assets/quiz/questao-01.jpeg",
+				image_alt: question.image_alt || "",
 				options: question.options.map((option) => ({
 					id: option.id,
 					text: option.text,
@@ -3854,7 +3953,8 @@ async function offlineApi(path, options = {}) {
 				id: question.id,
 				question: question.question,
 				category: question.category,
-				image_url: question.image_url || "./assets/illustrations/dentist-quiz.svg",
+				image_url: question.image_url || "./assets/quiz/questao-01.jpeg",
+				image_alt: question.image_alt || "",
 				options: question.options.map((option) => ({
 					id: option.id,
 					text: option.text,
@@ -3887,15 +3987,85 @@ async function offlineApi(path, options = {}) {
 	throw new Error("Falha na comunicacao com o servidor.");
 }
 
+const ALLOWED_RESISTANCE_LEVELS = ["none", "light", "moderate", "severe"];
+
+function hasOwnPayloadKey(object, key) {
+	return Object.prototype.hasOwnProperty.call(object || {}, key);
+}
+
+function normalizeTeaResistanceValue(value) {
+	if (value === "super-none") {
+		return "none";
+	}
+
+	return ALLOWED_RESISTANCE_LEVELS.includes(value) ? value : "";
+}
+
+function normalizeCaregiverResistanceValue(value) {
+	if (value === undefined || value === null || value === "") {
+		return "";
+	}
+
+	return normalizeTeaResistanceValue(value);
+}
+
+function resolveTeaResistanceForStore(payload, existing) {
+	if (hasOwnPayloadKey(payload, "resistanceLevel")) {
+		return normalizeTeaResistanceValue(payload.resistanceLevel) || existing?.resistance_level || "none";
+	}
+
+	return existing?.resistance_level || "none";
+}
+
+function resolveCaregiverResistanceForStore(payload, existing) {
+	if (hasOwnPayloadKey(payload, "caregiverResistanceLevel")) {
+		const normalized = normalizeCaregiverResistanceValue(payload.caregiverResistanceLevel);
+		return normalized === "" ? null : normalized;
+	}
+
+	if (existing && Object.prototype.hasOwnProperty.call(existing, "caregiver_resistance_level")) {
+		return existing.caregiver_resistance_level === undefined ? null : existing.caregiver_resistance_level;
+	}
+
+	return null;
+}
+
+function getResistanceInput(group) {
+	return group === "caregiver"
+		? document.getElementById("input-caregiver-resistance")
+		: document.getElementById("input-resistance");
+}
+
+function setResistanceSelection(group, level) {
+	const input = getResistanceInput(group);
+	const buttons = document.querySelectorAll(`.res-btn[data-group="${group}"]`);
+	const normalized =
+		group === "caregiver" ? normalizeCaregiverResistanceValue(level) : normalizeTeaResistanceValue(level);
+
+	if (input) {
+		input.value = normalized;
+	}
+
+	buttons.forEach((btn) => {
+		const isActive = Boolean(normalized) && btn.dataset.level === normalized;
+		btn.classList.toggle("active", isActive);
+		btn.setAttribute("aria-checked", isActive ? "true" : "false");
+	});
+}
+
 function translateResistance(value) {
 	const map = {
 		none: "Nenhuma",
 		light: "Leve",
 		moderate: "Moderada",
-		severe: "Grave"
+		severe: "Severa"
 	};
 
-	return map[value] || "-";
+	if (value === undefined || value === null || value === "") {
+		return "Não informado";
+	}
+
+	return map[value] || "Não informado";
 }
 
 function formatDate(value) {
@@ -3927,19 +4097,6 @@ function syncChecklistUI() {
 	if(aBtn) aBtn.classList.toggle('active', form.afternoon.checked);
 	if(nBtn) nBtn.classList.toggle('active', form.night.checked);
 
-	let resLevel = form.resistanceLevel.value || 'none';
-	document.querySelectorAll('.res-btn').forEach(btn => {
-		btn.classList.remove('active');
-	});
-	
-	if (resLevel === 'none') {
-		const posBtn = document.querySelector('.res-btn.positive');
-		if(posBtn) posBtn.classList.add('active');
-	} else if (resLevel === 'super-none') {
-		const extPosBtn = document.querySelector('.res-btn.extreme-positive');
-		if(extPosBtn) extPosBtn.classList.add('active');
-	} else {
-		const activeBtn = document.querySelector(`.res-btn[data-level="${resLevel}"]`);
-		if(activeBtn) activeBtn.classList.add('active');
-	}
+	setResistanceSelection("tea", form.resistanceLevel.value);
+	setResistanceSelection("caregiver", form.caregiverResistanceLevel.value);
 }
