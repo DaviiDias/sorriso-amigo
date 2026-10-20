@@ -3140,12 +3140,13 @@ async function loadVideos() {
 		dom.videoContainer.appendChild(card);
 		const player = new Plyr(card.querySelector("video"), {
 			iconUrl: "./assets/vendor/plyr/plyr.svg",
-			controls: ["rewind", "play", "fast-forward"],
+			controls: ["rewind", "play", "fast-forward", "progress"],
 			seekTime: 15,
 			keyboard: { focused: true, global: false },
 			i18n: {
 				play: "Reproduzir", pause: "Pausar", rewind: "Voltar 15 segundos",
-				fastForward: "Avançar 15 segundos", restart: "Reiniciar"
+				fastForward: "Avançar 15 segundos", restart: "Reiniciar",
+				seek: "Buscar", seekLabel: "{currentTime} de {duration}"
 			}
 		});
 		player.on("play", () => state.videoPlayers.forEach((other) => {
