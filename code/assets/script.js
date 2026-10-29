@@ -38,7 +38,11 @@ const state = {
 	quizState: "start",
 	offlineMode: false,
 	completedGuideStepIds: new Set(),
-	videoPlayers: []
+	videoPlayers: [],
+	videoHub: null,
+	videoHubView: "hub",
+	videoHubTrackId: null,
+	videoHubItemId: null
 };
 
 const runtimeConfig = {
@@ -636,6 +640,8 @@ function bindEvents() {
 		dom.quizActionBtn.addEventListener("click", handleQuizAction);
 		dom.quizRestartBtn.addEventListener("click", showQuizStartScreen);
 	}
+
+	dom.videoContainer?.addEventListener("click", onVideoHubClick);
 
 	dom.preferencesForm.addEventListener("submit", onPreferencesSubmit);
 
@@ -3107,53 +3113,320 @@ async function submitQuizResults() {
 	}
 }
 
-async function loadVideos() {
-	state.videoPlayers.forEach((player) => player.destroy());
+function encodeVideoAssetUrl(url) {
+	if (!url) return "";
+	return String(url)
+		.split("/")
+		.map((part, index) => {
+			if (index === 0 && part === "") return "";
+			try {
+				return encodeURIComponent(decodeURIComponent(part));
+			} catch (error) {
+				return encodeURIComponent(part);
+			}
+		})
+		.join("/");
+}
+
+function resolveVideoSrc(url) {
+	const encoded = encodeVideoAssetUrl(url);
+	try {
+		return new URL(encoded, document.baseURI).href;
+	} catch (error) {
+		return encoded;
+	}
+}
+
+function createVideoHubCatalog() {
+	const asset = (filename) => `./assets/videos/${encodeURIComponent(filename)}`;
+	const audience = "famílias, cuidadores e profissionais";
+	return {
+		intro: {
+			id: "hub-intro",
+			title: "Animação inicial",
+			heading: "Escolha por onde começar",
+			text: "Selecione uma opção para conhecer as adaptações.",
+			url: asset("principal-animacao-inicial.mp4"),
+			audience
+		},
+		tracks: [
+			{
+				id: "adaptador",
+				title: "MONTE SEU ADAPTADOR DE ESCOVA",
+				description: "Conheça 04 opções de adaptação do cabo da escova dentária.",
+				animation: {
+					id: "adaptador-animacao",
+					title: "Animação do adaptador de escova",
+					url: asset("adaptador-animacao.mp4"),
+					audience
+				},
+				items: [
+					{ id: "adaptador-palitos-madeira", title: "ADAPTAÇÃO DO CABO DA ESCOVA DENTÁRIA COM PALITOS DE MADEIRA", description: "Adaptação do cabo da escova dental com palitos de madeira.", youtubeUrl: "https://www.youtube.com/watch?v=azMd4U-4_Kg", audience },
+					{ id: "adaptador-esfera-isopor", title: "ADAPTAÇÃO DO CABO DA ESCOVA DENTÁRIA COM ESFERA DE ISOPOR", description: "Adaptação do cabo da escova dental com esfera de isopor.", youtubeUrl: "https://www.youtube.com/watch?v=lHAUwS3I8Zw", audience },
+					{ id: "adaptador-tubo-espuma", title: "ADAPTAÇÃO DO CABO DA ESCOVA DENTÁRIA COM TUBO DE ESPUMA", description: "Adaptação do cabo da escova dental com tubo de espuma.", youtubeUrl: "https://www.youtube.com/watch?v=_AG3wEdcGjg", audience },
+					{ id: "adaptador-escova-unhas", title: "ADAPTAÇÃO DO CABO DA ESCOVA DENTÁRIA COM ESCOVA PARA UNHAS", description: "Adaptação do cabo da escova dental com escova para unhas.", youtubeUrl: "https://www.youtube.com/watch?v=qZE0Db7v9PA", audience }
+				]
+			},
+			{
+				id: "abridor",
+				title: "MONTE SEU ABRIDOR DE BOCA",
+				description: "Conheça 03 opções de abridores de boca.",
+				animation: {
+					id: "abridor-animacao",
+					title: "Animação do abridor de boca",
+					url: asset("abridor-animacao.mp4"),
+					audience
+				},
+				items: [
+					{ id: "abridor-palito-madeira", title: "ABRIDOR DE BOCA MANUFATURADO COM PALITOS DE MADEIRA", description: "Abridor de boca manufaturado com palitos de madeira.", youtubeUrl: "https://www.youtube.com/watch?v=G49ozQxXPcc", audience },
+					{ id: "abridor-sugador-odontologico", title: "ABRIDOR DE BOCA COM SUGADOR ODONTOLÓGICO", description: "Abridor de boca com sugador odontológico.", youtubeUrl: "https://www.youtube.com/watch?v=TmqWSWNs9BI", audience },
+					{ id: "abridor-garrafa-pet", title: "ABRIDOR DE BOCA COM GARRAFA PET", description: "Abridor de boca com garrafa PET.", youtubeUrl: "https://www.youtube.com/watch?v=vF-9TocYqko", audience }
+				]
+			}
+		]
+	};
+}
+
+function itemYoutubeUrl(item) {
+	const url = String(item?.youtubeUrl || "").trim();
+	if (!url) return "";
+	try {
+		const parsed = new URL(url);
+		if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return "";
+		const host = parsed.hostname.replace(/^www\./, "");
+		if (host !== "youtube.com" && host !== "youtu.be" && host !== "m.youtube.com") return "";
+		return parsed.href;
+	} catch (error) {
+		return "";
+	}
+}
+
+function flattenVideoHubItems(hub) {
+	return (hub?.tracks || []).flatMap((track) => track.items || []);
+}
+
+function findVideoTrack(trackId) {
+	return (state.videoHub?.tracks || []).find((track) => track.id === trackId) || null;
+}
+
+function findVideoItem(track, itemId) {
+	return (track?.items || []).find((item) => item.id === itemId) || null;
+}
+
+function destroyVideoPlayers() {
+	state.videoPlayers.forEach((player) => {
+		if (player && typeof player.destroy === "function") player.destroy();
+	});
 	state.videoPlayers = [];
-	let videos = [];
+}
+
+function createLocalPlyr(videoEl) {
+	const player = new Plyr(videoEl, {
+		iconUrl: "./assets/vendor/plyr/plyr.svg",
+		controls: ["rewind", "play", "fast-forward", "progress"],
+		seekTime: 15,
+		keyboard: { focused: true, global: false },
+		i18n: {
+			play: "Reproduzir", pause: "Pausar", rewind: "Voltar 15 segundos",
+			fastForward: "Avançar 15 segundos", restart: "Reiniciar",
+			seek: "Buscar", seekLabel: "{currentTime} de {duration}"
+		}
+	});
+	player.on("play", () => state.videoPlayers.forEach((other) => {
+		if (other !== player) other.pause();
+	}));
+	state.videoPlayers.push(player);
+	return player;
+}
+
+function mountPlyrCard(container, video, extraClass = "") {
+	const card = document.createElement("article");
+	card.className = `video-card ${extraClass}`.trim();
+	card.innerHTML = `
+		<video class="js-plyr-video" playsinline preload="metadata" crossorigin="anonymous">
+			<source src="${escapeHtml(resolveVideoSrc(video.url))}" type="video/mp4" />
+		</video>
+		<div class="video-content">
+			<h4>${escapeHtml(video.title || "")}</h4>
+			${video.description ? `<p>${escapeHtml(video.description)}</p>` : ""}
+		</div>
+	`;
+	container.appendChild(card);
+	createLocalPlyr(card.querySelector("video"));
+	return card;
+}
+
+function captureThumbFirstFrame(videoEl) {
+	videoEl.addEventListener("loadedmetadata", () => {
+		try {
+			const duration = Number(videoEl.duration);
+			if (Number.isFinite(duration) && duration > 0) {
+				videoEl.currentTime = Math.min(0.12, duration * 0.01);
+			}
+		} catch (error) {}
+	}, { once: true });
+}
+
+function renderVideoHubView() {
+	if (!dom.videoContainer || !state.videoHub) return;
+	destroyVideoPlayers();
+	state.videoHubView = "hub";
+	state.videoHubTrackId = null;
+	state.videoHubItemId = null;
+
+	const intro = state.videoHub.intro || {};
+	dom.videoContainer.className = "video-hub mt-4";
+	dom.videoContainer.innerHTML = `
+		<div class="video-hub-intro">
+			<div class="video-hub-intro-player"></div>
+			<div class="video-hub-copy">
+				<h3>${escapeHtml(intro.heading || "Escolha por onde começar")}</h3>
+				<p>${escapeHtml(intro.text || "Selecione uma opção para conhecer as adaptações.")}</p>
+			</div>
+		</div>
+		<div class="video-hub-cards">
+			${(state.videoHub.tracks || []).map((track) => `
+				<button type="button" class="video-hub-card" data-video-track="${escapeHtml(track.id)}">
+					<span class="video-hub-card-title">${escapeHtml(track.title)}</span>
+					<span class="video-hub-card-text">${escapeHtml(track.description)}</span>
+				</button>
+			`).join("")}
+		</div>
+	`;
+
+	const introMount = dom.videoContainer.querySelector(".video-hub-intro-player");
+	if (intro.url) {
+		mountPlyrCard(introMount, intro, "video-card-intro");
+	}
+}
+
+function renderVideoTrackView(trackId) {
+	const track = findVideoTrack(trackId);
+	if (!track) {
+		renderVideoHubView();
+		return;
+	}
+
+	destroyVideoPlayers();
+	state.videoHubView = "track";
+	state.videoHubTrackId = track.id;
+	state.videoHubItemId = null;
+
+	const count = (track.items || []).length;
+	dom.videoContainer.className = "video-hub mt-4";
+	dom.videoContainer.innerHTML = `
+		<div class="video-hub-toolbar">
+			<button type="button" class="btn btn-secondary video-hub-back" data-video-back="hub">Voltar</button>
+			<div class="video-hub-toolbar-copy">
+				<p class="video-hub-kicker">Trilha</p>
+				<h3 class="video-hub-track-title">${escapeHtml(track.title)}</h3>
+			</div>
+		</div>
+		<div class="video-track-animation"></div>
+		<div class="video-track-grid video-track-grid--${count}"></div>
+	`;
+
+	const animationMount = dom.videoContainer.querySelector(".video-track-animation");
+	if (track.animation?.url) {
+		mountPlyrCard(animationMount, track.animation, "video-card-track-animation");
+	}
+
+	const grid = dom.videoContainer.querySelector(".video-track-grid");
+	(track.items || []).forEach((item) => {
+		const youtubeUrl = itemYoutubeUrl(item);
+		const thumb = document.createElement(youtubeUrl ? "a" : "button");
+		thumb.className = "video-thumb-card";
+		if (youtubeUrl) {
+			thumb.href = youtubeUrl;
+			thumb.target = "_blank";
+			thumb.rel = "noopener noreferrer";
+			thumb.dataset.youtubeUrl = youtubeUrl;
+		} else {
+			thumb.type = "button";
+			thumb.dataset.videoTrack = track.id;
+			thumb.dataset.videoItem = item.id;
+		}
+		thumb.dataset.videoId = item.id;
+		thumb.setAttribute("aria-label", `${item.title}. Assistir no YouTube`);
+		thumb.innerHTML = `
+			<span class="video-thumb-frame" aria-hidden="true">
+				<span class="video-thumb-youtube">
+					<i class="ph-fill ph-youtube-logo"></i>
+					<span class="video-thumb-youtube-label">YouTube</span>
+				</span>
+			</span>
+			<span class="video-thumb-name">${escapeHtml(item.title)}</span>
+		`;
+		grid.appendChild(thumb);
+	});
+}
+
+function renderVideoPlayerView(trackId, itemId) {
+	const track = findVideoTrack(trackId);
+	const item = findVideoItem(track, itemId);
+	if (!item) {
+		renderVideoTrackView(trackId);
+		return;
+	}
+
+	destroyVideoPlayers();
+	state.videoHubView = "player";
+	state.videoHubTrackId = track.id;
+	state.videoHubItemId = item.id;
+
+	dom.videoContainer.className = "video-hub mt-4";
+	dom.videoContainer.innerHTML = `
+		<div class="video-hub-toolbar">
+			<button type="button" class="btn btn-secondary video-hub-back" data-video-back="track">Voltar</button>
+			<div class="video-hub-toolbar-copy">
+				<p class="video-hub-kicker">${escapeHtml(track.title)}</p>
+				<h3 class="video-hub-track-title">${escapeHtml(item.title)}</h3>
+			</div>
+		</div>
+		<div class="video-player-mount"></div>
+	`;
+
+	mountPlyrCard(dom.videoContainer.querySelector(".video-player-mount"), item);
+}
+
+function onVideoHubClick(event) {
+	const backBtn = event.target.closest("[data-video-back]");
+	if (backBtn) {
+		const target = backBtn.dataset.videoBack;
+		if (target === "hub") renderVideoHubView();
+		else if (target === "track") renderVideoTrackView(state.videoHubTrackId);
+		return;
+	}
+
+	const itemBtn = event.target.closest("[data-video-item]");
+	if (itemBtn) {
+		renderVideoPlayerView(itemBtn.dataset.videoTrack, itemBtn.dataset.videoItem);
+		return;
+	}
+
+	const trackBtn = event.target.closest("[data-video-track]");
+	if (trackBtn) {
+		renderVideoTrackView(trackBtn.dataset.videoTrack);
+	}
+}
+
+async function loadVideos() {
+	let hub = null;
 	try {
 		const result = await api("/videos");
-		videos = result?.videos || [];
+		if (result?.hub?.tracks?.length) {
+			hub = result.hub;
+		}
 	} catch (error) {
 		console.warn("Falha ao buscar vídeos do servidor. Usando dados estáticos de fallback.", error);
 	}
 
-	// Se retornar vazio do banco ou der erro na tabela, usa o fallback estático
-	if (!videos || !videos.length) {
-		videos = demoStore.videos;
+	if (!hub || !hub.tracks?.length) {
+		hub = createVideoHubCatalog();
 	}
 
-	dom.videoContainer.innerHTML = "";
-
-	videos.forEach((video) => {
-		const card = document.createElement("article");
-		card.className = "video-card";
-		card.innerHTML = `
-			<video class="js-plyr-video" playsinline preload="metadata" crossorigin="anonymous">
-				<source src="${escapeHtml(new URL(video.url, document.baseURI).href)}" type="video/mp4" />
-			</video>
-			<div class="video-content">
-				<h4>${escapeHtml(video.title)}</h4>
-				<p>${escapeHtml(video.description)}</p>
-			</div>
-		`;
-		dom.videoContainer.appendChild(card);
-		const player = new Plyr(card.querySelector("video"), {
-			iconUrl: "./assets/vendor/plyr/plyr.svg",
-			controls: ["rewind", "play", "fast-forward", "progress"],
-			seekTime: 15,
-			keyboard: { focused: true, global: false },
-			i18n: {
-				play: "Reproduzir", pause: "Pausar", rewind: "Voltar 15 segundos",
-				fastForward: "Avançar 15 segundos", restart: "Reiniciar",
-				seek: "Buscar", seekLabel: "{currentTime} de {duration}"
-			}
-		});
-		player.on("play", () => state.videoPlayers.forEach((other) => {
-			if (other !== player) other.pause();
-		}));
-		state.videoPlayers.push(player);
-	});
+	state.videoHub = hub;
+	renderVideoHubView();
 }
 
 async function loadPreferences() {
@@ -3558,11 +3831,8 @@ function createDemoStore() {
 				created_at: new Date(now.getTime() - 172800000).toISOString()
 			}
 		],
-		videos: [
-			{ id: 1, title: "Abridor de Boca", description: "Vídeo educativo sobre o abridor de boca.", url: "./assets/videos/Abridor de Boca.mp4" },
-			{ id: 2, title: "Adaptador de escova", description: "Vídeo educativo sobre o adaptador de escova.", url: "./assets/videos/Adaptador de escova.mp4" },
-			{ id: 3, title: "Principal - Animação Inicial", description: "Animação inicial educativa do Sorriso Amigo.", url: "./assets/videos/Principal - Animação Inicial.mp4" }
-		],
+		hub: createVideoHubCatalog(),
+		videos: flattenVideoHubItems(createVideoHubCatalog()),
 		nextAttemptId: 3
 	};
 }
@@ -3787,7 +4057,7 @@ async function mockApi(path, options = {}) {
 	}
 
 	if (pathname === "/videos" && normalizedMethod === "GET") {
-		return { videos: demoStore.videos };
+		return { hub: demoStore.hub || createVideoHubCatalog(), videos: demoStore.videos };
 	}
 
 	if (pathname === "/user/preferences" && normalizedMethod === "GET") {
@@ -3967,7 +4237,7 @@ async function offlineApi(path, options = {}) {
 	}
 
 	if (pathname === "/videos" && normalizedMethod === "GET") {
-		return { videos: demoStore.videos };
+		return { hub: demoStore.hub || createVideoHubCatalog(), videos: demoStore.videos };
 	}
 
 	if (pathname === "/user/preferences" && normalizedMethod === "GET") {
