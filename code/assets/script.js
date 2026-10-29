@@ -3138,7 +3138,7 @@ function resolveVideoSrc(url) {
 }
 
 function createVideoHubCatalog() {
-	const asset = (filename) => `/assets/videos/${encodeURIComponent(filename)}`;
+	const asset = (filename) => `./assets/videos/${encodeURIComponent(filename)}`;
 	const audience = "famílias, cuidadores e profissionais";
 	return {
 		intro: {
