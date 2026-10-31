@@ -56,7 +56,15 @@ app.use(
   })
 );
 
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        imgSrc: ["'self'", "data:", "https://img.youtube.com"]
+      }
+    }
+  })
+);
 app.use(express.json({ limit: "1mb" }));
 app.use(morgan("dev"));
 

@@ -51,7 +51,7 @@ const runtimeConfig = {
 };
 
 // Modo temporario para demonstracao sem backend ativo.
-const QUICK_ACCESS_MODE = true;
+const QUICK_ACCESS_MODE = false;
 const QUICK_ACCESS_TOKEN = "quick-access-demo-token";
 const demoStore = createDemoStore();
 const OFFLINE_STORE_KEY = "sorriso_offline_store";
