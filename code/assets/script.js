@@ -39,6 +39,7 @@ const state = {
 	offlineMode: false,
 	completedGuideStepIds: new Set(),
 	videoPlayers: [],
+	loopVideos: [],
 	videoHub: null,
 	videoHubView: "hub",
 	videoHubTrackId: null,
@@ -50,7 +51,7 @@ const runtimeConfig = {
 };
 
 // Modo temporario para demonstracao sem backend ativo.
-const QUICK_ACCESS_MODE = false;
+const QUICK_ACCESS_MODE = true;
 const QUICK_ACCESS_TOKEN = "quick-access-demo-token";
 const demoStore = createDemoStore();
 const OFFLINE_STORE_KEY = "sorriso_offline_store";
@@ -1037,6 +1038,7 @@ function pauseVideoPlayers() {
 	state.videoPlayers.forEach((player) => {
 		if (player && typeof player.pause === "function") player.pause();
 	});
+	pauseLoopVideos();
 }
 
 function setActiveSection(sectionName) {
@@ -3128,13 +3130,85 @@ function encodeVideoAssetUrl(url) {
 		.join("/");
 }
 
+function toRelativeStaticVideoPath(url) {
+	const raw = String(url || "").trim();
+	if (!raw) return "";
+
+	try {
+		const parsed = new URL(raw, document.baseURI);
+		const path = parsed.pathname.replace(/\\/g, "/");
+		const marker = path.indexOf("/assets/videos/");
+		if (marker !== -1) {
+			return `.${path.slice(marker)}${parsed.search || ""}`;
+		}
+	} catch (error) {}
+
+	const normalized = raw.replace(/\\/g, "/");
+	const marker = normalized.indexOf("/assets/videos/");
+	if (marker !== -1) {
+		return `.${normalized.slice(marker)}`;
+	}
+	if (normalized.startsWith("assets/videos/")) {
+		return `./${normalized}`;
+	}
+	return normalized;
+}
+
 function resolveVideoSrc(url) {
-	const encoded = encodeVideoAssetUrl(url);
+	const relative = toRelativeStaticVideoPath(url);
+	const encoded = encodeVideoAssetUrl(relative);
 	try {
 		return new URL(encoded, document.baseURI).href;
 	} catch (error) {
 		return encoded;
 	}
+}
+
+function prefersReducedMotion() {
+	return Boolean(window.matchMedia?.("(prefers-reduced-motion: reduce)").matches);
+}
+
+function youtubeVideoId(url) {
+	const safe = itemYoutubeUrl({ youtubeUrl: url });
+	if (!safe) return "";
+	try {
+		const parsed = new URL(safe);
+		const host = parsed.hostname.replace(/^www\./, "");
+		if (host === "youtu.be") {
+			return parsed.pathname.replace(/^\//, "").split("/")[0] || "";
+		}
+		if (parsed.searchParams.get("v")) {
+			return parsed.searchParams.get("v");
+		}
+		const parts = parsed.pathname.split("/").filter(Boolean);
+		const embedIndex = parts.indexOf("embed");
+		if (embedIndex !== -1) return parts[embedIndex + 1] || "";
+		const shortsIndex = parts.indexOf("shorts");
+		if (shortsIndex !== -1) return parts[shortsIndex + 1] || "";
+	} catch (error) {}
+	return "";
+}
+
+function youtubeThumbnailUrl(videoId) {
+	if (!videoId) return "";
+	return `https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`;
+}
+
+function applyYoutubeThumbFallback(img, videoId) {
+	if (!img || !videoId) return;
+	const sources = [
+		`https://img.youtube.com/vi/${encodeURIComponent(videoId)}/maxresdefault.jpg`,
+		`https://img.youtube.com/vi/${encodeURIComponent(videoId)}/hqdefault.jpg`,
+		`https://img.youtube.com/vi/${encodeURIComponent(videoId)}/default.jpg`
+	];
+	let index = 0;
+	img.src = sources[index];
+	img.addEventListener("error", () => {
+		index += 1;
+		if (index < sources.length) {
+			img.src = sources[index];
+		}
+	});
 }
 
 function createVideoHubCatalog() {
@@ -3218,53 +3292,68 @@ function destroyVideoPlayers() {
 		if (player && typeof player.destroy === "function") player.destroy();
 	});
 	state.videoPlayers = [];
+	pauseLoopVideos();
+	state.loopVideos = [];
 }
 
-function createLocalPlyr(videoEl) {
-	const player = new Plyr(videoEl, {
-		iconUrl: "./assets/vendor/plyr/plyr.svg",
-		controls: ["rewind", "play", "fast-forward", "progress"],
-		seekTime: 15,
-		keyboard: { focused: true, global: false },
-		i18n: {
-			play: "Reproduzir", pause: "Pausar", rewind: "Voltar 15 segundos",
-			fastForward: "Avançar 15 segundos", restart: "Reiniciar",
-			seek: "Buscar", seekLabel: "{currentTime} de {duration}"
+function pauseLoopVideos() {
+	state.loopVideos.forEach((videoEl) => {
+		if (videoEl && typeof videoEl.pause === "function") {
+			try { videoEl.pause(); } catch (error) {}
 		}
 	});
-	player.on("play", () => state.videoPlayers.forEach((other) => {
-		if (other !== player) other.pause();
-	}));
-	state.videoPlayers.push(player);
-	return player;
 }
 
-function mountPlyrCard(container, video, extraClass = "") {
-	const card = document.createElement("article");
-	card.className = `video-card ${extraClass}`.trim();
-	card.innerHTML = `
-		<video class="js-plyr-video" playsinline preload="metadata" crossorigin="anonymous">
-			<source src="${escapeHtml(resolveVideoSrc(video.url))}" type="video/mp4" />
-		</video>
-		<div class="video-content">
-			<h4>${escapeHtml(video.title || "")}</h4>
-			${video.description ? `<p>${escapeHtml(video.description)}</p>` : ""}
-		</div>
-	`;
-	container.appendChild(card);
-	createLocalPlyr(card.querySelector("video"));
-	return card;
+function tryPlayLoopVideo(videoEl) {
+	if (!videoEl || prefersReducedMotion()) return;
+	const playPromise = videoEl.play();
+	if (playPromise && typeof playPromise.catch === "function") {
+		playPromise.catch(() => {});
+	}
 }
 
-function captureThumbFirstFrame(videoEl) {
-	videoEl.addEventListener("loadedmetadata", () => {
-		try {
-			const duration = Number(videoEl.duration);
-			if (Number.isFinite(duration) && duration > 0) {
-				videoEl.currentTime = Math.min(0.12, duration * 0.01);
-			}
-		} catch (error) {}
-	}, { once: true });
+function mountLoopAnimation(container, video, extraClass = "") {
+	if (!container || !video?.url) return null;
+
+	const wrap = document.createElement("div");
+	wrap.className = `video-loop-media ${extraClass}`.trim();
+
+	const videoEl = document.createElement("video");
+	videoEl.className = "video-loop-el";
+	videoEl.setAttribute("aria-label", video.title || "Animação educativa");
+	videoEl.muted = true;
+	videoEl.defaultMuted = true;
+	videoEl.loop = true;
+	videoEl.playsInline = true;
+	videoEl.setAttribute("muted", "");
+	videoEl.setAttribute("loop", "");
+	videoEl.setAttribute("playsinline", "");
+	videoEl.setAttribute("webkit-playsinline", "");
+	videoEl.preload = "metadata";
+	videoEl.removeAttribute("controls");
+	videoEl.controls = false;
+	videoEl.setAttribute("disablepictureinpicture", "");
+
+	const source = document.createElement("source");
+	source.src = resolveVideoSrc(video.url);
+	source.type = "video/mp4";
+	videoEl.appendChild(source);
+	wrap.appendChild(videoEl);
+	container.appendChild(wrap);
+
+	state.loopVideos.push(videoEl);
+
+	if (prefersReducedMotion()) {
+		videoEl.removeAttribute("autoplay");
+		videoEl.pause();
+	} else {
+		videoEl.setAttribute("autoplay", "");
+		videoEl.autoplay = true;
+		tryPlayLoopVideo(videoEl);
+		videoEl.addEventListener("canplay", () => tryPlayLoopVideo(videoEl), { once: true });
+	}
+
+	return videoEl;
 }
 
 function renderVideoHubView() {
@@ -3277,27 +3366,29 @@ function renderVideoHubView() {
 	const intro = state.videoHub.intro || {};
 	dom.videoContainer.className = "video-hub mt-4";
 	dom.videoContainer.innerHTML = `
-		<div class="video-hub-intro">
-			<div class="video-hub-intro-player"></div>
-			<div class="video-hub-copy">
-				<h3>${escapeHtml(intro.heading || "Escolha por onde começar")}</h3>
-				<p>${escapeHtml(intro.text || "Selecione uma opção para conhecer as adaptações.")}</p>
+		<div class="video-hub-stage">
+			<div class="video-hub-mascot" data-video-loop-mount></div>
+			<div class="video-hub-actions" role="group" aria-label="Categorias de vídeos">
+				${(state.videoHub.tracks || []).map((track) => `
+					<button type="button" class="video-hub-choice" data-video-track="${escapeHtml(track.id)}">
+						<span class="video-hub-choice-arrow" aria-hidden="true">
+							<i class="ph-fill ph-caret-right"></i>
+						</span>
+						<span class="video-hub-choice-copy">
+							<span class="video-hub-choice-title">${escapeHtml(track.title)}</span>
+							<span class="video-hub-choice-text">${escapeHtml(track.description)}</span>
+						</span>
+					</button>
+				`).join("")}
 			</div>
-		</div>
-		<div class="video-hub-cards">
-			${(state.videoHub.tracks || []).map((track) => `
-				<button type="button" class="video-hub-card" data-video-track="${escapeHtml(track.id)}">
-					<span class="video-hub-card-title">${escapeHtml(track.title)}</span>
-					<span class="video-hub-card-text">${escapeHtml(track.description)}</span>
-				</button>
-			`).join("")}
 		</div>
 	`;
 
-	const introMount = dom.videoContainer.querySelector(".video-hub-intro-player");
-	if (intro.url) {
-		mountPlyrCard(introMount, intro, "video-card-intro");
-	}
+	mountLoopAnimation(
+		dom.videoContainer.querySelector("[data-video-loop-mount]"),
+		intro,
+		"video-loop-media--hub"
+	);
 }
 
 function renderVideoTrackView(trackId) {
@@ -3315,25 +3406,30 @@ function renderVideoTrackView(trackId) {
 	const count = (track.items || []).length;
 	dom.videoContainer.className = "video-hub mt-4";
 	dom.videoContainer.innerHTML = `
-		<div class="video-hub-toolbar">
-			<button type="button" class="btn btn-secondary video-hub-back" data-video-back="hub">Voltar</button>
-			<div class="video-hub-toolbar-copy">
-				<p class="video-hub-kicker">Trilha</p>
+		<div class="video-hub-stage video-hub-stage--track">
+			<div class="video-hub-mascot" data-video-loop-mount></div>
+			<div class="video-hub-track-panel">
+				<button type="button" class="video-hub-back" data-video-back="hub">
+					<i class="ph ph-arrow-left" aria-hidden="true"></i>
+					<span>Voltar</span>
+				</button>
 				<h3 class="video-hub-track-title">${escapeHtml(track.title)}</h3>
+				<p class="video-hub-track-lead">${escapeHtml(track.description || "")}</p>
+				<div class="video-track-grid video-track-grid--${count}"></div>
 			</div>
 		</div>
-		<div class="video-track-animation"></div>
-		<div class="video-track-grid video-track-grid--${count}"></div>
 	`;
 
-	const animationMount = dom.videoContainer.querySelector(".video-track-animation");
-	if (track.animation?.url) {
-		mountPlyrCard(animationMount, track.animation, "video-card-track-animation");
-	}
+	mountLoopAnimation(
+		dom.videoContainer.querySelector("[data-video-loop-mount]"),
+		track.animation,
+		"video-loop-media--track"
+	);
 
 	const grid = dom.videoContainer.querySelector(".video-track-grid");
 	(track.items || []).forEach((item) => {
 		const youtubeUrl = itemYoutubeUrl(item);
+		const videoId = youtubeVideoId(youtubeUrl);
 		const thumb = document.createElement(youtubeUrl ? "a" : "button");
 		thumb.className = "video-thumb-card";
 		if (youtubeUrl) {
@@ -3343,64 +3439,29 @@ function renderVideoTrackView(trackId) {
 			thumb.dataset.youtubeUrl = youtubeUrl;
 		} else {
 			thumb.type = "button";
-			thumb.dataset.videoTrack = track.id;
-			thumb.dataset.videoItem = item.id;
 		}
 		thumb.dataset.videoId = item.id;
-		thumb.setAttribute("aria-label", `${item.title}. Assistir no YouTube`);
+		thumb.setAttribute("aria-label", `${item.title}. Abrir no YouTube`);
 		thumb.innerHTML = `
-			<span class="video-thumb-frame" aria-hidden="true">
-				<span class="video-thumb-youtube">
-					<i class="ph-fill ph-youtube-logo"></i>
-					<span class="video-thumb-youtube-label">YouTube</span>
-				</span>
+			<span class="video-thumb-frame">
+				<img class="video-thumb-img" alt="${escapeHtml(item.title)}" loading="lazy" decoding="async" />
+				<span class="video-thumb-play" aria-hidden="true"><i class="ph-fill ph-play"></i></span>
 			</span>
 			<span class="video-thumb-name">${escapeHtml(item.title)}</span>
 		`;
+		const img = thumb.querySelector(".video-thumb-img");
+		applyYoutubeThumbFallback(img, videoId);
 		grid.appendChild(thumb);
 	});
 }
 
-function renderVideoPlayerView(trackId, itemId) {
-	const track = findVideoTrack(trackId);
-	const item = findVideoItem(track, itemId);
-	if (!item) {
-		renderVideoTrackView(trackId);
-		return;
-	}
-
-	destroyVideoPlayers();
-	state.videoHubView = "player";
-	state.videoHubTrackId = track.id;
-	state.videoHubItemId = item.id;
-
-	dom.videoContainer.className = "video-hub mt-4";
-	dom.videoContainer.innerHTML = `
-		<div class="video-hub-toolbar">
-			<button type="button" class="btn btn-secondary video-hub-back" data-video-back="track">Voltar</button>
-			<div class="video-hub-toolbar-copy">
-				<p class="video-hub-kicker">${escapeHtml(track.title)}</p>
-				<h3 class="video-hub-track-title">${escapeHtml(item.title)}</h3>
-			</div>
-		</div>
-		<div class="video-player-mount"></div>
-	`;
-
-	mountPlyrCard(dom.videoContainer.querySelector(".video-player-mount"), item);
-}
-
 function onVideoHubClick(event) {
+	const youtubeLink = event.target.closest("a[data-youtube-url]");
+	if (youtubeLink) return;
+
 	const backBtn = event.target.closest("[data-video-back]");
 	if (backBtn) {
-		const target = backBtn.dataset.videoBack;
-		if (target === "hub") renderVideoHubView();
-		else if (target === "track") renderVideoTrackView(state.videoHubTrackId);
-		return;
-	}
-
-	const itemBtn = event.target.closest("[data-video-item]");
-	if (itemBtn) {
-		renderVideoPlayerView(itemBtn.dataset.videoTrack, itemBtn.dataset.videoItem);
+		renderVideoHubView();
 		return;
 	}
 
@@ -3408,6 +3469,21 @@ function onVideoHubClick(event) {
 	if (trackBtn) {
 		renderVideoTrackView(trackBtn.dataset.videoTrack);
 	}
+}
+
+function normalizeVideoHubUrls(hub) {
+	if (!hub) return hub;
+	if (hub.intro) {
+		hub.intro = { ...hub.intro, url: toRelativeStaticVideoPath(hub.intro.url) || hub.intro.url };
+	}
+	hub.tracks = (hub.tracks || []).map((track) => ({
+		...track,
+		animation: track.animation
+			? { ...track.animation, url: toRelativeStaticVideoPath(track.animation.url) || track.animation.url }
+			: track.animation,
+		items: [...(track.items || [])]
+	}));
+	return hub;
 }
 
 async function loadVideos() {
@@ -3425,7 +3501,7 @@ async function loadVideos() {
 		hub = createVideoHubCatalog();
 	}
 
-	state.videoHub = hub;
+	state.videoHub = normalizeVideoHubUrls(hub);
 	renderVideoHubView();
 }
 
